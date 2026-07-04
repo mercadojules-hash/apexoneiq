@@ -18,8 +18,11 @@ import {
   FilePenLine,
   FileText,
   Filter,
+  Film,
   HeartPulse,
+  Image,
   LineChart,
+  Maximize2,
   Menu,
   MessageSquareText,
   Mic2,
@@ -43,6 +46,7 @@ import {
   UserRound,
   UsersRound,
   Volume2,
+  SlidersHorizontal,
   X
 } from "lucide-react";
 import "./styles.css";
@@ -206,6 +210,133 @@ const patientStory = [
   { title: "Current encounter", detail: "Clinical OS is coordinating evidence, reasoning, documentation, and education." }
 ];
 
+const presentationSteps = [
+  { title: "Patient Overview", screen: "command", stage: 0, prep: true },
+  { title: "Voice Intake", screen: "visit", stage: 1 },
+  { title: "AI Transcript", screen: "visit", stage: 2 },
+  { title: "History", screen: "timeline", stage: 2 },
+  { title: "Physical Exam", screen: "visit", stage: 5 },
+  { title: "Laboratory Results", screen: "labs", stage: 4 },
+  { title: "Imaging", screen: "timeline", stage: 4 },
+  { title: "Differential Diagnosis", screen: "reasoning", stage: 5 },
+  { title: "Clinical Reasoning", screen: "reasoning", stage: 6 },
+  { title: "ICD-10 Suggestions", screen: "docs", stage: 7 },
+  { title: "SOAP Note", screen: "docs", stage: 7 },
+  { title: "Follow-up Plan", screen: "education", stage: 8 }
+];
+
+const imagingStudies = [
+  {
+    id: "chest-xray",
+    type: "Chest X-ray",
+    patient: "Sarah Johnson",
+    studyDate: "Jul 04, 2026",
+    accession: "CXR-884201",
+    technique: "PA and lateral chest radiographs",
+    impression: "No focal airspace consolidation. Cardiomediastinal silhouette is not enlarged. No pleural effusion or pneumothorax.",
+    ai: ["No acute infiltrate detected", "Cardiac silhouette within expected limits", "No pneumothorax signal"],
+    view: "chest"
+  },
+  {
+    id: "knee-xray",
+    type: "Knee X-ray",
+    patient: "Marcus Hill",
+    studyDate: "Jun 29, 2026",
+    accession: "KNEE-441027",
+    technique: "AP, lateral, and sunrise right knee views",
+    impression: "Mild medial compartment joint space narrowing. No acute fracture or dislocation.",
+    ai: ["Mild osteoarthritic pattern", "No fracture line detected", "Small suprapatellar effusion possible"],
+    view: "knee"
+  },
+  {
+    id: "lumbar-mri",
+    type: "Lumbar MRI",
+    patient: "Elena Park",
+    studyDate: "Jun 18, 2026",
+    accession: "MRI-L-203911",
+    technique: "Sagittal and axial T1/T2 lumbar sequences",
+    impression: "L4-L5 broad-based disc bulge with mild canal narrowing. No high-grade foraminal stenosis.",
+    ai: ["Disc bulge highlighted at L4-L5", "No emergent cord compression marker", "Degenerative endplate signal present"],
+    view: "lumbar"
+  },
+  {
+    id: "brain-mri",
+    type: "Brain MRI",
+    patient: "Naomi Rivera",
+    studyDate: "Jun 21, 2026",
+    accession: "MRI-B-778145",
+    technique: "Axial FLAIR, DWI, and post-contrast T1 brain sequences",
+    impression: "No acute infarct. Scattered nonspecific white matter FLAIR hyperintensities, likely chronic microvascular change.",
+    ai: ["No restricted diffusion pattern detected", "Mild chronic white matter burden", "No mass effect signal"],
+    view: "brain"
+  },
+  {
+    id: "ct-scan",
+    type: "CT Scan",
+    patient: "Owen Brooks",
+    studyDate: "May 30, 2026",
+    accession: "CT-550912",
+    technique: "CT abdomen and pelvis with IV contrast",
+    impression: "No acute intra-abdominal process. Mild hepatic steatosis. Appendix normal.",
+    ai: ["No appendicitis pattern", "Mild steatosis texture", "No free air or obstruction"],
+    view: "ct"
+  },
+  {
+    id: "ultrasound",
+    type: "Ultrasound",
+    patient: "Sarah Johnson",
+    studyDate: "Jul 04, 2026",
+    accession: "US-119038",
+    technique: "Focused bedside cardiac and lung ultrasound mock clip",
+    impression: "Grossly preserved LV function in mock loop. No pleural effusion visualized.",
+    ai: ["Gross LV squeeze appears preserved", "No B-line cluster in sampled view", "Clip quality adequate"],
+    view: "ultrasound"
+  }
+];
+
+const procedureStudies = [
+  {
+    id: "endoscopy",
+    title: "Endoscopy mock video",
+    time: "00:42",
+    impression: "Mild antral erythema without active bleeding in simulated clip.",
+    observations: ["Mucosa visualized", "No active bleeding marker", "Biopsy site annotation ready"],
+    view: "endoscopy"
+  },
+  {
+    id: "ultrasound-clip",
+    title: "Ultrasound clip",
+    time: "01:18",
+    impression: "Focused lung window with no pleural effusion in the sampled mock view.",
+    observations: ["Pleural line tracked", "No effusion pocket", "Respiratory motion preserved"],
+    view: "ultrasound"
+  },
+  {
+    id: "echo",
+    title: "Cardiac Echo clip",
+    time: "02:04",
+    impression: "Parasternal long-axis mock loop with grossly preserved systolic motion.",
+    observations: ["LV motion symmetric", "No large pericardial effusion", "Valve motion visible"],
+    view: "echo"
+  },
+  {
+    id: "wound",
+    title: "Wound progression",
+    time: "Day 14",
+    impression: "Granulation tissue increased with reduced erythema compared with baseline.",
+    observations: ["Area decreased 18%", "No expanding cellulitis marker", "Photo comparison aligned"],
+    view: "wound"
+  },
+  {
+    id: "derm",
+    title: "Dermatology lesion comparison",
+    time: "6 mo",
+    impression: "Lesion size stable in mock comparison; border irregularity flagged for clinician review.",
+    observations: ["Diameter stable", "Border irregularity annotated", "Derm follow-up suggested"],
+    view: "derm"
+  }
+];
+
 function App() {
   const [active, setActive] = useState("command");
   const [theme, setTheme] = useState("dark");
@@ -214,6 +345,8 @@ function App() {
   const [transitioning, setTransitioning] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [selectedEvidenceId, setSelectedEvidenceId] = useState(evidenceItems[0].id);
+  const [presentationMode, setPresentationMode] = useState(false);
+  const [presentationIndex, setPresentationIndex] = useState(0);
   const ActiveScreen = screens[active];
   const activeLabel = tabs.find((tab) => tab.id === active)?.label;
   const encounter = useMemo(
@@ -238,6 +371,30 @@ function App() {
     const timer = window.setTimeout(() => dispatchEncounter({ type: "APPLY_NEXT_EVENT" }), delay);
     return () => window.clearTimeout(timer);
   }, [encounterState.active, encounterState.paused, encounterState.eventCursor]);
+
+  useEffect(() => {
+    if (!presentationMode) return undefined;
+
+    const step = presentationSteps[presentationIndex];
+    setTransitioning(true);
+    setActive(step.screen);
+    dispatchEncounter({ type: "JUMP_TO_STAGE", stage: step.stage, prep: step.prep });
+    const settleTimer = window.setTimeout(() => setTransitioning(false), 520);
+    const advanceTimer = window.setTimeout(() => {
+      setPresentationIndex((index) => {
+        if (index >= presentationSteps.length - 1) {
+          setPresentationMode(false);
+          return index;
+        }
+        return index + 1;
+      });
+    }, 5200);
+
+    return () => {
+      window.clearTimeout(settleTimer);
+      window.clearTimeout(advanceTimer);
+    };
+  }, [presentationMode, presentationIndex]);
 
   const beginEncounter = () => {
     setTransitioning(true);
@@ -269,8 +426,19 @@ function App() {
     dispatchEncounter({ type: "SELECT_CONVERSATION_OPTION", interactionId, optionId });
   };
 
+  const togglePresentationMode = () => {
+    if (presentationMode) {
+      setPresentationMode(false);
+      setTransitioning(false);
+      return;
+    }
+
+    setPresentationIndex(0);
+    setPresentationMode(true);
+  };
+
   return (
-    <main className={`app ${theme} ${encounter.active ? "encounter-mode" : ""} ${transitioning ? "transitioning" : ""}`}>
+    <main className={`app ${theme} ${encounter.active ? "encounter-mode" : ""} ${transitioning ? "transitioning" : ""} ${presentationMode ? "presentation-mode" : ""}`}>
       <aside className={`sidebar ${mobileOpen ? "open" : ""}`}>
         <div className="brand">
           <div className="brand-mark"><HeartPulse size={22} /></div>
@@ -321,14 +489,26 @@ function App() {
             <h1>{activeLabel}</h1>
           </div>
           <div className="top-actions">
-            <button className="icon-button" aria-label="Search"><Search size={19} /></button>
-            <button className="icon-button" aria-label="Notifications"><Bell size={19} /></button>
+            <ComingSoonButton className="icon-button" label="Enterprise search" icon={Search} />
+            <ComingSoonButton className="icon-button" label="Notification center" icon={Bell} />
+            <button className={`presentation-button ${presentationMode ? "active" : ""}`} onClick={togglePresentationMode}>
+              <Film size={17} />
+              <span>{presentationMode ? "Stop Presentation" : "Presentation Mode"}</span>
+            </button>
             <button className="theme-toggle" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
               {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
               <span>{theme === "dark" ? "Light" : "Dark"}</span>
             </button>
           </div>
         </header>
+        {presentationMode && (
+          <PresentationGuide
+            step={presentationSteps[presentationIndex]}
+            index={presentationIndex}
+            total={presentationSteps.length}
+            onStop={() => setPresentationMode(false)}
+          />
+        )}
         <MissionControlBar encounter={encounter} onOpenEvidence={() => openEvidenceDrawer()} />
         <DemoControlRail
           encounter={encounter}
@@ -678,6 +858,46 @@ function ClinicalVoiceAssistant({ encounter }) {
 
 function estimateDuration(wordCount, speed) {
   return Math.max(14, (wordCount / 148) * 60 / Math.max(speed, 0.5));
+}
+
+function ComingSoonButton({ label, icon: Icon, className = "ghost-button" }) {
+  return (
+    <button className={`${className} coming-soon-control`} title={`${label} - coming soon`} aria-label={`${label} coming soon`}>
+      {Icon && <Icon size={17} />}
+      {className !== "icon-button" && <span>{label}</span>}
+      <small>Soon</small>
+    </button>
+  );
+}
+
+function ComingSoonCard({ title, detail, icon: Icon = Sparkles }) {
+  return (
+    <div className="coming-soon-card">
+      <Icon size={20} />
+      <div>
+        <strong>{title}</strong>
+        <span>{detail}</span>
+      </div>
+    </div>
+  );
+}
+
+function PresentationGuide({ step, index, total, onStop }) {
+  return (
+    <section className="presentation-guide" aria-label="Presentation Mode guide">
+      <div>
+        <span className="eyebrow">Presentation Mode</span>
+        <strong>{step.title}</strong>
+      </div>
+      <div className="presentation-track">
+        {presentationSteps.map((item, itemIndex) => (
+          <span key={item.title} className={itemIndex <= index ? "active" : ""} />
+        ))}
+      </div>
+      <small>{index + 1} of {total}</small>
+      <button className="ghost-button" onClick={onStop}><Square size={14} /> Stop</button>
+    </section>
+  );
 }
 
 function MissionControlBar({ encounter, onOpenEvidence }) {
@@ -1032,7 +1252,7 @@ function CommandCenter({ encounter, onBeginEncounter, onOpenEvidence, onClinical
         </div>
       </Panel>
 
-      <Panel title="Risk Alerts" icon={AlertTriangle} action={<button className="ghost-button">Review all</button>}>
+      <Panel title="Risk Alerts" icon={AlertTriangle} action={<ComingSoonButton label="Risk inbox" icon={AlertTriangle} />}>
         <div className="alert-stack">
           {alerts.map((alert) => {
             const Icon = alert.icon;
@@ -1212,7 +1432,7 @@ function VirtualVisitWorkspace({ encounter, transcript }) {
       </div>
       <div className="telehealth-controls">
         {["Mute", "Camera", "Screen Share", "Chat", "Invite", "PiP"].map((control) => (
-          <button key={control}>{control}</button>
+          <ComingSoonButton key={control} label={control} />
         ))}
       </div>
       <div className="virtual-bottom">
@@ -1336,25 +1556,138 @@ function VoiceWave() {
 
 function Timeline({ encounter }) {
   const [view, setView] = useState("story");
-  const items = encounter.timeline;
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLowerCase();
+  const items = normalizedQuery
+    ? encounter.timeline.filter((item) => `${item.type} ${item.date} ${item.title} ${item.meta}`.toLowerCase().includes(normalizedQuery))
+    : encounter.timeline;
 
   return (
     <div className="screen enter">
       <div className="toolbar">
-        <div className="searchbox"><Search size={18} /><input placeholder="Search diagnoses, labs, notes, medications..." /></div>
+        <div className="searchbox">
+          <Search size={18} />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search diagnoses, labs, notes, medications..." />
+        </div>
         <div className="mode-switch small">
           <button className={view === "story" ? "active" : ""} onClick={() => setView("story")}>Story View</button>
           <button className={view === "chrono" ? "active" : ""} onClick={() => setView("chrono")}>Chronological</button>
         </div>
-        <button className="theme-toggle"><Filter size={17} /> Filters</button>
+        <ComingSoonButton className="theme-toggle" label="Filters" icon={Filter} />
       </div>
       {encounter.isReady("timeline") && (
         <div className="live-banner"><Sparkles size={18} /> Timeline is re-sorting around the current encounter priority.</div>
       )}
       <Panel title={view === "story" ? "Encounter Narrative" : "Clinical Timeline"} icon={Clock3}>
-        {view === "story" ? <PatientStory narrative={encounter.narrative} items={items} highlight={encounter.isReady("timeline")} /> : <TimelineList items={items} large highlight={encounter.isReady("timeline")} />}
+        {items.length ? (
+          view === "story" ? <PatientStory narrative={encounter.narrative} items={items} highlight={encounter.isReady("timeline")} /> : <TimelineList items={items} large highlight={encounter.isReady("timeline")} />
+        ) : (
+          <ComingSoonCard title="No matching timeline events" detail="Try a broader term such as ECG, diabetes, lab, medication, or chest." icon={Search} />
+        )}
       </Panel>
+      <DiagnosticImagingWorkspace />
+      <ProcedureReviewWorkspace />
     </div>
+  );
+}
+
+function DiagnosticImagingWorkspace() {
+  const [selectedId, setSelectedId] = useState(imagingStudies[0].id);
+  const selected = imagingStudies.find((study) => study.id === selectedId) || imagingStudies[0];
+
+  return (
+    <Panel className="imaging-workspace-panel" title="Diagnostic Imaging Workspace" icon={Image}>
+      <div className="pacs-layout">
+        <div className="pacs-sidebar">
+          <span className="eyebrow">Studies</span>
+          {imagingStudies.map((study) => (
+            <button key={study.id} className={study.id === selected.id ? "active" : ""} onClick={() => setSelectedId(study.id)}>
+              <span>{study.type}</span>
+              <small>{study.studyDate}</small>
+            </button>
+          ))}
+        </div>
+        <div className="pacs-viewer">
+          <div className="viewer-toolbar">
+            <strong>{selected.type}</strong>
+            <div>
+              <button><Maximize2 size={14} /> Fit</button>
+              <button><Search size={14} /> Zoom 125%</button>
+              <button><SlidersHorizontal size={14} /> W/L 42/380</button>
+            </div>
+          </div>
+          <div className={`mock-scan ${selected.view}`}>
+            <div className="scan-ruler top" />
+            <div className="scan-ruler left" />
+            <div className="scan-anatomy" />
+            <div className="scan-crosshair" />
+            <span className="scan-label">{selected.type}</span>
+          </div>
+          <div className="thumbnail-strip">
+            {[0, 1, 2, 3].map((item) => <span key={item} className={item === 1 ? "active" : ""} />)}
+          </div>
+        </div>
+        <div className="pacs-insights">
+          <div className="study-info">
+            <span>Patient</span><strong>{selected.patient}</strong>
+            <span>Accession</span><strong>{selected.accession}</strong>
+            <span>Technique</span><strong>{selected.technique}</strong>
+          </div>
+          <article>
+            <span className="eyebrow">Radiology Impression</span>
+            <p>{selected.impression}</p>
+          </article>
+          <article>
+            <span className="eyebrow">AI Findings</span>
+            <ul>
+              {selected.ai.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          </article>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function ProcedureReviewWorkspace() {
+  const [selectedId, setSelectedId] = useState(procedureStudies[0].id);
+  const selected = procedureStudies.find((study) => study.id === selectedId) || procedureStudies[0];
+
+  return (
+    <Panel className="procedure-workspace-panel" title="Procedure and Video Review" icon={Film}>
+      <div className="procedure-layout">
+        <div className="procedure-timeline">
+          {procedureStudies.map((study) => (
+            <button key={study.id} className={study.id === selected.id ? "active" : ""} onClick={() => setSelectedId(study.id)}>
+              <strong>{study.title}</strong>
+              <span>{study.time}</span>
+            </button>
+          ))}
+        </div>
+        <div className={`procedure-viewer ${selected.view}`}>
+          <div className="procedure-screen">
+            <div className="video-noise" />
+            <div className="annotation-marker one">A1</div>
+            <div className="annotation-marker two">A2</div>
+            <span>{selected.title}</span>
+          </div>
+          <div className="playback-controls">
+            <button><Play size={14} /> Play</button>
+            <button><Pause size={14} /> Pause</button>
+            <button><RotateCcw size={14} /> Replay</button>
+            <span>00:18 / {selected.time}</span>
+          </div>
+        </div>
+        <div className="procedure-insights">
+          <span className="eyebrow">AI Observations</span>
+          <p>{selected.impression}</p>
+          <ul>
+            {selected.observations.map((item) => <li key={item}>{item}</li>)}
+          </ul>
+          <ComingSoonCard title="Structured procedure report" detail="Template-based procedure reporting will attach annotations directly to the note." icon={FileText} />
+        </div>
+      </div>
+    </Panel>
   );
 }
 
@@ -1573,7 +1906,7 @@ function SoapEditor({ compact = false, encounter = { isReady: () => false } }) {
 function CodeList({ items }) {
   return (
     <div className="code-list">
-      {items.map((item) => <button key={item}><Plus size={15} /> {item}</button>)}
+      {items.map((item) => <span key={item}><Plus size={15} /> {item}</span>)}
     </div>
   );
 }
@@ -1605,8 +1938,8 @@ function PatientEducation({ encounter }) {
         </div>
       </Panel>
       <Panel title="Printable Summary" icon={Printer}>
-        <button className="primary-button"><Printer size={16} /> Print AVS</button>
-        <button className="ghost-button"><Download size={16} /> Download PDF</button>
+        <ComingSoonButton className="primary-button" label="Print AVS" icon={Printer} />
+        <ComingSoonButton label="Download PDF" icon={Download} />
       </Panel>
     </div>
   );

@@ -83,10 +83,16 @@ export const INITIAL_ENCOUNTER = {
     { name: "Albuterol HFA", dose: "2 puffs PRN", status: "Rare use", adherence: 64, intelligence: "Confirm dyspnea is not wheeze-related." }
   ],
   labs: [
+    { label: "WBC", value: 7.8, unit: "K/uL", range: "4.0-11.0", series: [7.1, 7.4, 7.6, 7.9, 7.8], tone: "ok", intelligence: "CBC does not suggest marked leukocytosis in the mock baseline." },
+    { label: "Hgb", value: 13.1, unit: "g/dL", range: "12.0-15.5", series: [13.8, 13.5, 13.4, 13.2, 13.1], tone: "ok", intelligence: "No anemia signal to explain dyspnea in current mock data." },
+    { label: "Troponin", value: 4, unit: "ng/L", range: "Normal <12", series: [4], tone: "ok", intelligence: "Normal value lowers MI concern when interpreted with symptom timing." },
     { label: "A1c", value: 8.2, unit: "%", range: "Goal <7.5", series: [7.1, 7.4, 7.6, 7.7, 8.2], tone: "high", intelligence: "Rising trend supports adherence and therapy review." },
+    { label: "Glucose", value: 186, unit: "mg/dL", range: "70-140 fasting", series: [142, 158, 166, 174, 186], tone: "high", intelligence: "CMP glucose aligns with A1c drift and adherence questions." },
     { label: "LDL", value: 118, unit: "mg/dL", range: "Goal <100", series: [142, 136, 127, 121, 118], tone: "warn", intelligence: "Improving but above goal in chest symptom context." },
+    { label: "Creatinine", value: 0.94, unit: "mg/dL", range: "0.6-1.1", series: [0.82, 0.86, 0.9, 0.91, 0.94], tone: "ok", intelligence: "CMP renal marker is acceptable for medication planning." },
     { label: "eGFR", value: 72, unit: "mL/min", range: "Normal >60", series: [82, 78, 76, 73, 72], tone: "ok", intelligence: "Renal function adequate for current medication review." },
-    { label: "K+", value: 4.8, unit: "mmol/L", range: "3.5-5.1", series: [4.2, 4.4, 4.7, 4.5, 4.8], tone: "ok", intelligence: "Monitor with ACE inhibitor and renal risk." }
+    { label: "K+", value: 4.8, unit: "mmol/L", range: "3.5-5.1", series: [4.2, 4.4, 4.7, 4.5, 4.8], tone: "ok", intelligence: "Monitor with ACE inhibitor and renal risk." },
+    { label: "Urine ACR", value: 34, unit: "mg/g", range: "Goal <30", series: [22, 24, 28, 31, 34], tone: "warn", intelligence: "Mildly elevated albuminuria supports renal risk counseling and ACE inhibitor adherence." }
   ],
   imaging: [
     { type: "Chest X-ray", date: "Feb 04, 2026", result: "Clear lungs, normal cardiac silhouette." }
@@ -94,6 +100,9 @@ export const INITIAL_ENCOUNTER = {
   physicalExam: ["Focused cardiopulmonary exam pending", "Foot exam due"],
   vitalSigns: [
     { label: "BP", value: "148/92", unit: "mmHg", tone: "warn", trend: "+8 systolic" },
+    { label: "HR", value: "96", unit: "bpm", tone: "warn", trend: "+12 today" },
+    { label: "SpO2", value: "97", unit: "%", tone: "ok", trend: "room air" },
+    { label: "Temp", value: "98.8", unit: "F", tone: "ok", trend: "afebrile" },
     { label: "A1c", value: "8.2", unit: "%", tone: "high", trend: "+0.5 since Jan" },
     { label: "LDL", value: "118", unit: "mg/dL", tone: "warn", trend: "-9 since Apr" },
     { label: "BMI", value: "31.4", unit: "", tone: "neutral", trend: "stable" }
@@ -105,7 +114,7 @@ export const INITIAL_ENCOUNTER = {
     { name: "Musculoskeletal chest wall pain", probability: 14, direction: "watch", why: "No exam finding available yet." },
     { name: "GERD or esophageal source", probability: 20, direction: "watch", why: "Chest discomfort differential remains broad before symptom detail." }
   ],
-  orders: ["Repeat BP", "A1c follow-up", "CMP", "Urine ACR"],
+  orders: ["Repeat BP", "CBC", "CMP", "Troponin if clinically indicated", "A1c follow-up", "Lipid panel", "Urine ACR", "In-office ECG"],
   evidence: ["Recent metabolic labs", "Prior chest X-ray", "Prior cardiometabolic consult"],
   documentation: baselineDocumentation,
   patientEducation: {

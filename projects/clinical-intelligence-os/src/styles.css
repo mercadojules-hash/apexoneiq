@@ -452,7 +452,7 @@ button {
 .primary-button,
 .quick-grid button,
 .suggestion-list button,
-.code-list button {
+.code-list span {
   border: 1px solid var(--line);
   color: var(--text);
   background: var(--panel);
@@ -491,8 +491,7 @@ button {
 .ghost-button:hover,
 .primary-button:hover,
 .quick-grid button:hover,
-.suggestion-list button:hover,
-.code-list button:hover {
+.suggestion-list button:hover {
   transform: translateY(-1px);
   border-color: rgba(110, 231, 216, 0.48);
 }
@@ -973,7 +972,7 @@ button {
 
 .quick-grid button,
 .suggestion-list button,
-.code-list button {
+.code-list span {
   min-height: 42px;
   border-radius: 14px;
   text-align: left;
@@ -1845,7 +1844,7 @@ button {
   line-height: 1.45;
 }
 
-.code-list button {
+.code-list span {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2473,6 +2472,380 @@ button {
   font-size: 0.78rem;
 }
 
+.presentation-button,
+.coming-soon-control {
+  position: relative;
+}
+
+.presentation-button {
+  min-height: 38px;
+  border: 1px solid rgba(110, 231, 216, 0.28);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  background: rgba(110, 231, 216, 0.08);
+  color: var(--text);
+  font-weight: 800;
+}
+
+.presentation-button.active {
+  color: #061016;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.coming-soon-control small {
+  margin-left: 4px;
+  border-radius: 999px;
+  padding: 1px 6px;
+  background: rgba(246, 201, 107, 0.15);
+  color: var(--warn);
+  font-size: 0.64rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.icon-button.coming-soon-control small {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  margin: 0;
+}
+
+.coming-soon-card {
+  border: 1px solid rgba(246, 201, 107, 0.22);
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 10px;
+  align-items: start;
+  background: rgba(246, 201, 107, 0.075);
+}
+
+.coming-soon-card strong,
+.coming-soon-card span {
+  display: block;
+}
+
+.coming-soon-card span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+.presentation-guide {
+  border: 1px solid rgba(110, 231, 216, 0.34);
+  border-radius: 18px;
+  padding: 12px 14px;
+  margin: -4px 0 14px;
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  background: rgba(110, 231, 216, 0.1);
+  box-shadow: var(--shadow);
+  animation: mission-enter 360ms ease;
+}
+
+.presentation-guide strong {
+  display: block;
+}
+
+.presentation-track {
+  display: flex;
+  gap: 5px;
+}
+
+.presentation-track span {
+  height: 7px;
+  flex: 1;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.22);
+}
+
+.presentation-track span.active {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+.presentation-guide small {
+  color: var(--muted);
+}
+
+.imaging-workspace-panel,
+.procedure-workspace-panel {
+  margin-top: 14px;
+}
+
+.pacs-layout {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) 300px;
+  gap: 12px;
+}
+
+.pacs-sidebar,
+.pacs-insights,
+.procedure-timeline,
+.procedure-insights {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px;
+}
+
+.pacs-sidebar {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.pacs-sidebar button,
+.procedure-timeline button {
+  border: 1px solid transparent;
+  border-radius: 13px;
+  padding: 10px;
+  background: rgba(7, 11, 18, 0.45);
+  color: var(--text);
+  text-align: left;
+}
+
+.pacs-sidebar button.active,
+.procedure-timeline button.active {
+  border-color: rgba(110, 231, 216, 0.46);
+  background: rgba(110, 231, 216, 0.12);
+}
+
+.pacs-sidebar span,
+.pacs-sidebar small,
+.procedure-timeline strong,
+.procedure-timeline span {
+  display: block;
+}
+
+.pacs-sidebar small,
+.procedure-timeline span {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.pacs-viewer,
+.procedure-viewer {
+  min-width: 0;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #05070a;
+}
+
+.viewer-toolbar,
+.playback-controls {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(12, 17, 29, 0.92);
+}
+
+.viewer-toolbar div,
+.playback-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.viewer-toolbar button,
+.playback-controls button {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  padding: 6px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--soft);
+  font-size: 0.76rem;
+}
+
+.mock-scan {
+  position: relative;
+  min-height: 390px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+    radial-gradient(circle at 50% 46%, rgba(220, 238, 255, 0.12), transparent 30%),
+    #030507;
+  background-size: 28px 28px, 28px 28px, auto, auto;
+}
+
+.scan-anatomy {
+  width: min(72%, 420px);
+  aspect-ratio: 0.92;
+  border-radius: 46% 46% 34% 34%;
+  background:
+    radial-gradient(circle at 35% 36%, rgba(230, 244, 255, 0.34), transparent 14%),
+    radial-gradient(circle at 64% 36%, rgba(230, 244, 255, 0.34), transparent 14%),
+    radial-gradient(ellipse at 50% 62%, rgba(230, 244, 255, 0.24), transparent 28%),
+    linear-gradient(135deg, rgba(255,255,255,0.18), rgba(120,160,190,0.06));
+  filter: contrast(1.16) brightness(0.92);
+  box-shadow: inset 0 0 44px rgba(255,255,255,0.18), 0 0 80px rgba(110, 231, 216, 0.06);
+}
+
+.mock-scan.knee .scan-anatomy { width: 42%; border-radius: 42%; transform: rotate(-8deg); }
+.mock-scan.lumbar .scan-anatomy { width: 34%; border-radius: 40% 40% 22% 22%; transform: scaleY(1.2); }
+.mock-scan.brain .scan-anatomy { border-radius: 50% 50% 44% 44%; }
+.mock-scan.ct .scan-anatomy { border-radius: 50%; }
+.mock-scan.ultrasound .scan-anatomy { width: 64%; border-radius: 12px 12px 60% 60%; filter: blur(0.3px) contrast(1.35); }
+
+.scan-crosshair {
+  position: absolute;
+  width: 62%;
+  height: 62%;
+  border: 1px dashed rgba(110, 231, 216, 0.35);
+  border-radius: 50%;
+}
+
+.scan-ruler {
+  position: absolute;
+  background: repeating-linear-gradient(90deg, rgba(110,231,216,0.38) 0 1px, transparent 1px 18px);
+}
+
+.scan-ruler.top { left: 20px; right: 20px; top: 16px; height: 8px; }
+.scan-ruler.left { left: 16px; top: 20px; bottom: 20px; width: 8px; transform: rotate(90deg); transform-origin: top left; }
+
+.scan-label {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  color: rgba(244, 247, 251, 0.72);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+}
+
+.thumbnail-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.thumbnail-strip span {
+  height: 54px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  background: radial-gradient(circle, rgba(220, 238, 255, 0.2), transparent 50%), #05070a;
+}
+
+.thumbnail-strip span.active {
+  border-color: var(--accent);
+}
+
+.study-info {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 6px 10px;
+  margin-bottom: 12px;
+}
+
+.study-info span,
+.pacs-insights .eyebrow,
+.procedure-insights .eyebrow {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.study-info strong,
+.pacs-insights p,
+.procedure-insights p {
+  color: var(--soft);
+}
+
+.pacs-insights article + article {
+  margin-top: 12px;
+}
+
+.pacs-insights ul,
+.procedure-insights ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--soft);
+}
+
+.procedure-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 300px;
+  gap: 12px;
+}
+
+.procedure-timeline {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.procedure-screen {
+  min-height: 320px;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 48% 42%, rgba(255, 210, 160, 0.22), transparent 18%),
+    radial-gradient(circle at 58% 56%, rgba(110, 231, 216, 0.16), transparent 15%),
+    linear-gradient(135deg, #090b0f, #151923);
+}
+
+.procedure-screen span {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  color: var(--soft);
+  font-weight: 800;
+}
+
+.video-noise {
+  width: 68%;
+  aspect-ratio: 16 / 10;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 40% 45%, rgba(255,255,255,0.22), transparent 10%),
+    radial-gradient(circle at 62% 52%, rgba(255,255,255,0.12), transparent 16%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 7px);
+  box-shadow: inset 0 0 60px rgba(0,0,0,0.44);
+}
+
+.procedure-viewer.echo .procedure-screen,
+.procedure-viewer.ultrasound .procedure-screen { background: radial-gradient(circle at 50% 48%, rgba(180, 220, 255, 0.18), transparent 26%), #030507; }
+.procedure-viewer.wound .procedure-screen { background: radial-gradient(circle at 48% 48%, rgba(255, 120, 110, 0.28), transparent 24%), #151010; }
+.procedure-viewer.derm .procedure-screen { background: radial-gradient(circle at 50% 50%, rgba(210, 150, 116, 0.36), transparent 22%), #120d0b; }
+
+.annotation-marker {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  background: rgba(7, 11, 18, 0.72);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.annotation-marker.one { top: 28%; left: 38%; }
+.annotation-marker.two { top: 52%; right: 31%; }
+
 .enter {
   animation: enter 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -2521,6 +2894,9 @@ button {
   .encounter-pulse { grid-template-columns: 1fr; }
   .demo-rail { grid-template-columns: 1fr; }
   .voice-summary-layout { grid-template-columns: 1fr; }
+  .presentation-guide,
+  .pacs-layout,
+  .procedure-layout { grid-template-columns: 1fr; }
   .command-grid,
   .visit-grid,
   .encounter-workspace-grid,
@@ -2564,6 +2940,8 @@ button {
   .topbar { align-items: flex-start; }
   .top-actions .icon-button:not(:last-child) { display: none; }
   .theme-toggle span { display: none; }
+  .presentation-button span { display: none; }
+  .presentation-guide { grid-template-columns: 1fr; }
   .brief-top,
   .brief-actions { flex-direction: column; }
   .brief-patient { width: 100%; min-width: 0; }
