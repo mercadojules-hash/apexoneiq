@@ -76,7 +76,6 @@ button {
 
 .app.encounter-mode .workspace {
   background: radial-gradient(circle at 50% 0%, rgba(110, 231, 216, 0.05), transparent 36%);
-  padding-right: max(332px, clamp(16px, 2.6vw, 34px));
 }
 
 .sidebar {
@@ -1901,12 +1900,20 @@ button {
   z-index: 14;
   width: 292px;
   border: 1px solid rgba(110, 231, 216, 0.24);
-  border-radius: 22px;
-  padding: 14px;
+  border-radius: 20px;
+  padding: 10px;
   color: var(--text);
   background: rgba(10, 15, 26, 0.86);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(28px);
+  transition: width 240ms ease, transform 240ms ease, box-shadow 240ms ease;
+  overflow: hidden;
+}
+
+.intelligence-dock.collapsed {
+  width: 58px;
+  padding: 9px;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.18);
 }
 
 .light .intelligence-dock {
@@ -1916,10 +1923,22 @@ button {
 
 .dock-head {
   display: grid;
-  grid-template-columns: 12px 1fr;
+  grid-template-columns: 12px minmax(0, 1fr) 34px;
   gap: 10px;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 9px;
+}
+
+.intelligence-dock.collapsed .dock-head {
+  grid-template-columns: 1fr;
+  place-items: center;
+  margin-bottom: 0;
+}
+
+.intelligence-dock.collapsed .dock-head .pulse-dot,
+.intelligence-dock.collapsed .dock-head div,
+.intelligence-dock.collapsed .dock-progress {
+  display: none;
 }
 
 .dock-head strong,
@@ -1929,6 +1948,35 @@ button {
 
 .dock-head small {
   color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dock-toggle {
+  width: 32px;
+  height: 32px;
+  color: var(--accent);
+}
+
+.dock-body {
+  display: grid;
+  max-height: 440px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: max-height 260ms ease, opacity 200ms ease, transform 220ms ease;
+}
+
+.intelligence-dock.collapsed .dock-body {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+}
+
+.dock-body > * {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .dock-grid {
@@ -1989,6 +2037,14 @@ button {
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.18);
   overflow: hidden;
+}
+
+.dock-progress.compact {
+  margin-bottom: 0;
+}
+
+.intelligence-dock.expanded .dock-progress.compact {
+  margin-bottom: 10px;
 }
 
 .dock-progress i {
@@ -2407,17 +2463,14 @@ button {
 
 .voice-summary-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 270px;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
   min-height: 0;
 }
 
 .voice-script {
-  max-height: 230px;
-  overflow: auto;
   display: grid;
   gap: 8px;
-  padding-right: 4px;
   scroll-behavior: smooth;
 }
 
@@ -2453,23 +2506,26 @@ button {
   line-height: 1.48;
 }
 
-.voice-clinical-safety {
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.045);
-  padding: 13px;
-  display: grid;
-  align-content: start;
+.voice-inline-status {
+  display: inline-flex;
+  align-items: center;
   gap: 7px;
+  color: var(--muted);
+  font-size: 0.76rem;
 }
 
-.voice-clinical-safety strong {
-  color: var(--text);
+.voice-inline-status span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ok);
+  box-shadow: 0 0 0 4px rgba(142, 230, 168, 0.09);
 }
 
-.voice-clinical-safety em {
-  font-style: normal;
-  font-size: 0.78rem;
+.voice-inline-status.fallback span,
+.voice-inline-status.error span {
+  background: var(--warn);
+  box-shadow: 0 0 0 4px rgba(246, 201, 107, 0.1);
 }
 
 .presentation-button,
@@ -2879,7 +2935,6 @@ button {
 
 @media (max-width: 1180px) {
   .app { grid-template-columns: 92px 1fr; }
-  .app.encounter-mode .workspace { padding-right: clamp(16px, 2.6vw, 34px); }
   .sidebar { padding: 18px 12px; }
   .brand div:not(.brand-mark),
   .nav-item span,
@@ -2912,9 +2967,13 @@ button {
   .telehealth-controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .virtual-bottom { grid-template-columns: 1fr; }
   .intelligence-dock {
-    width: 260px;
+    width: 278px;
     right: 12px;
     bottom: 12px;
+  }
+
+  .intelligence-dock.collapsed {
+    width: 56px;
   }
 }
 
@@ -2958,7 +3017,6 @@ button {
   .voice-controls .ghost-button,
   .voice-controls label { width: 100%; justify-content: center; }
   .voice-controls select { max-width: none; flex: 1; }
-  .voice-script { max-height: 280px; }
   .rail-jumps button { flex: 1 1 140px; }
   .rail-begin { width: 100%; }
   .evidence-drawer { padding: 16px; }
@@ -3001,12 +3059,23 @@ button {
   .patient-video { min-height: 300px; }
   .self-view { width: 112px; height: 82px; }
   .intelligence-dock {
-    position: sticky;
-    left: 8px;
-    right: 8px;
-    bottom: 8px;
-    width: auto;
-    margin: 12px 8px;
+    right: 10px;
+    left: auto;
+    bottom: 10px;
+    width: min(320px, calc(100vw - 20px));
+    transform: translateX(calc(100% - 56px));
+  }
+  .intelligence-dock.expanded {
+    transform: translateX(0);
+  }
+  .intelligence-dock.collapsed {
+    width: min(320px, calc(100vw - 20px));
+  }
+  .intelligence-dock.collapsed .dock-head {
+    justify-items: start;
+  }
+  .intelligence-dock.collapsed .dock-toggle {
+    margin-left: 2px;
   }
   .dock-grid { grid-template-columns: 1fr; }
 }

@@ -61,7 +61,8 @@ import {
   buildClinicalVoiceSummary,
   clinicalVoiceOptions,
   estimateSectionTimings,
-  playbackSpeeds
+  playbackSpeeds,
+  stripSpeechMarkup
 } from "./voiceAssistant";
 
 const patient = {
@@ -551,7 +552,6 @@ function ClinicalVoiceAssistant({ encounter }) {
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [activeSectionId, setActiveSectionId] = useState("");
-  const [cachedKey, setCachedKey] = useState("");
   const [source, setSource] = useState("ElevenLabs");
   const [elevenLabsConfigured, setElevenLabsConfigured] = useState(null);
   const audioRef = useRef(null);
@@ -564,7 +564,6 @@ function ClinicalVoiceAssistant({ encounter }) {
   const utteranceRef = useRef(null);
 
   const summary = useMemo(() => buildClinicalVoiceSummary(encounter), [encounter]);
-  const selectedVoice = clinicalVoiceOptions.find((voice) => voice.id === voiceId) || clinicalVoiceOptions[0];
   const summaryKey = `${summary.id}:${voiceId}:${playbackSpeed}`;
   const isCached = cacheRef.current.has(summaryKey);
   const isPlaying = status === "playing";
@@ -606,7 +605,7 @@ function ClinicalVoiceAssistant({ encounter }) {
 
   useEffect(() => {
     if (!activeSectionId) return;
-    sectionRefs.current[activeSectionId]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    sectionRefs.current[activeSectionId]?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [activeSectionId]);
 
   const clearFallbackTimer = () => {
@@ -638,7 +637,6 @@ function ClinicalVoiceAssistant({ encounter }) {
 
   const getAudio = async (forceRegenerate = false) => {
     if (!forceRegenerate && cacheRef.current.has(summaryKey)) {
-      setCachedKey(summaryKey);
       return cacheRef.current.get(summaryKey);
     }
 
@@ -665,7 +663,6 @@ function ClinicalVoiceAssistant({ encounter }) {
     const url = URL.createObjectURL(blob);
     const audio = { url, blob, summaryId: summary.id, createdAt: Date.now() };
     cacheRef.current.set(summaryKey, audio);
-    setCachedKey(summaryKey);
     return audio;
   };
 
@@ -696,14 +693,14 @@ function ClinicalVoiceAssistant({ encounter }) {
   const playBrowserFallback = () => {
     if (!("speechSynthesis" in window)) {
       setStatus("error");
-      setError("Set ELEVENLABS_API_KEY to enable clinical voice playback.");
+      setError("Voice unavailable.");
       return;
     }
 
     window.speechSynthesis.cancel();
     clearFallbackTimer();
 
-    const utterance = new SpeechSynthesisUtterance(summary.fullText);
+    const utterance = new SpeechSynthesisUtterance(stripSpeechMarkup(summary.fullText));
     const preferredVoice = window.speechSynthesis
       .getVoices()
       .find((voice) => /female|samantha|victoria|karen|zira|ava|allison/i.test(`${voice.name} ${voice.voiceURI}`));
@@ -719,7 +716,7 @@ function ClinicalVoiceAssistant({ encounter }) {
     utterance.onerror = () => {
       clearFallbackTimer();
       setStatus("error");
-      setError("Voice playback failed. Set ELEVENLABS_API_KEY for ElevenLabs audio.");
+      setError("Voice unavailable.");
     };
 
     const durationEstimate = estimateDuration(summary.wordCount, playbackSpeed);
@@ -786,8 +783,8 @@ function ClinicalVoiceAssistant({ encounter }) {
           <p>{status === "generating" ? "Preparing spoken clinical summary..." : `Ready to speak ${summary.sections.length} clinical sections from the shared encounter.`}</p>
         </div>
         <div className={`voice-status ${status}`}>
-          <span>{isCached ? "Cached" : source}</span>
-          <strong>{status === "idle" ? elevenLabsConfigured === false ? "Fallback ready" : "Ready" : status}</strong>
+          <span>{elevenLabsConfigured === false ? "Local fallback" : isCached ? "Cached" : source}</span>
+          <strong>{status === "idle" ? "Ready" : status}</strong>
         </div>
       </div>
 
@@ -843,13 +840,9 @@ function ClinicalVoiceAssistant({ encounter }) {
             </article>
           ))}
         </div>
-        <div className="voice-clinical-safety">
-          <strong>{selectedVoice.label}</strong>
-          <span>{selectedVoice.tone}</span>
-          <p>This demonstration voice summarizes the current encounter state and preserves clinician judgment. It does not make a final diagnosis.</p>
-          <small>Summary ID {summary.id} - generated {summary.generatedAt}{cachedKey === summaryKey ? " - audio cached" : ""}</small>
-          {elevenLabsConfigured === false && <small>Set ELEVENLABS_API_KEY to use ElevenLabs audio in this local preview.</small>}
-          {error && <em>{error}</em>}
+        <div className={`voice-inline-status ${elevenLabsConfigured === false ? "fallback" : status}`}>
+          <span />
+          <small>{elevenLabsConfigured === false ? "Fallback voice available" : error ? "Voice unavailable" : "ElevenLabs ready"}</small>
         </div>
       </div>
     </section>
@@ -958,50 +951,56 @@ function DemoControlRail({ encounter, onBegin, onPause, onPlay, onReplay, onJump
 }
 
 function PersistentIntelligenceDock({ encounter, onOpenEvidence, onClinicalAction }) {
+  const [expanded, setExpanded] = useState(false);
   const progress = encounter.readinessScore;
   const confidence = encounter.clinicalConfidence.diagnostic;
   const openQuestions = encounter.missingQuestions.length;
   const topRecommendation = encounter.conductor.recommendations[0];
 
   return (
-    <aside className="intelligence-dock" aria-label="Persistent Clinical Intelligence">
+    <aside className={`intelligence-dock ${expanded ? "expanded" : "collapsed"}`} aria-label="Persistent Clinical Intelligence">
       <div className="dock-head">
         <span className="pulse-dot" />
         <div>
           <strong>Clinical Intelligence</strong>
           <small>{encounter.active ? encounter.currentStep.activity : "Ready for encounter."}</small>
         </div>
+        <button className="icon-button dock-toggle" onClick={() => setExpanded((value) => !value)} aria-label={expanded ? "Collapse Clinical Intelligence" : "Expand Clinical Intelligence"}>
+          {expanded ? <X size={16} /> : <Brain size={16} />}
+        </button>
       </div>
-      <div className="dock-grid">
-        <div>
-          <span>Current focus</span>
-          <strong>{encounter.conductor.priority}</strong>
-        </div>
-        <div>
-          <span>Diagnostic confidence</span>
-          <strong>{confidence}%</strong>
-        </div>
-        <div>
-          <span>Outstanding questions</span>
-          <strong>{openQuestions}</strong>
-        </div>
-        <div>
-          <span>Documentation</span>
-          <strong>{encounter.clinicalConfidence.documentationCompleteness}%</strong>
-        </div>
-      </div>
-      <div className="dock-alerts">
-        {[topRecommendation.action, encounter.conductor.informationNeeded[0]?.question, "ECG evidence available"].filter(Boolean).map((item) => (
-          <button key={item} onClick={item.includes("ECG") ? onOpenEvidence : () => onClinicalAction(`Clinician addressed: ${item}`)}>{item}</button>
-        ))}
-      </div>
-      <div className="dock-progress">
-        <span>Encounter readiness</span>
+      <div className="dock-progress compact">
+        <span>Readiness {progress}%</span>
         <div><i style={{ width: `${progress}%` }} /></div>
       </div>
-      <button className="dock-evidence" onClick={onOpenEvidence}>
-        Evidence reviewed <strong>{encounter.evidence.reviewed}/{encounter.evidence.available}</strong>
-      </button>
+      <div className="dock-body">
+        <div className="dock-grid">
+          <div>
+            <span>Current focus</span>
+            <strong>{encounter.conductor.priority}</strong>
+          </div>
+          <div>
+            <span>Diagnostic confidence</span>
+            <strong>{confidence}%</strong>
+          </div>
+          <div>
+            <span>Outstanding questions</span>
+            <strong>{openQuestions}</strong>
+          </div>
+          <div>
+            <span>Documentation</span>
+            <strong>{encounter.clinicalConfidence.documentationCompleteness}%</strong>
+          </div>
+        </div>
+        <div className="dock-alerts">
+          {[topRecommendation.action, encounter.conductor.informationNeeded[0]?.question, "ECG evidence available"].filter(Boolean).map((item) => (
+            <button key={item} onClick={item.includes("ECG") ? onOpenEvidence : () => onClinicalAction(`Clinician addressed: ${item}`)}>{item}</button>
+          ))}
+        </div>
+        <button className="dock-evidence" onClick={onOpenEvidence}>
+          Evidence reviewed <strong>{encounter.evidence.reviewed}/{encounter.evidence.available}</strong>
+        </button>
+      </div>
     </aside>
   );
 }

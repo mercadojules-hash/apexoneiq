@@ -1,0 +1,33 @@
+{
+  "consoleErrors": [],
+  "checks": {
+    "desktop": {
+      "before": {
+        "dockWidth": 58,
+        "toggleVisible": true,
+        "horizontalOverflow": 0,
+        "voiceNestedOverflow": 0,
+        "keyLabText": "Key Laboratory FindingsLaboratory review demonstrates White blood cell count is 7 point 8 thousand per microliter, which is within the expected range. Hemoglobin is 13 point 1 grams per deciliter. High-sensitivity troponin is 4, which remains within the normal range and lowers concern for myocardial injury in the current snapshot. Hemoglobin A one C is elevated at 8 point 2 percent, supporting suboptimal diabetic control. Fasting glucose is 186 milligrams per deciliter, which remains above goal. L D L cholesterol remains above goal at 118 milligrams per deciliter. Creatinine is 0 point 94 milligrams per deciliter. Estimated G F R is 72, suggesting preserved renal function."
+      },
+      "after": {
+        "dockWidth": 292,
+        "dockInViewport": true,
+        "horizontalOverflow": 0
+      }
+    },
+    "mobile": {
+      "before": {
+        "dockWidth": 320,
+        "toggleVisible": true,
+        "horizontalOverflow": 0,
+        "voiceNestedOverflow": 0,
+        "keyLabText": "Key Laboratory FindingsLaboratory review demonstrates White blood cell count is 7 point 8 thousand per microliter, which is within the expected range. Hemoglobin is 13 point 1 grams per deciliter. High-sensitivity troponin is 4, which remains within the normal range and lowers concern for myocardial injury in the current snapshot. Hemoglobin A one C is elevated at 8 point 2 percent, supporting suboptimal diabetic control. Fasting glucose is 186 milligrams per deciliter, which remains above goal. L D L cholesterol remains above goal at 118 milligrams per deciliter. Creatinine is 0 point 94 milligrams per deciliter. Estimated G F R is 72, suggesting preserved renal function."
+      },
+      "after": {
+        "dockWidth": 320,
+        "dockInViewport": true,
+        "horizontalOverflow": 0
+      }
+    }
+  }
+}
