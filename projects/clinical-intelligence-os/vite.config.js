@@ -1,5 +1,5 @@
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 
 const ELEVENLABS_STREAM_URL = "https://api.elevenlabs.io/v1/text-to-speech";
 
@@ -33,10 +33,10 @@ function sendJson(res, statusCode, payload) {
   res.end(JSON.stringify(payload));
 }
 
-function elevenLabsVoiceProxy() {
+function elevenLabsVoiceProxy(configuredApiKey) {
   const handleVoiceRequest = async (req, res) => {
     if (req.method === "GET") {
-      sendJson(res, 200, { configured: Boolean(process.env.ELEVENLABS_API_KEY) });
+      sendJson(res, 200, { configured: Boolean(configuredApiKey || process.env.ELEVENLABS_API_KEY) });
       return;
     }
 
@@ -45,7 +45,7 @@ function elevenLabsVoiceProxy() {
       return;
     }
 
-    const apiKey = process.env.ELEVENLABS_API_KEY;
+    const apiKey = configuredApiKey || process.env.ELEVENLABS_API_KEY;
 
     if (!apiKey) {
       sendJson(res, 503, { error: "Missing ELEVENLABS_API_KEY." });
@@ -119,6 +119,10 @@ function elevenLabsVoiceProxy() {
   };
 }
 
-export default defineConfig({
-  plugins: [react(), elevenLabsVoiceProxy()]
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+
+  return {
+    plugins: [react(), elevenLabsVoiceProxy(env.ELEVENLABS_API_KEY)]
+  };
 });
