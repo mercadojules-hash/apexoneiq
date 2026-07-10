@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "ok": true,
+  "url": "https://apexdigital.design/wp-json/apls/v1/gbp/metrics?days=30",
+  "body": {
+    "data": []
+  }
+}

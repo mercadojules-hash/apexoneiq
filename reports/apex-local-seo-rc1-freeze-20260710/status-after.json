@@ -1,0 +1,20 @@
+{
+  "status": 200,
+  "ok": true,
+  "url": "https://apexdigital.design/wp-json/apls/v1/gbp/status",
+  "body": {
+    "data": {
+      "configured": true,
+      "connected": true,
+      "email": "mercadojules@gmail.com",
+      "scopes": "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid https://www.googleapis.com/auth/business.manage",
+      "expiresAt": "2026-07-10 18:46:04",
+      "redirectUri": "https://apexdigital.design/wp-admin/admin-post.php?action=apls_google_callback",
+      "summary": {
+        "connected": false
+      },
+      "status": "connected",
+      "message": "Google Business Profile is connected."
+    }
+  }
+}

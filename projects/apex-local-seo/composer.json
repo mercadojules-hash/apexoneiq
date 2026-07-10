@@ -1,0 +1,9 @@
+{
+  "name": "apex-digital-design/apex-local-seo",
+  "description": "Apex Local SEO WordPress plugin foundation.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": ">=8.2"
+  }
+}
