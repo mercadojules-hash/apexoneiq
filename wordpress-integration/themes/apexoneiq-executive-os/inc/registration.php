@@ -174,9 +174,8 @@ function apexoneiq_render_register_page() {
 							<button class="button" type="submit"><?php esc_html_e( 'Create Free Account', 'apexoneiq' ); ?></button>
 							<p class="form-status" data-register-status><?php esc_html_e( 'After registration, your account opens the Free Dashboard with safe snapshot data and upgrade options.', 'apexoneiq' ); ?></p>
 						</form>
-						<div class="oauth-options" aria-label="<?php esc_attr_e( 'OAuth sign-in foundations', 'apexoneiq' ); ?>">
+						<div class="oauth-options" aria-label="<?php esc_attr_e( 'Google sign-in', 'apexoneiq' ); ?>">
 							<a class="ghost-button" href="<?php echo esc_url( home_url( '/oauth/google/' ) ); ?>"><?php esc_html_e( 'Continue with Google', 'apexoneiq' ); ?><small><?php esc_html_e( 'Free account access', 'apexoneiq' ); ?></small></a>
-							<button class="ghost-button" type="button" data-oauth-provider="apple"><?php esc_html_e( 'Continue with Apple', 'apexoneiq' ); ?><small><?php esc_html_e( 'Setup required', 'apexoneiq' ); ?></small></button>
 						</div>
 						<p class="auth-switch"><?php esc_html_e( 'Already have an account?', 'apexoneiq' ); ?> <a href="<?php echo esc_url( home_url( '/sign-in.html' ) ); ?>"><?php esc_html_e( 'Sign In', 'apexoneiq' ); ?></a></p>
 					</div>
@@ -197,7 +196,7 @@ function apexoneiq_render_register_page() {
  */
 function apexoneiq_start_oauth_flow( $provider ) {
 	if ( 'google' !== $provider ) {
-		apexoneiq_render_oauth_placeholder( $provider );
+		apexoneiq_render_oauth_error( __( 'This sign-in provider is not supported by ApexOneIQ.', 'apexoneiq' ) );
 		return;
 	}
 
@@ -246,7 +245,7 @@ function apexoneiq_start_oauth_flow( $provider ) {
  */
 function apexoneiq_handle_oauth_callback( $provider ) {
 	if ( 'google' !== $provider ) {
-		apexoneiq_render_oauth_placeholder( $provider );
+		apexoneiq_render_oauth_error( __( 'This sign-in provider is not supported by ApexOneIQ.', 'apexoneiq' ) );
 		return;
 	}
 
@@ -516,20 +515,6 @@ function apexoneiq_allowed_oauth_redirect( $redirect_to ) {
 	);
 
 	return in_array( $path, $allowed, true ) ? home_url( $path ) : home_url( '/free-dashboard.html' );
-}
-
-/**
- * Render inactive OAuth callback placeholders so redirect URIs can be configured safely.
- *
- * @param string $provider Provider slug.
- */
-function apexoneiq_render_oauth_placeholder( $provider ) {
-	status_header( 501 );
-	wp_die(
-		esc_html( sprintf( __( '%s OAuth is not active yet. Configure credentials, state validation, nonce handling, and account-linking safeguards before enabling this callback.', 'apexoneiq' ), ucfirst( $provider ) ) ),
-		esc_html__( 'OAuth Setup Required', 'apexoneiq' ),
-		array( 'response' => 501 )
-	);
 }
 
 /**

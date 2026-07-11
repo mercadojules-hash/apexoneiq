@@ -646,13 +646,6 @@ function applyFreeProfileSnapshot() {
 	}
 }
 
-document.querySelectorAll('[data-oauth-provider]').forEach(button => {
-	button.addEventListener('click', () => {
-		const provider = button.dataset.oauthProvider === 'apple' ? 'Apple' : 'Google';
-		openDrawer(`${provider} OAuth Foundation`, `${provider} sign-in is intentionally not active until the owner creates production OAuth credentials, adds the approved redirect URI, and stores secrets in WordPress settings or environment variables.`, 'Secure Authentication');
-	});
-});
-
 document.querySelectorAll('.account').forEach(account => {
 	if (apexDemoMode) return;
 	if (!account.querySelector('[data-ask]')) {
@@ -720,7 +713,7 @@ document.addEventListener('click', event => {
 		return;
 	}
 
-	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]):not([data-oauth-provider]), a[href="#"]');
+	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]), a[href="#"]');
 	if (genericControl && !genericControl.disabled && !genericControl.closest('[data-drawer-text]')) {
 		const text = genericControl.textContent.trim() || genericControl.getAttribute('aria-label') || routeAskDefaults[route] || 'What should I do next?';
 		openAsk(text);
