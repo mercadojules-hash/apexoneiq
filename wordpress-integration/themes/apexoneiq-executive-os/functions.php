@@ -14,6 +14,7 @@ define( 'APEXONEIQ_THEME_DIR', trailingslashit( get_template_directory() ) );
 define( 'APEXONEIQ_THEME_URI', trailingslashit( get_template_directory_uri() ) );
 
 require_once APEXONEIQ_THEME_DIR . 'inc/static-renderer.php';
+require_once APEXONEIQ_THEME_DIR . 'inc/registration.php';
 require_once APEXONEIQ_THEME_DIR . 'inc/billing-routes.php';
 require_once APEXONEIQ_THEME_DIR . 'inc/admin-settings.php';
 require_once APEXONEIQ_THEME_DIR . 'inc/subscription-schema.php';
@@ -74,7 +75,8 @@ function apexoneiq_enqueue_assets() {
  * Register static concept routes and checkout API routes.
  */
 function apexoneiq_register_rewrite_routes() {
-	add_rewrite_rule( '^$', 'index.php?apexoneiq_static_page=dashboard.html', 'top' );
+	add_rewrite_rule( '^register/?$', 'index.php?apexoneiq_register_page=1', 'top' );
+	add_rewrite_rule( '^oauth/(google|apple)/callback/?$', 'index.php?apexoneiq_oauth_provider=$matches[1]', 'top' );
 	add_rewrite_rule( '^sign-in/?$', 'index.php?apexoneiq_static_page=sign-in.html', 'top' );
 	add_rewrite_rule( '^account(?:\.html)?/?$', 'index.php?apexoneiq_account_page=1', 'top' );
 	add_rewrite_rule( '^checkout/(cloud|command|essentials|growth)/?$', 'index.php?apexoneiq_static_page=checkout/$matches[1]/index.html', 'top' );
@@ -95,6 +97,8 @@ function apexoneiq_register_query_vars( $vars ) {
 	$vars[] = 'apexoneiq_checkout_plan';
 	$vars[] = 'apexoneiq_stripe_webhook';
 	$vars[] = 'apexoneiq_account_page';
+	$vars[] = 'apexoneiq_register_page';
+	$vars[] = 'apexoneiq_oauth_provider';
 
 	return $vars;
 }
@@ -113,6 +117,17 @@ function apexoneiq_template_include( $template ) {
 
 	if ( get_query_var( 'apexoneiq_account_page' ) ) {
 		apexoneiq_render_account_page();
+		exit;
+	}
+
+	if ( get_query_var( 'apexoneiq_register_page' ) ) {
+		apexoneiq_render_register_page();
+		exit;
+	}
+
+	$oauth_provider = get_query_var( 'apexoneiq_oauth_provider' );
+	if ( $oauth_provider ) {
+		apexoneiq_render_oauth_placeholder( $oauth_provider );
 		exit;
 	}
 
@@ -146,7 +161,7 @@ function apexoneiq_template_include( $template ) {
 function apexoneiq_disable_static_canonical_redirects( $redirect_url, $requested_url ) {
 	$path = wp_parse_url( $requested_url, PHP_URL_PATH );
 
-	if ( $path && ( preg_match( '#/(checkout/)?[a-z0-9-]+\.html$#', $path ) || preg_match( '#^/account(?:\.html)?/?$#', $path ) || preg_match( '#^/api/billing/checkout/#', $path ) || preg_match( '#^/api/stripe/webhook#', $path ) ) ) {
+	if ( $path && ( preg_match( '#/(checkout/)?[a-z0-9-]+\.html$#', $path ) || preg_match( '#^/account(?:\.html)?/?$#', $path ) || preg_match( '#^/register/?$#', $path ) || preg_match( '#^/oauth/(google|apple)/callback/?$#', $path ) || preg_match( '#^/api/billing/checkout/#', $path ) || preg_match( '#^/api/stripe/webhook#', $path ) ) ) {
 		return false;
 	}
 
@@ -160,7 +175,7 @@ function apexoneiq_theme_activation_notice() {
 	apexoneiq_register_rewrite_routes();
 	apexoneiq_install_subscription_schema();
 	flush_rewrite_rules();
-	update_option( 'apexoneiq_rewrite_version', '1.2.0', false );
+	update_option( 'apexoneiq_rewrite_version', '1.6.0', false );
 	update_option( 'apexoneiq_theme_installed_at', gmdate( 'c' ) );
 }
 
@@ -168,9 +183,9 @@ function apexoneiq_theme_activation_notice() {
  * Flush rewrites once when theme route definitions change.
  */
 function apexoneiq_maybe_flush_rewrite_routes() {
-	if ( '1.2.0' !== get_option( 'apexoneiq_rewrite_version' ) ) {
+	if ( '1.6.0' !== get_option( 'apexoneiq_rewrite_version' ) ) {
 		flush_rewrite_rules( false );
-		update_option( 'apexoneiq_rewrite_version', '1.2.0', false );
+		update_option( 'apexoneiq_rewrite_version', '1.6.0', false );
 	}
 }
 
@@ -277,8 +292,8 @@ function apexoneiq_render_account_page() {
 						</div>
 						<div class="grid-3">
 							<a class="ghost-button" href="<?php echo esc_url( home_url( '/subscription.html' ) ); ?>"><?php esc_html_e( 'Upgrade or Downgrade', 'apexoneiq' ); ?></a>
-							<a class="ghost-button" href="<?php echo esc_url( home_url( '/subscription.html?billing=portal-placeholder' ) ); ?>"><?php esc_html_e( 'Manage Billing', 'apexoneiq' ); ?></a>
-							<a class="ghost-button" href="<?php echo esc_url( home_url( '/subscription.html?billing=cancel-placeholder' ) ); ?>"><?php esc_html_e( 'Cancel Architecture', 'apexoneiq' ); ?></a>
+							<a class="ghost-button" href="<?php echo esc_url( 'mailto:billing@apexoneiq.com?subject=ApexOneIQ%20Billing%20Help' ); ?>"><?php esc_html_e( 'Billing Help', 'apexoneiq' ); ?></a>
+							<a class="ghost-button" href="<?php echo esc_url( 'mailto:billing@apexoneiq.com?subject=ApexOneIQ%20Subscription%20Change' ); ?>"><?php esc_html_e( 'Subscription Support', 'apexoneiq' ); ?></a>
 						</div>
 						<p class="muted" style="margin-top:18px;"><?php esc_html_e( 'The next production phase can connect these actions to Stripe Customer Portal and subscription-change routes without altering the Executive Dashboard UI.', 'apexoneiq' ); ?></p>
 					</div>

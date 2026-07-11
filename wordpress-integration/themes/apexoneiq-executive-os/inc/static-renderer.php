@@ -16,8 +16,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function apexoneiq_render_static_page( $page ) {
 	$page = apexoneiq_normalize_static_page( $page );
+	$is_demo_request = apexoneiq_is_demo_request( $page );
 
-	if ( ! apexoneiq_is_public_static_page( $page ) ) {
+	if ( ! $is_demo_request && ! apexoneiq_is_public_static_page( $page ) ) {
 		$required_capability = apexoneiq_required_capability_for_page( $page );
 		if ( $required_capability && ! is_user_logged_in() ) {
 			wp_safe_redirect( wp_login_url( home_url( '/' . $page ) ) );
@@ -102,7 +103,7 @@ function apexoneiq_normalize_static_page( $page ) {
 	$page = ltrim( sanitize_text_field( wp_unslash( $page ) ), '/' );
 	$page = preg_replace( '#/{2,}#', '/', $page );
 
-	if ( '' === $page || 'index.html' === $page ) {
+	if ( '' === $page ) {
 		return 'dashboard.html';
 	}
 
@@ -118,13 +119,17 @@ function apexoneiq_normalize_static_page( $page ) {
 function apexoneiq_transform_static_html( $html ) {
 	$asset_uri = APEXONEIQ_THEME_URI;
 	$site_url  = trailingslashit( home_url() );
-	$auth_url  = wp_login_url( home_url( '/dashboard.html' ) );
+	$auth_url  = wp_login_url( home_url( '/free-dashboard.html' ) );
+	$register_url = home_url( '/register/' );
+	$is_demo = apexoneiq_is_demo_request( get_query_var( 'apexoneiq_static_page' ) );
+	$user_id = get_current_user_id();
 
 	$replacements = array(
 		'href="css/app.css"' => 'href="' . esc_url( $asset_uri . 'assets/css/app.css?ver=' . APEXONEIQ_THEME_VERSION ) . '"',
 		'src="js/app.js"'    => 'src="' . esc_url( $asset_uri . 'assets/js/app.js?ver=' . APEXONEIQ_THEME_VERSION ) . '"',
 		'href="sign-in.html"' => 'href="' . esc_url( $auth_url ) . '"',
 		'href="/sign-in/"'   => 'href="' . esc_url( $auth_url ) . '"',
+		'href="/register/"'  => 'href="' . esc_url( $register_url ) . '"',
 	);
 
 	$html = strtr( $html, $replacements );
@@ -149,8 +154,13 @@ function apexoneiq_transform_static_html( $html ) {
 			array(
 				'baseUrl'      => $site_url,
 				'authUrl'      => $auth_url,
+				'registerUrl'  => $register_url,
+				'demoMode'     => $is_demo,
 				'isLoggedIn'   => is_user_logged_in(),
 				'subscription' => apexoneiq_get_current_user_subscription_state(),
+				'businessName' => $user_id ? get_user_meta( $user_id, 'apexoneiq_business_name', true ) : '',
+				'businessWebsite' => $user_id ? get_user_meta( $user_id, 'apexoneiq_business_website', true ) : '',
+				'businessEmail' => $user_id ? wp_get_current_user()->user_email : '',
 			)
 		)
 	);
@@ -158,4 +168,28 @@ function apexoneiq_transform_static_html( $html ) {
 	$html = str_replace( $app_script, $config . $app_script, $html );
 
 	return $html;
+}
+
+/**
+ * Whether a static request should render a safe public demo.
+ *
+ * @param string $page Static page.
+ * @return bool
+ */
+function apexoneiq_is_demo_request( $page ) {
+	$page = apexoneiq_normalize_static_page( $page );
+	if ( empty( $_GET['demo'] ) ) {
+		return false;
+	}
+
+	return in_array(
+		$page,
+		array(
+			'free-dashboard.html',
+			'dashboard.html',
+			'command-dashboard.html',
+			'concierge-essentials-dashboard.html',
+		),
+		true
+	);
 }

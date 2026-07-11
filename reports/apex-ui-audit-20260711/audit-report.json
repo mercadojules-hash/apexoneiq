@@ -1,0 +1,297 @@
+{
+  "generatedAt": "2026-07-11T09:02:45.641Z",
+  "routes": [
+    {
+      "name": "Homepage",
+      "path": "/",
+      "status": 200,
+      "title": "ApexOneIQ - AI Executive Intelligence for Business Growth",
+      "h1": [
+        "Know what is blocking growth and what to do next."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "IQ\nApexOneIQ\nFeatures\nPricing\nDemo\nSign In\nStart Free\nAI EXECUTIVE GROWTH OPERATING SYSTEM\nKnow what is blocking growth and what to do next.\n\nApexOneIQ identifies why a business is not being discovered, explains what matters, and turns website health, Google Business performance, reviews, competitors, AI-search visibility, and trust signals into clear executive decisions.\n\nBUSINESS WEBSITE\nBUSINESS EMAIL\nSTART FREE\nVIEW DEMO DASHBOARD\n\nCreate a free account, see your business snapshot, then upgrade when you are ready.\n\n91\nEXECUTIVE SCORE\nProjected after priority actions\nEXAMPLE GROWTH PATH\nDiscovery, trust, and action priority\nPROJECTION MODEL, NOT A GUARANTEED OUTCOME\nSTARTING STATE\n42\nPROJECTED STATE\n91\nLocal Trust\n+23%\nExample lift after proof cleanup\nAI Visibility\n+38%\nProjected mention stability\nPriority Impact\nHigh\nModeled action queue\nBUSINESS SIGNALS\nWhere Apex finds leverage\nWEBSITE HEALTH\n76\n+8 IMPROVING\nGOOGLE BUSINESS\n68%\n+14 PRIORITY\nLOCAL TRUST\n82\n+6 PROOF\nREVIEWS\n71%\n+5 FRESH\nCOMPETITOR POSITION\n2 gaps\nWATCH NORTHSTAR\nAI VISIBILITY\n64\n+12 POSSIBLE\nSEARCH DISCOVERY\nRising\nEXAMPLE TREND\nBEYOND SEO DASHBOARDS\nApexOneIQ turns scattered visibility data into executive deci",
+      "consoleErrors": []
+    },
+    {
+      "name": "Registration",
+      "path": "/register/",
+      "status": 200,
+      "title": "ApexOneIQ - Create Free Account",
+      "h1": [
+        "Create your free ApexOneIQ business snapshot."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "START FREE\nCreate your free ApexOneIQ business snapshot.\n\nRegister your business, review a controlled Free Dashboard, and upgrade only when you are ready for Cloud, Command, or managed Concierge support.\n\nBUSINESS NAME\nBUSINESS WEBSITE\nEMAIL\nPASSWORD\nCONFIRM PASSWORD\nCREATE FREE ACCOUNT\n\nAfter registration, your account opens the Free Dashboard with safe snapshot data and upgrade options.\n\nCONTINUE WITH GOOGLE\nSETUP REQUIRED\nCONTINUE WITH APPLE\nSETUP REQUIRED\n\nAlready have an account? Sign In",
+      "consoleErrors": []
+    },
+    {
+      "name": "Sign In",
+      "path": "/sign-in.html",
+      "status": 200,
+      "title": "ApexOneIQ - Executive Sign In",
+      "h1": [
+        "Sign in before Apex builds your operating picture."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "IQ\nApexOneIQ\nEXECUTIVE INTELLIGENCE OS\nACCESS CONCEPT\nSign in to continue\n\nApexOneIQ / Last update 42 seconds ago\n\nACCOUNT\nSign In\nPlans\nFree Snapshot\nCloud Preview\nAPEXONEIQ FOCUS\n\nExecutive OS concept remains isolated until reviewed and approved.\n\nREVIEW APEXONEIQ\nEXECUTIVE SIGN IN\nASK APEX\nSIGN IN\nJM\nEXECUTIVE ACCESS\nSign in before Apex builds your operating picture.\n\nThe Free experience begins after authentication so Apex can save business context, recommendations, and future subscription state.\n\nEXECUTIVE SIGN IN\nEmail\nPassword\nSIGN IN\nCREATE ACCOUNT\nFORGOT PASSWORD\nFAST ACCESS\nContinue with Google\n\nPlaceholder for future OAuth-based account access. No Google authentication is connected in this concept.\n\nCONTINUE WITH GOOGLE\nMAGIC LINK\nEmail a secure access link.\n\nPlaceholder for passwordless access. The future implementation will send a time-limited email link.\n\nSEND MAGIC LINK\nAFTER SIGN IN\nStart with the Free Executive Snapshot.\n\nOnce authentication is implemented, new users will land in the Free Snapshot and can upgrade into Cloud, Command, Concierge, or Enterprise.\n\nPREVIEW FREE SNAPSHOT",
+      "consoleErrors": []
+    },
+    {
+      "name": "Free Dashboard Demo",
+      "path": "/free-dashboard.html?demo=1",
+      "status": 200,
+      "title": "ApexOneIQ - Free Executive Snapshot",
+      "h1": [
+        "Your business has opportunity. Apex has identified the first constraint."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": true,
+      "navExposesAccountControls": false,
+      "textSample": "IQ\nApexOneIQ\nEXECUTIVE INTELLIGENCE OS\nSNAPSHOT READY\nDemo Business\n\nApexOneIQ / Last update 42 seconds ago\n\nWORKSPACES\nFREE SNAPSHOT\nDashboard\nBusiness Snapshot\nTop Recommendations\nUpgrade Options\nLIMITED PREVIEW\nCloud Intelligence\nDEMO\nCommand Execution\nUPGRADE\nConcierge Service\nUPGRADE\nAPEXONEIQ FOCUS\n\nExecutive OS concept remains isolated until reviewed and approved.\n\nREVIEW APEXONEIQ\nDEMO WORKSPACE\nSafe mock data only. Settings, billing, integrations, and account-management controls are hidden until sign-in.\nFREE EXECUTIVE DASHBOARD\nDEMO WORKSPACE\nSTART FREE\nSIGN IN\nFREE EXECUTIVE SNAPSHOT\nYour business has opportunity. Apex has identified the first constraint.\n\nThis preview gives owners a focused read on business health, top opportunities, and the first action worth considering.\n\nEXECUTIVE SCORE\n61\nEarly opportunity / trust layer incomplete\nBUSINESS HEALTH SNAPSHOT\nCustomer discovery is forming, but trust proof is limiting momentum.\n\nApex sees enough market demand to justify action. The immediate growth constraint is whether buyers and recommendation engines have enough proof to choose the business confidently.\n\nEXECUTIVE SUMMARY\nOne decision matters most this week.\n\nComplete",
+      "consoleErrors": []
+    },
+    {
+      "name": "Cloud Dashboard Demo",
+      "path": "/dashboard.html?demo=1",
+      "status": 200,
+      "title": "ApexOneIQ - Mission Control",
+      "h1": [
+        "Good morning. ApexOneIQ found the decision that matters."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": true,
+      "navExposesAccountControls": false,
+      "textSample": "IQ\nApexOneIQ\nEXECUTIVE INTELLIGENCE OS\nMONITORING LIVE\nDemo Business\n\nApexOneIQ / Last update 42 seconds ago\n\nINTELLIGENCE\nEXECUTIVE\nDashboard\nExecutive Brief\nAction Center\nINTELLIGENCE\nCompetitors\nExecutive Timeline\nAI Visibility\nMarket Intelligence\nOPERATIONS\nWebsite Health\nGoogle Business\nSOON\nContent\nSOON\nReviews\nSOON\nLocal Presence\nSOON\nMONITORING\nMonitoring Center\nAlerts\n3\nRank Tracking\nSOON\nPerformance\nSOON\nPLANNING\nGrowth Forecast\nPlaybooks\nReports\nAPEXONEIQ FOCUS\n\nExecutive OS concept remains isolated until reviewed and approved.\n\nREVIEW APEXONEIQ\nDEMO WORKSPACE\nSafe mock data only. Settings, billing, integrations, and account-management controls are hidden until sign-in.\nEXECUTIVE INTELLIGENCE ONLINE\nDEMO WORKSPACE\nSTART FREE\nSIGN IN\nMISSION CONTROL\nGood morning. ApexOneIQ found the decision that matters.\nOPEN DAILY BRIEF\nBUSINESS STATUS\nStatus is improving, but business trust is still the constraint.\n\nToday’s decision is clear: finish the local trust layer before publishing more content. That unlocks the fastest modeled lift in calls, discovery, and forecast confidence.\n\nOVERALL STATUS\nImproving\nDiscovery and AI recommendations are rising.\nRISK\nLow\nNo critical volatility",
+      "consoleErrors": []
+    },
+    {
+      "name": "Command Dashboard Demo",
+      "path": "/command-dashboard.html?demo=1",
+      "status": 200,
+      "title": "ApexOneIQ - Command Center",
+      "h1": [
+        "Command Center Active"
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": true,
+      "navExposesAccountControls": false,
+      "textSample": "IQ\nApexOneIQ\nEXECUTIVE INTELLIGENCE OS\nEXECUTION LIVE\nDemo Business\n\nApexOneIQ / Last update 42 seconds ago\n\nWORKSPACES\nCLOUD INTELLIGENCE\nMission Control\nExecutive Brief\nCompetitors\nAI Visibility\nReports\nEXECUTION\nCommand Center\nApproval Queue\nAgent Work\nAutomation Health\nUPGRADE-ONLY\nManaged Concierge\nUPGRADE\nEnterprise Governance\nUPGRADE\nCOMMAND\nAgent Queue\nApprovals\n2\nExecute Now\nActivity Feed\nAPEXONEIQ FOCUS\n\nExecutive OS concept remains isolated until reviewed and approved.\n\nREVIEW APEXONEIQ\nDEMO WORKSPACE\nSafe mock data only. Settings, billing, integrations, and account-management controls are hidden until sign-in.\nCOMMAND CENTER ONLINE\nDEMO WORKSPACE\nSTART FREE\nSIGN IN\nAPEX COMMAND\nCommand Center Active\n\nYour AI workforce is executing approved growth work across content, trust, AI visibility, and local presence.\n\nAI TASKS RUNNING\n43\n8 agents active\nCOMPLETED TODAY\n12\n6 shipped to production\nAWAITING APPROVAL\n2\nOwner review needed\nNEXT COMPLETION\n4 min\nSchema validation\nACTIVE AGENT QUEUE\nAI agents currently executing approved business work.\nALL\nRUNNING\nAPPROVAL\nPUBLISHING\nFAILED\nTASK\nSTATUS\nPROGRESS\nETA\nAI\nPRIORITY\nACTION\nWriting service-area article\nRUNNING\n11 min\nContent ",
+      "consoleErrors": []
+    },
+    {
+      "name": "Concierge Essentials Demo",
+      "path": "/concierge-essentials-dashboard.html?demo=1",
+      "status": 200,
+      "title": "ApexOneIQ - Concierge Essentials",
+      "h1": [
+        "A focused Apex specialist is moving one monthly priority forward."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": true,
+      "navExposesAccountControls": false,
+      "textSample": "IQ\nApexOneIQ\nEXECUTIVE INTELLIGENCE OS\nESSENTIALS ACTIVE\nDemo Business\n\nApexOneIQ / Last update 42 seconds ago\n\nWORKSPACES\nMANAGED SERVICE\nEssentials Dashboard\nMonthly Priorities\nApprovals\nCompleted Work\nUpcoming Work\nReports\nSupport\nAVAILABLE UPGRADES\nCloud Intelligence\nINCLUDED CONTEXT\nCommand Execution\nUPGRADE\nConcierge Growth\nUPGRADE\nAPEXONEIQ FOCUS\n\nExecutive OS concept remains isolated until reviewed and approved.\n\nREVIEW APEXONEIQ\nDEMO WORKSPACE\nSafe mock data only. Settings, billing, integrations, and account-management controls are hidden until sign-in.\nESSENTIALS WORKSPACE\nDEMO WORKSPACE\nSTART FREE\nSIGN IN\nCONCIERGE ESSENTIALS\nA focused Apex specialist is moving one monthly priority forward.\n\nEssentials gives small businesses managed optimization, monthly reporting, approval support, and a simple view of what Apex completed.\n\nASSIGNED APEX SPECIALIST\nLocal Growth Specialist\nCurrent focus: trust and listing consistency\nCURRENT MONTHLY CAMPAIGN\nClean up local trust signals.\n\nThis month's approved scope focuses on Google Business Profile maintenance, citation consistency, and one priority improvement campaign.\n\n58% complete / next update Friday\nMONTHLY PROGRESS\nCOMPLETED\n7\nA",
+      "consoleErrors": []
+    },
+    {
+      "name": "Concierge Growth",
+      "path": "/concierge-dashboard.html",
+      "status": 200,
+      "title": "ApexOneIQ - Concierge Workspace",
+      "h1": [
+        "Your Apex growth team is working today."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "IQ\nApexOneIQ\nEXECUTIVE INTELLIGENCE OS\nCONCIERGE LIVE\nGrowth Plan\n\nApexOneIQ / Last update 42 seconds ago\n\nWORKSPACES\nCloud Intelligence\nCommand Center\nEnterprise Ops\nConcierge\nCONCIERGE\nDaily Progress\nWork Queue\n14\nApprovals\n3\nClient Messaging\nAPEXONEIQ FOCUS\n\nExecutive OS concept remains isolated until reviewed and approved.\n\nREVIEW APEXONEIQ\nCONCIERGE TEAM ACTIVE\nASK APEX\nGROWTH PLAN RECOMMENDED\nSIGN IN\nJM\nAPEX CONCIERGE\nYour Apex growth team is working today.\n\nWatch expert-led execution, approvals, strategy, messaging, and business impact in one premium client workspace.\n\nCURRENT RECOMMENDATION\nConcierge Growth\n\n$999/month / best fit for daily execution, strategy, reporting, and measurable growth support.\n\nExplain plan\nCompare tiers\nDAILY EXECUTIVE PROGRESS REPORT\nWhat Apex completed, what is moving, and what needs your approval.\nASK APEX\nCOMPLETED TODAY\n9\n2 pages, 4 listings, 3 reviews\nIN PROGRESS\n5\nTeam execution active\nWAITING APPROVAL\n3\nReview before publish\nSCHEDULED\n11\nNext 14 days\nESTIMATED REVENUE GROWTH\n+$8.4k/mo\nModeled from completed work\nEXECUTIVE MEMORY\nLearning\nDecisions and results linked\nLIVE WORK QUEUE\nReal work being completed by the Apex team.\nALL\nIN PROGRESS",
+      "consoleErrors": []
+    },
+    {
+      "name": "Enterprise Dashboard",
+      "path": "/enterprise-dashboard.html",
+      "status": 200,
+      "title": "ApexOneIQ - Enterprise Operations",
+      "h1": [
+        "Enterprise Operations"
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "IQ\nApexOneIQ\nEXECUTIVE INTELLIGENCE OS\nENTERPRISE LIVE\n86 locations\n\nApexOneIQ / Last update 42 seconds ago\n\nWORKSPACES\nCloud Intelligence\nCommand Center\nEnterprise Ops\nENTERPRISE\nRegional Overview\nLocations\n86\nCompliance\n7\nBoard Reports\nAPEXONEIQ FOCUS\n\nExecutive OS concept remains isolated until reviewed and approved.\n\nREVIEW APEXONEIQ\nENTERPRISE OPERATIONS ONLINE\nASK APEX\nBOARD VIEW READY\nSIGN IN\nJM\nAPEX ENTERPRISE\nEnterprise Operations\n\nExecutive view of regions, locations, teams, compliance, AI adoption, and growth forecast.\n\nLOCATIONS\n86\nREGIONAL MANAGERS\n3\nAI TASKS TODAY\n1,247\nEXECUTIVE HEALTH\n92\nREGIONAL OVERVIEW\nMarket performance by region, state, and location density.\nASK APEX\nWest\n94\nSouth\n84\nNE\n91\nCentral\n93\nORGANIZATION TREE\nEnterprise to location accountability.\nEnterprise\nRegions\nDistricts\nLocations\nManagers\nEXECUTIVE KPIS\nBoard-level outcomes across all locations.\nREVENUE\n$4.8M\n+8.4% QoQ\nTRUST\n88\n7 locations below standard\nAI VISIBILITY\n+21%\nCommand adoption driving lift\nBRAND HEALTH\n92\nStrong, with local exceptions\nCOMPLIANCE\n7 issues\n4 GBP, 2 NAP, 1 review\nMARKET SHARE\n14.2%\nTexas leading growth\nGROWTH\nPositive\nSouth region lagging\nFORECAST\n89%\nExpansion path sta",
+      "consoleErrors": []
+    },
+    {
+      "name": "Subscription",
+      "path": "/subscription.html",
+      "status": 200,
+      "title": "ApexOneIQ - Subscription Plans",
+      "h1": [
+        "See where your business is today and choose the next operating level."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "IQ\nApexOneIQ\nEXECUTIVE INTELLIGENCE OS\nGROWTH PATH READY\nFree to Enterprise\n\nApexOneIQ / Last update 42 seconds ago\n\nWORKSPACES\nFree Snapshot\nCloud Intelligence\nCommand Center\nConcierge Essentials\nConcierge Growth\nEnterprise Ops\nPlans\nAPEXONEIQ FOCUS\n\nExecutive OS concept remains isolated until reviewed and approved.\n\nREVIEW APEXONEIQ\nSUBSCRIPTION GUIDE\nASK APEX\nSIGN IN\nEXECUTIVE JOURNEY\nJM\nAPEXONEIQ GROWTH PATH\nSee where your business is today and choose the next operating level.\n\nStart with an executive snapshot, gain clarity in Cloud, turn strategy into execution with Command, or bring in the Apex team when you want managed growth support.\n\nSOFTWARE BILLING\nChoose how Cloud and Command are billed\nMONTHLY\nFlexible\nANNUAL\n2 months free\nAnnual savings apply to software plans only.\nCloud and Command update instantly.\nConcierge managed-service agreements are scoped separately with Apex before activation.\nFREE\nExecutive snapshot\nCLOUD\nExecutive clarity\nCOMMAND\nStrategy into execution\nESSENTIALS\nManaged monthly support\nGROWTH\nApex growth team\nENTERPRISE\nOrganization-wide operations\nFREE\nSee where your business stands.\n\nA lightweight executive snapshot for prospects who want to understa",
+      "consoleErrors": []
+    },
+    {
+      "name": "Checkout Cloud",
+      "path": "/checkout/cloud/",
+      "status": 200,
+      "title": "ApexOneIQ - Executive Intelligence OS",
+      "h1": [
+        "Apex Cloud secure checkout."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "STRIPE SANDBOX CHECKOUT\nApex Cloud secure checkout.\n\nThis route calls the Apex backend, which creates a Stripe Sandbox Checkout Session using the Cloud price configured in environment variables.\n\nCONTINUE TO STRIPE SANDBOX\nRETURN TO PLANS",
+      "consoleErrors": []
+    },
+    {
+      "name": "Checkout Command",
+      "path": "/checkout/command/",
+      "status": 200,
+      "title": "ApexOneIQ - Executive Intelligence OS",
+      "h1": [
+        "Apex Command secure checkout."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "STRIPE SANDBOX CHECKOUT\nApex Command secure checkout.\n\nThis route calls the Apex backend, which creates a Stripe Sandbox Checkout Session using the Command price configured in environment variables.\n\nCONTINUE TO STRIPE SANDBOX\nRETURN TO PLANS",
+      "consoleErrors": []
+    },
+    {
+      "name": "Checkout Essentials",
+      "path": "/checkout/essentials/",
+      "status": 200,
+      "title": "ApexOneIQ - Executive Intelligence OS",
+      "h1": [
+        "Concierge Essentials secure checkout."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "STRIPE SANDBOX CHECKOUT\nConcierge Essentials secure checkout.\n\nThis route calls the Apex backend, which creates a Stripe Sandbox Checkout Session using the Essentials price configured in environment variables.\n\nCONTINUE TO STRIPE SANDBOX\nRETURN TO PLANS",
+      "consoleErrors": []
+    },
+    {
+      "name": "Checkout Growth",
+      "path": "/checkout/growth/",
+      "status": 200,
+      "title": "ApexOneIQ - Executive Intelligence OS",
+      "h1": [
+        "Concierge Growth secure checkout."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "STRIPE SANDBOX CHECKOUT\nConcierge Growth secure checkout.\n\nThis route calls the Apex backend, which creates a Stripe Sandbox Checkout Session using the Growth price configured in environment variables.\n\nCONTINUE TO STRIPE SANDBOX\nRETURN TO PLANS",
+      "consoleErrors": []
+    },
+    {
+      "name": "Success",
+      "path": "/checkout/success.html",
+      "status": 200,
+      "title": "ApexOneIQ - Checkout Success",
+      "h1": [
+        "Checkout completed in Sandbox."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "STRIPE SANDBOX SUCCESS\nCheckout completed in Sandbox.\n\nThe next production step is webhook validation, subscription persistence, and capability-based workspace access. Entitlements are not activated in this concept.\n\nRETURN TO PLANS\nCONTINUE TO SIGN IN",
+      "consoleErrors": []
+    },
+    {
+      "name": "Cancel",
+      "path": "/checkout/cancel.html",
+      "status": 200,
+      "title": "ApexOneIQ - Checkout Cancelled",
+      "h1": [
+        "Checkout was cancelled."
+      ],
+      "hasHorizontalOverflow": false,
+      "hasDemoBanner": false,
+      "navExposesAccountControls": false,
+      "textSample": "STRIPE SANDBOX CANCELLED\nCheckout was cancelled.\n\nNo subscription changes were made. Return to the ApexOneIQ subscription journey when ready.\n\nRETURN TO PLANS",
+      "consoleErrors": []
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "homepage-desktop",
+      "path": "reports/apex-ui-audit-20260711/homepage-desktop.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      }
+    },
+    {
+      "name": "homepage-mobile",
+      "path": "reports/apex-ui-audit-20260711/homepage-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      }
+    },
+    {
+      "name": "subscription-desktop",
+      "path": "reports/apex-ui-audit-20260711/subscription-desktop.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "name": "subscription-mobile",
+      "path": "reports/apex-ui-audit-20260711/subscription-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      }
+    },
+    {
+      "name": "register-desktop",
+      "path": "reports/apex-ui-audit-20260711/register-desktop.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "name": "register-mobile",
+      "path": "reports/apex-ui-audit-20260711/register-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 900
+      }
+    }
+  ],
+  "mixtapeIntake": {
+    "website": "https://mixtapepsd.com",
+    "productionAltered": false,
+    "dataClassification": "submitted URL live input; dashboard metrics safe mock placeholders; snapshot generation pending/static",
+    "steps": [
+      {
+        "step": "homepage_submit",
+        "url": "http://127.0.0.1:4188/register/?website=https%3A%2F%2Fmixtapepsd.com&email=test%40mixtapepsd.com",
+        "ok": true
+      },
+      {
+        "step": "free_dashboard_loaded",
+        "url": "http://127.0.0.1:4188/free-dashboard.html",
+        "hasIntakeBanner": true,
+        "labelsMockData": true
+      }
+    ]
+  }
+}
