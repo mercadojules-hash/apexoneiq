@@ -16,6 +16,20 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function apexoneiq_render_static_page( $page ) {
 	$page = apexoneiq_normalize_static_page( $page );
+
+	if ( ! apexoneiq_is_public_static_page( $page ) ) {
+		$required_capability = apexoneiq_required_capability_for_page( $page );
+		if ( $required_capability && ! is_user_logged_in() ) {
+			wp_safe_redirect( wp_login_url( home_url( '/' . $page ) ) );
+			exit;
+		}
+
+		if ( $required_capability && ! apexoneiq_user_has_capability( get_current_user_id(), $required_capability ) ) {
+			apexoneiq_render_upgrade_required( $page, $required_capability );
+			return;
+		}
+	}
+
 	$file = realpath( APEXONEIQ_THEME_DIR . 'templates/static/' . $page );
 	$root = realpath( APEXONEIQ_THEME_DIR . 'templates/static' );
 
@@ -34,6 +48,48 @@ function apexoneiq_render_static_page( $page ) {
 	$html = apexoneiq_transform_static_html( $html );
 
 	echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+}
+
+/**
+ * Render an upgrade-required surface without exposing protected workspace data.
+ *
+ * @param string $page                Requested page.
+ * @param string $required_capability Required capability.
+ */
+function apexoneiq_render_upgrade_required( $page, $required_capability ) {
+	$subscription_url = esc_url( home_url( '/subscription.html' ) );
+	$dashboard_url    = esc_url( home_url( '/free-dashboard.html' ) );
+	$capability       = esc_html( $required_capability );
+
+	status_header( 403 );
+	?>
+	<!doctype html>
+	<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>ApexOneIQ - Upgrade Required</title>
+		<link rel="stylesheet" href="<?php echo esc_url( APEXONEIQ_THEME_URI . 'assets/css/app.css?ver=' . APEXONEIQ_THEME_VERSION ); ?>">
+	</head>
+	<body>
+		<div class="app subscription-workspace">
+			<main class="main" style="grid-column: 1 / -1;">
+				<section class="subscription-hero">
+					<div>
+						<div class="page-kicker">ApexOneIQ Access</div>
+						<h1>This workspace requires a higher ApexOneIQ subscription.</h1>
+						<p>Your current subscription does not include <strong><?php echo $capability; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></strong>. Choose the operating level that matches the work you want ApexOneIQ to perform.</p>
+					</div>
+					<div class="plan-actions">
+						<a class="button" href="<?php echo $subscription_url; ?>">View Plans</a>
+						<a class="ghost-button" href="<?php echo $dashboard_url; ?>">Open Free Snapshot</a>
+					</div>
+				</section>
+			</main>
+		</div>
+	</body>
+	</html>
+	<?php
 }
 
 /**

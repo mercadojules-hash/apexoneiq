@@ -16,11 +16,16 @@ define( 'APEXONEIQ_THEME_URI', trailingslashit( get_template_directory_uri() ) )
 require_once APEXONEIQ_THEME_DIR . 'inc/static-renderer.php';
 require_once APEXONEIQ_THEME_DIR . 'inc/billing-routes.php';
 require_once APEXONEIQ_THEME_DIR . 'inc/admin-settings.php';
+require_once APEXONEIQ_THEME_DIR . 'inc/subscription-schema.php';
 require_once APEXONEIQ_THEME_DIR . 'inc/subscription-state.php';
+require_once APEXONEIQ_THEME_DIR . 'inc/entitlements.php';
+require_once APEXONEIQ_THEME_DIR . 'inc/stripe-webhooks.php';
+require_once APEXONEIQ_THEME_DIR . 'inc/owner-admin.php';
 
 add_action( 'after_setup_theme', 'apexoneiq_theme_setup' );
 add_action( 'wp_enqueue_scripts', 'apexoneiq_enqueue_assets' );
 add_action( 'init', 'apexoneiq_register_rewrite_routes' );
+add_action( 'init', 'apexoneiq_maybe_flush_rewrite_routes', 20 );
 add_filter( 'query_vars', 'apexoneiq_register_query_vars' );
 add_filter( 'template_include', 'apexoneiq_template_include' );
 add_filter( 'redirect_canonical', 'apexoneiq_disable_static_canonical_redirects', 10, 2 );
@@ -45,7 +50,7 @@ function apexoneiq_theme_setup() {
  * Enqueue assets for any normal WordPress-rendered pages.
  */
 function apexoneiq_enqueue_assets() {
-	if ( get_query_var( 'apexoneiq_static_page' ) || get_query_var( 'apexoneiq_checkout_plan' ) ) {
+	if ( get_query_var( 'apexoneiq_static_page' ) || get_query_var( 'apexoneiq_checkout_plan' ) || get_query_var( 'apexoneiq_stripe_webhook' ) ) {
 		return;
 	}
 
@@ -75,6 +80,7 @@ function apexoneiq_register_rewrite_routes() {
 	add_rewrite_rule( '^checkout/(success|cancel)\.html$', 'index.php?apexoneiq_static_page=checkout/$matches[1].html', 'top' );
 	add_rewrite_rule( '^([a-z0-9-]+\.html)$', 'index.php?apexoneiq_static_page=$matches[1]', 'top' );
 	add_rewrite_rule( '^api/billing/checkout/(cloud|command|essentials|growth)/?$', 'index.php?apexoneiq_checkout_plan=$matches[1]', 'top' );
+	add_rewrite_rule( '^api/stripe/webhook/?$', 'index.php?apexoneiq_stripe_webhook=1', 'top' );
 }
 
 /**
@@ -86,6 +92,7 @@ function apexoneiq_register_rewrite_routes() {
 function apexoneiq_register_query_vars( $vars ) {
 	$vars[] = 'apexoneiq_static_page';
 	$vars[] = 'apexoneiq_checkout_plan';
+	$vars[] = 'apexoneiq_stripe_webhook';
 
 	return $vars;
 }
@@ -97,6 +104,11 @@ function apexoneiq_register_query_vars( $vars ) {
  * @return string
  */
 function apexoneiq_template_include( $template ) {
+	if ( get_query_var( 'apexoneiq_stripe_webhook' ) ) {
+		apexoneiq_handle_stripe_webhook();
+		exit;
+	}
+
 	$checkout_plan = get_query_var( 'apexoneiq_checkout_plan' );
 	if ( $checkout_plan ) {
 		apexoneiq_handle_checkout_request( $checkout_plan );
@@ -127,7 +139,7 @@ function apexoneiq_template_include( $template ) {
 function apexoneiq_disable_static_canonical_redirects( $redirect_url, $requested_url ) {
 	$path = wp_parse_url( $requested_url, PHP_URL_PATH );
 
-	if ( $path && ( preg_match( '#/(checkout/)?[a-z0-9-]+\.html$#', $path ) || preg_match( '#^/api/billing/checkout/#', $path ) ) ) {
+	if ( $path && ( preg_match( '#/(checkout/)?[a-z0-9-]+\.html$#', $path ) || preg_match( '#^/api/billing/checkout/#', $path ) || preg_match( '#^/api/stripe/webhook#', $path ) ) ) {
 		return false;
 	}
 
@@ -139,6 +151,18 @@ function apexoneiq_disable_static_canonical_redirects( $redirect_url, $requested
  */
 function apexoneiq_theme_activation_notice() {
 	apexoneiq_register_rewrite_routes();
+	apexoneiq_install_subscription_schema();
 	flush_rewrite_rules();
+	update_option( 'apexoneiq_rewrite_version', '1.1.0', false );
 	update_option( 'apexoneiq_theme_installed_at', gmdate( 'c' ) );
+}
+
+/**
+ * Flush rewrites once when theme route definitions change.
+ */
+function apexoneiq_maybe_flush_rewrite_routes() {
+	if ( '1.1.0' !== get_option( 'apexoneiq_rewrite_version' ) ) {
+		flush_rewrite_rules( false );
+		update_option( 'apexoneiq_rewrite_version', '1.1.0', false );
+	}
 }

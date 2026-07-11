@@ -365,10 +365,15 @@ async function startCheckout(plan, control) {
 			headers: { 'Content-Type': 'application/json' }
 		});
 		const payload = await response.json().catch(() => ({}));
-		if (!response.ok || !payload.url) {
-			throw new Error(payload.message || 'Checkout could not be started. Confirm the sandbox backend and Stripe environment variables are configured.');
+		if (response.status === 401 && payload?.data?.login_url) {
+			window.location.assign(payload.data.login_url);
+			return;
 		}
-		window.location.assign(payload.url);
+		const checkoutUrl = payload?.data?.url || payload?.url;
+		if (!response.ok || !checkoutUrl) {
+			throw new Error(payload?.data?.message || payload.message || 'Checkout could not be started. Confirm the sandbox backend and Stripe environment variables are configured.');
+		}
+		window.location.assign(checkoutUrl);
 	} catch (error) {
 		openDrawer('Checkout Not Ready', `Apex could not create the Stripe Sandbox Checkout Session. ${error.message}`, 'Billing');
 		if (control) {
