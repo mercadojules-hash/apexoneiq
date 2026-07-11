@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APEXONEIQ_THEME_VERSION', '0.1.5' );
+define( 'APEXONEIQ_THEME_VERSION', '0.1.6' );
 define( 'APEXONEIQ_THEME_DIR', trailingslashit( get_template_directory() ) );
 define( 'APEXONEIQ_THEME_URI', trailingslashit( get_template_directory_uri() ) );
 
@@ -77,7 +77,7 @@ function apexoneiq_enqueue_assets() {
 function apexoneiq_register_rewrite_routes() {
 	add_rewrite_rule( '^register/?$', 'index.php?apexoneiq_register_page=1', 'top' );
 	add_rewrite_rule( '^oauth/google/?$', 'index.php?apexoneiq_oauth_start=google', 'top' );
-	add_rewrite_rule( '^oauth/(google|apple)/callback/?$', 'index.php?apexoneiq_oauth_provider=$matches[1]', 'top' );
+	add_rewrite_rule( '^oauth/google/callback/?$', 'index.php?apexoneiq_oauth_provider=google', 'top' );
 	add_rewrite_rule( '^sign-in/?$', 'index.php?apexoneiq_static_page=sign-in.html', 'top' );
 	add_rewrite_rule( '^account(?:\.html)?/?$', 'index.php?apexoneiq_account_page=1', 'top' );
 	add_rewrite_rule( '^checkout/(cloud|command|essentials|growth)/?$', 'index.php?apexoneiq_static_page=checkout/$matches[1]/index.html', 'top' );
@@ -164,7 +164,7 @@ function apexoneiq_template_include( $template ) {
 function apexoneiq_disable_static_canonical_redirects( $redirect_url, $requested_url ) {
 	$path = wp_parse_url( $requested_url, PHP_URL_PATH );
 
-	if ( $path && ( preg_match( '#/(checkout/)?[a-z0-9-]+\.html$#', $path ) || preg_match( '#^/account(?:\.html)?/?$#', $path ) || preg_match( '#^/register/?$#', $path ) || preg_match( '#^/oauth/google/?$#', $path ) || preg_match( '#^/oauth/(google|apple)/callback/?$#', $path ) || preg_match( '#^/api/billing/checkout/#', $path ) || preg_match( '#^/api/stripe/webhook#', $path ) ) ) {
+	if ( $path && ( preg_match( '#/(checkout/)?[a-z0-9-]+\.html$#', $path ) || preg_match( '#^/account(?:\.html)?/?$#', $path ) || preg_match( '#^/register/?$#', $path ) || preg_match( '#^/oauth/google/?$#', $path ) || preg_match( '#^/oauth/google/callback/?$#', $path ) || preg_match( '#^/api/billing/checkout/#', $path ) || preg_match( '#^/api/stripe/webhook#', $path ) ) ) {
 		return false;
 	}
 
@@ -178,7 +178,7 @@ function apexoneiq_theme_activation_notice() {
 	apexoneiq_register_rewrite_routes();
 	apexoneiq_install_subscription_schema();
 	flush_rewrite_rules();
-	update_option( 'apexoneiq_rewrite_version', '1.7.0', false );
+	update_option( 'apexoneiq_rewrite_version', '1.8.0', false );
 	update_option( 'apexoneiq_theme_installed_at', gmdate( 'c' ) );
 }
 
@@ -186,9 +186,9 @@ function apexoneiq_theme_activation_notice() {
  * Flush rewrites once when theme route definitions change.
  */
 function apexoneiq_maybe_flush_rewrite_routes() {
-	if ( '1.7.0' !== get_option( 'apexoneiq_rewrite_version' ) ) {
+	if ( '1.8.0' !== get_option( 'apexoneiq_rewrite_version' ) ) {
 		flush_rewrite_rules( false );
-		update_option( 'apexoneiq_rewrite_version', '1.7.0', false );
+		update_option( 'apexoneiq_rewrite_version', '1.8.0', false );
 	}
 }
 
