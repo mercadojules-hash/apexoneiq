@@ -1,9 +1,12 @@
 <?php
 /**
- * Front page template.
+ * Public marketing homepage.
  *
  * @package ApexOneIQ
  */
 
-apexoneiq_render_static_page( 'dashboard.html' );
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
+apexoneiq_render_static_page( 'index.html' );
