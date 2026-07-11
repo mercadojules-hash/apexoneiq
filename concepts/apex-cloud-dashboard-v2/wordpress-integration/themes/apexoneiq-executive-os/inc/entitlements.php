@@ -51,6 +51,7 @@ function apexoneiq_plan_capabilities() {
 		'forecast.access',
 		'alerts.access',
 		'website_health.access',
+		'intelligence.access',
 		'billing.manage',
 	);
 
@@ -124,6 +125,16 @@ function apexoneiq_required_capability_for_page( $page ) {
 		'alerts.html'                          => 'alerts.access',
 		'reports.html'                         => 'reports.access',
 		'website-profile.html'                 => 'website_health.access',
+		'website-overview.html'                => 'intelligence.access',
+		'organic-keywords.html'                => 'intelligence.access',
+		'keyword-opportunities.html'           => 'intelligence.access',
+		'competitor-intelligence.html'         => 'intelligence.access',
+		'backlinks.html'                       => 'intelligence.access',
+		'content-gap.html'                     => 'intelligence.access',
+		'site-audit.html'                      => 'intelligence.access',
+		'intelligence-ai-visibility.html'      => 'intelligence.access',
+		'search-trends.html'                   => 'intelligence.access',
+		'local-rankings.html'                  => 'intelligence.access',
 		'settings.html'                        => 'billing.manage',
 		'business-timeline.html'               => 'timeline.access',
 		'monitoring-center.html'               => 'dashboard.access',
@@ -150,6 +161,7 @@ function apexoneiq_is_public_static_page( $page ) {
 		$page,
 		array(
 			'subscription.html',
+			'index.html',
 			'concierge-enrollment.html',
 			'checkout/cloud/index.html',
 			'checkout/command/index.html',

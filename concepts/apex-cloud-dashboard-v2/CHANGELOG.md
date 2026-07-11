@@ -1,5 +1,16 @@
 # Apex Cloud Dashboard v2 Changelog
 
+## Phase 30 - ApexOneIQ Intelligence Platform Foundation
+
+- Added the new Intelligence Layer as a research workspace separate from the Executive Dashboard landing experience.
+- Created Website Overview, Organic Keywords, Keyword Opportunities, Competitor Intelligence, Backlinks, Content Gap, Site Audit, AI Visibility Intelligence, Search Trends, and Local Rankings pages.
+- Extended shared navigation so the Executive Layer remains Dashboard, Executive Brief, Action Center, Forecast, and Reports while Intelligence exposes the new research modules.
+- Added executive-focused research components for animated KPI cards, keyword explorer rows, competitor intelligence cards, opportunity queues, AI engine visibility, trend charts, local ranking grids, and executive site audit findings.
+- Preserved the Executive Design System and did not redesign the existing Executive Dashboard, subscription system, Stripe integration, or authentication flow.
+- Added Cloud-level `intelligence.access` entitlement coverage for the new WordPress-rendered Intelligence pages.
+- Expanded public demo safety routing so Intelligence preview pages render safe mock data in demo mode without exposing settings, billing, integrations, or account controls.
+- Refined mobile sidebar behavior so the larger Intelligence navigation remains scrollable and the page content appears sooner on small screens.
+
 ## Phase 17B - Executive Decision System
 
 - Created a new isolated concept at `concepts/apex-cloud-dashboard-v2/` by copying the preserved Version 1 concept and editing only the v2 copy.

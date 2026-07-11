@@ -189,6 +189,16 @@ function apexoneiq_is_demo_request( $page ) {
 			'dashboard.html',
 			'command-dashboard.html',
 			'concierge-essentials-dashboard.html',
+			'website-overview.html',
+			'organic-keywords.html',
+			'keyword-opportunities.html',
+			'competitor-intelligence.html',
+			'backlinks.html',
+			'content-gap.html',
+			'site-audit.html',
+			'intelligence-ai-visibility.html',
+			'search-trends.html',
+			'local-rankings.html',
 		),
 		true
 	);
