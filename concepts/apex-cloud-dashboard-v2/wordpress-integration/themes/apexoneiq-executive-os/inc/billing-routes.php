@@ -25,6 +25,20 @@ function apexoneiq_handle_checkout_request( $plan ) {
 		);
 	}
 
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error(
+			array(
+				'code'      => 'authentication_required',
+				'message'   => 'Sign in before starting ApexOneIQ Checkout.',
+				'login_url' => wp_login_url( home_url( '/subscription.html' ) ),
+			),
+			401
+		);
+	}
+
+	$user = wp_get_current_user();
+	$user_id = get_current_user_id();
+
 	$prices = apexoneiq_checkout_prices();
 	if ( ! isset( $prices[ $plan ] ) ) {
 		wp_send_json_error(
@@ -65,12 +79,17 @@ function apexoneiq_handle_checkout_request( $plan ) {
 				'Authorization' => 'Bearer ' . $secret_key,
 			),
 			'body'    => array(
-				'mode'                  => 'subscription',
-				'line_items[0][price]'  => $prices[ $plan ],
+				'mode'                    => 'subscription',
+				'client_reference_id'     => $user_id,
+				'customer_email'          => $user->user_email,
+				'line_items[0][price]'    => $prices[ $plan ],
 				'line_items[0][quantity]' => 1,
-				'success_url'           => home_url( '/checkout/success.html?session_id={CHECKOUT_SESSION_ID}' ),
-				'cancel_url'            => home_url( '/checkout/cancel.html' ),
-				'metadata[apex_plan]'   => $plan,
+				'success_url'             => home_url( '/checkout/success.html?session_id={CHECKOUT_SESSION_ID}' ),
+				'cancel_url'              => home_url( '/checkout/cancel.html' ),
+				'metadata[apex_plan]'     => $plan,
+				'metadata[wordpress_user_id]' => $user_id,
+				'subscription_data[metadata][apex_plan]' => $plan,
+				'subscription_data[metadata][wordpress_user_id]' => $user_id,
 			),
 		)
 	);
@@ -136,7 +155,8 @@ function apexoneiq_get_env_value( $key ) {
 	if ( false === $value || '' === $value ) {
 		$options = array(
 			'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY' => 'apexoneiq_stripe_publishable_key',
-			'STRIPE_SECRET_KEY'                 => 'apexoneiq_stripe_secret_key',
+		'STRIPE_SECRET_KEY'                 => 'apexoneiq_stripe_secret_key',
+		'STRIPE_WEBHOOK_SECRET'            => 'apexoneiq_stripe_webhook_secret',
 		);
 
 		if ( isset( $options[ $key ] ) ) {

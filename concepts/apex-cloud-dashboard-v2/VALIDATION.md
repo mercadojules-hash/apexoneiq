@@ -325,6 +325,26 @@
 - Phase 26 key hygiene validation confirmed no provided Stripe sandbox keys and no live Stripe keys are present in the ApexOneIQ workspace or git metadata.
 - Phase 26 WordPress auth foundation validation confirmed rendered dashboard pages include WordPress auth configuration and Sign In routes through `wp-login.php`.
 - Phase 26 direct auth route validation confirmed `/sign-in.html` redirects to `wp-login.php` with `redirect_to=/dashboard.html`.
+- Phase 27 route validation confirmed unauthenticated protected workspace requests redirect to WordPress login before protected content is rendered.
+- Phase 27 public route validation confirmed `subscription.html` remains publicly accessible with HTTP 200.
+- Phase 27 checkout validation confirmed unauthenticated checkout requests return `authentication_required` with a WordPress login URL.
+- Phase 27 authenticated checkout validation confirmed Cloud, Command, Essentials, and Growth still create Stripe Sandbox Checkout Sessions with HTTP 200.
+- Phase 27 owner admin validation confirmed `ApexOneIQ Owner` loads in WordPress admin with subscription metrics and Stripe webhook health sections.
+- Phase 27 Stripe webhook endpoint validation confirmed `GET /api/stripe/webhook` returns HTTP 405.
+- Phase 27 unsigned webhook validation confirmed unsigned webhook requests are rejected with `invalid_signature`.
+- Phase 27 signed webhook validation confirmed these signed sandbox events process successfully with HTTP 200:
+  - `checkout.session.completed`
+  - `customer.subscription.created`
+  - `customer.subscription.updated`
+  - `customer.subscription.deleted`
+  - `invoice.paid`
+  - `invoice.payment_failed`
+- Phase 27 webhook persistence validation confirmed processed events appear in the owner console webhook health table.
+- Phase 27 subscription persistence validation confirmed a synced test subscription appears in the owner console subscription table with plan, status, price, renewal, Stripe subscription ID, and updated timestamp.
+- Phase 27 signed live-mode validation confirmed a correctly signed event with `livemode: true` is rejected with `live_mode_rejected`.
+- Phase 27 entitlement validation confirmed a temporary subscriber without an active entitlement receives the upgrade experience instead of protected dashboard data.
+- Phase 27 cleanup validation confirmed the temporary subscriber test user was removed through the WordPress REST API.
+- Phase 27 key hygiene validation confirmed no provided Stripe sandbox keys, webhook signing secrets, or live Stripe keys are present in the ApexOneIQ workspace or git metadata.
 
 ## Future Stripe Architecture Notes
 

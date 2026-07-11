@@ -251,3 +251,29 @@
 - Updated the static renderer and theme JavaScript so dashboard Sign In routes through WordPress authentication while preserving the current Executive Dashboard UI.
 - Updated direct sign-in routes so `/sign-in.html` and `/sign-in/` hand off to WordPress login instead of the previous placeholder sign-in concept.
 - Preserved scope: no live Stripe credentials, pricing changes, new products, dashboard redesign, Enterprise/Elite checkout conversion, or entitlement enforcement were added.
+
+## Phase 27 - Stripe Subscription Lifecycle
+
+- Added a signed Stripe Sandbox webhook endpoint at `/api/stripe/webhook`.
+- Added webhook signature verification using the Stripe `Stripe-Signature` header and `whsec_` signing secret.
+- Added live-mode rejection so signed events with `livemode: true` are rejected in the sandbox WordPress environment.
+- Added support for required Stripe lifecycle events:
+  - `checkout.session.completed`
+  - `customer.subscription.created`
+  - `customer.subscription.updated`
+  - `customer.subscription.deleted`
+  - `invoice.paid`
+  - `invoice.payment_failed`
+- Added subscription persistence tables through WordPress `dbDelta`:
+  - `wp_apexoneiq_subscriptions`
+  - `wp_apexoneiq_webhook_events`
+- Added a centralized subscription-state service that answers authentication, active status, plan, capabilities, renewal date, grace period, trial status, cancellation, and expiration.
+- Added capability-based entitlement mapping so plans enable capabilities instead of hardcoded application checks.
+- Updated checkout creation so Stripe Checkout Sessions require a logged-in WordPress user and carry `wordpress_user_id` and `apex_plan` metadata into both the Checkout Session and Stripe Subscription.
+- Added workspace protection before static dashboard rendering:
+  - unauthenticated protected workspace requests redirect to WordPress login
+  - authenticated users without the required capability see an upgrade experience
+  - administrators retain owner access
+- Added the owner-facing WordPress admin console at `ApexOneIQ Owner` with customer/subscription status, MRR/ARR estimates, failed payment count, recent subscriptions, and webhook health.
+- Created a Stripe Sandbox webhook endpoint for the live development site and saved its signing secret in WordPress settings over trusted HTTPS without committing secrets.
+- Preserved scope: no dashboard redesign, no live Stripe keys, no committed secrets, no new Stripe products, and no Enterprise/Elite checkout conversion.
