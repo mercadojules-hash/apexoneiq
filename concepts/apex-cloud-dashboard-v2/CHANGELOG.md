@@ -277,3 +277,17 @@
 - Added the owner-facing WordPress admin console at `ApexOneIQ Owner` with customer/subscription status, MRR/ARR estimates, failed payment count, recent subscriptions, and webhook health.
 - Created a Stripe Sandbox webhook endpoint for the live development site and saved its signing secret in WordPress settings over trusted HTTPS without committing secrets.
 - Preserved scope: no dashboard redesign, no live Stripe keys, no committed secrets, no new Stripe products, and no Enterprise/Elite checkout conversion.
+
+## Phase 28 - Stripe Sandbox Customer Lifecycle
+
+- Installed the Stripe Sandbox webhook signing secret into WordPress admin settings without hardcoding or committing the secret.
+- Added a protected `/account` and `/account.html` customer account surface inside the ApexOneIQ theme using the centralized subscription state service.
+- Added account-level billing architecture placeholders for current plan, billing status, renewal date, entitlement count, manage billing, upgrade/downgrade, and cancellation routing without changing Executive Dashboard UI.
+- Verified webhook security behavior over HTTPS: unsigned events fail, signed Sandbox events process, signed live-mode events are rejected, and duplicate event IDs return idempotent duplicate responses.
+- Created a new non-admin WordPress subscriber for lifecycle testing and verified protected Cloud workspace access is blocked before entitlement.
+- Verified browser checkout routing reaches Stripe-hosted Checkout for the subscriber, but Stripe's hosted payment form did not expose card-entry fields in headless automation because the page rendered payment-method accordion/hCaptcha-protected controls.
+- Created a real Stripe Sandbox customer and active Cloud subscription through the Stripe API using the subscriber's WordPress user ID and plan metadata, allowing Stripe to deliver real subscription and invoice webhooks to WordPress.
+- Verified Stripe-delivered `customer.subscription.created` and `invoice.paid` events persisted the subscription, linked the WordPress user to the Stripe customer/subscription, granted Cloud entitlements, updated Owner Console metrics, and unlocked the Cloud dashboard.
+- Verified signed renewal, past-due, replay, and cancellation lifecycle paths: renewal processed, past-due granted grace access and updated failed-payment metrics, cancellation removed workspace access and updated Owner Console status.
+- Verified invalid live-key settings submission is rejected and existing Sandbox checkout configuration remains usable afterward.
+- Preserved scope: no dashboard redesign, no Live Stripe keys, no production Stripe mode, no Enterprise/Elite logic changes, and no committed secrets.

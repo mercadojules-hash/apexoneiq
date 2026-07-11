@@ -359,3 +359,30 @@
   - Tablet captures: 1024 x 1366
   - Mobile captures: 390 x 1400
   - Full-page dashboard: 1440 x 3724
+
+## Phase 28 Stripe Sandbox Customer Lifecycle Validation
+
+- Webhook secret configuration: stored in WordPress admin settings only; no hardcoded webhook secret committed.
+- Webhook endpoint: `https://apexoneiq.com/api/stripe/webhook`.
+- Unsigned webhook POST: HTTP 400 with `invalid_signature`.
+- Signed Sandbox webhook POST: HTTP 200 with `processed`.
+- Signed live-mode webhook POST: HTTP 400 with `live_mode_rejected`.
+- Replay/idempotency check: first signed event HTTP 200 `processed`; second event with same Stripe event ID HTTP 200 `duplicate`.
+- Live-key settings attempt: rejected through WordPress settings with `apexoneiq_status=invalid`; follow-up checkout route still returned a Stripe-hosted Sandbox Checkout URL.
+- New non-admin subscriber created for validation: `phase28customer1783748919` / `phase28customer1783748919@example.com`.
+- Pre-entitlement workspace protection: subscriber dashboard returned HTTP 403 upgrade-required state before subscription entitlement.
+- Browser checkout routing: subscriber reached Stripe-hosted Checkout for Apex Cloud from `subscription.html`.
+- Hosted checkout limitation: Stripe's hosted payment page rendered payment-method accordion controls and hCaptcha-protected frames in headless automation; card-entry fields were not exposed to Playwright, so the card payment could not be completed headlessly in this environment.
+- Stripe Sandbox API lifecycle: created a real Sandbox customer and active Cloud subscription with WordPress user metadata and attached test payment method.
+- Stripe-delivered webhook validation: `customer.subscription.created` and `invoice.paid` appeared in Owner Console as `processed` and persisted the Cloud subscription.
+- Subscription persistence: `wp_apexoneiq_subscriptions` recorded user ID, Stripe customer ID, Stripe subscription ID, price ID, status, plan, period data, and timestamps.
+- Entitlement assignment: Cloud capabilities were granted automatically after webhook sync.
+- Protected workspace unlock: subscriber `dashboard.html` changed from HTTP 403 before entitlement to HTTP 200 after subscription sync.
+- Customer account page: `/account` and `/account.html` returned HTTP 200 for the authenticated subscriber and displayed current plan, billing status, renewal date, and entitlement count.
+- Owner Console update: Active Subscriptions moved to 1, MRR to `$79`, ARR to `$948` after active subscription sync.
+- Renewal event: signed `invoice.paid` for the subscription returned HTTP 200 `processed`.
+- Payment failure simulation: signed `customer.subscription.updated` with `past_due` returned HTTP 200, changed account billing status to Past Due, preserved grace-period dashboard access with HTTP 200, and updated Owner Console Failed Payments to 1.
+- Cancellation validation: Stripe API cancellation returned subscription status `canceled`; delivered webhook changed dashboard access to HTTP 403, account billing status to Canceled, and Owner Console status to canceled.
+- Local JavaScript validation: `node --check` passed for the theme app script.
+- Local PHP lint limitation: PHP CLI is not installed in this shell; WordPress theme file editor validation accepted the PHP update and live HTTPS route checks confirmed the account route works.
+- Secrets scan: repository scan found no committed Stripe live keys, Sandbox keys, or webhook secrets after cleanup.
