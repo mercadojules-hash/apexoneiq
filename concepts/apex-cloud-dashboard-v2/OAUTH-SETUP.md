@@ -9,6 +9,10 @@ Production WordPress site:
 - Google OAuth redirect URI: `https://apexoneiq.com/oauth/google/callback/`
 - Apple Sign In redirect URI: `https://apexoneiq.com/oauth/apple/callback/`
 
+Google OAuth start route:
+
+- `https://apexoneiq.com/oauth/google/`
+
 Local/staging should use the exact canonical host for that environment:
 
 - Google: `https://staging.apexoneiq.com/oauth/google/callback/`
@@ -83,5 +87,20 @@ Recommended WordPress option namespace:
 
 Current callback routes intentionally return setup-required placeholders:
 
-- `/oauth/google/callback/`
 - `/oauth/apple/callback/`
+
+## Phase 31 Google Sign-In Runtime
+
+Google Sign-In is implemented server-side in the WordPress theme:
+
+- Public start route: `/oauth/google/`
+- Authorized callback route: `/oauth/google/callback/`
+- New Google users are created as Free ApexOneIQ users.
+- Existing WordPress users are linked by verified Google email and Google subject ID.
+- Authenticated Free users are redirected to `/free-dashboard.html`.
+- OAuth state and nonce are generated per attempt and stored temporarily server-side.
+- Authorization codes are exchanged server-side only.
+- Google ID tokens are validated through Google's tokeninfo endpoint before login.
+- The Google client secret must remain in `wp-config.php`, an environment variable, or the protected ApexOneIQ admin option. It must never be committed or exposed to browser JavaScript.
+
+Apple Sign In is still intentionally inactive.

@@ -399,3 +399,18 @@
   - `reports/phase-30-intelligence/subscription-desktop.png`
 - Visual review confirmed the new Intelligence pages render with the existing Executive Design System and the mobile sidebar no longer pushes Intelligence content far below the first viewport.
 - PHP lint remains blocked locally because PHP CLI is not installed in this shell.
+
+## Phase 31 Homepage Authority and Google OAuth Validation
+
+- Local validation passed: `npm run validate`.
+- Secret scan confirmed the pasted Google OAuth client ID and client secret are not present in the ApexOneIQ repository files.
+- Local HTTP checks returned 200 for `index.html`, `sign-in.html`, `register/index.html`, and `subscription.html`.
+- Playwright CLI screenshots captured:
+  - `reports/phase-31-homepage-oauth/homepage-desktop.png`
+  - `reports/phase-31-homepage-oauth/homepage-mobile.png`
+  - `reports/phase-31-homepage-oauth/homepage-full-page.png`
+  - `reports/phase-31-homepage-oauth/sign-in-desktop-after.png`
+- Visual review confirmed the homepage includes the trusted logo marquee, AI Executive Team section, statistics, authority marquee, testimonial photography, and final CTA.
+- Visual review confirmed the sign-in page now presents Google Sign-In as the primary public authentication path.
+- WordPress Google OAuth runtime could not be fully exercised in the local static Node preview; implementation is in the WordPress theme routes and must be verified on staging/production after server-side credentials are installed.
+- PHP lint remains blocked locally because PHP CLI is not installed in this shell.

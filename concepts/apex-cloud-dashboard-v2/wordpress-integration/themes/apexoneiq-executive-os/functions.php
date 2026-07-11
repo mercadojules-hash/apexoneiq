@@ -76,6 +76,7 @@ function apexoneiq_enqueue_assets() {
  */
 function apexoneiq_register_rewrite_routes() {
 	add_rewrite_rule( '^register/?$', 'index.php?apexoneiq_register_page=1', 'top' );
+	add_rewrite_rule( '^oauth/google/?$', 'index.php?apexoneiq_oauth_start=google', 'top' );
 	add_rewrite_rule( '^oauth/(google|apple)/callback/?$', 'index.php?apexoneiq_oauth_provider=$matches[1]', 'top' );
 	add_rewrite_rule( '^sign-in/?$', 'index.php?apexoneiq_static_page=sign-in.html', 'top' );
 	add_rewrite_rule( '^account(?:\.html)?/?$', 'index.php?apexoneiq_account_page=1', 'top' );
@@ -98,6 +99,7 @@ function apexoneiq_register_query_vars( $vars ) {
 	$vars[] = 'apexoneiq_stripe_webhook';
 	$vars[] = 'apexoneiq_account_page';
 	$vars[] = 'apexoneiq_register_page';
+	$vars[] = 'apexoneiq_oauth_start';
 	$vars[] = 'apexoneiq_oauth_provider';
 
 	return $vars;
@@ -125,9 +127,15 @@ function apexoneiq_template_include( $template ) {
 		exit;
 	}
 
+	$oauth_start = get_query_var( 'apexoneiq_oauth_start' );
+	if ( $oauth_start ) {
+		apexoneiq_start_oauth_flow( $oauth_start );
+		exit;
+	}
+
 	$oauth_provider = get_query_var( 'apexoneiq_oauth_provider' );
 	if ( $oauth_provider ) {
-		apexoneiq_render_oauth_placeholder( $oauth_provider );
+		apexoneiq_handle_oauth_callback( $oauth_provider );
 		exit;
 	}
 
@@ -139,11 +147,6 @@ function apexoneiq_template_include( $template ) {
 
 	$static_page = get_query_var( 'apexoneiq_static_page' );
 	if ( $static_page ) {
-		if ( in_array( $static_page, array( 'sign-in.html', 'sign-in/index.html' ), true ) ) {
-			wp_safe_redirect( wp_login_url( home_url( '/dashboard.html' ) ) );
-			exit;
-		}
-
 		apexoneiq_render_static_page( $static_page );
 		exit;
 	}
@@ -161,7 +164,7 @@ function apexoneiq_template_include( $template ) {
 function apexoneiq_disable_static_canonical_redirects( $redirect_url, $requested_url ) {
 	$path = wp_parse_url( $requested_url, PHP_URL_PATH );
 
-	if ( $path && ( preg_match( '#/(checkout/)?[a-z0-9-]+\.html$#', $path ) || preg_match( '#^/account(?:\.html)?/?$#', $path ) || preg_match( '#^/register/?$#', $path ) || preg_match( '#^/oauth/(google|apple)/callback/?$#', $path ) || preg_match( '#^/api/billing/checkout/#', $path ) || preg_match( '#^/api/stripe/webhook#', $path ) ) ) {
+	if ( $path && ( preg_match( '#/(checkout/)?[a-z0-9-]+\.html$#', $path ) || preg_match( '#^/account(?:\.html)?/?$#', $path ) || preg_match( '#^/register/?$#', $path ) || preg_match( '#^/oauth/google/?$#', $path ) || preg_match( '#^/oauth/(google|apple)/callback/?$#', $path ) || preg_match( '#^/api/billing/checkout/#', $path ) || preg_match( '#^/api/stripe/webhook#', $path ) ) ) {
 		return false;
 	}
 
@@ -175,7 +178,7 @@ function apexoneiq_theme_activation_notice() {
 	apexoneiq_register_rewrite_routes();
 	apexoneiq_install_subscription_schema();
 	flush_rewrite_rules();
-	update_option( 'apexoneiq_rewrite_version', '1.6.0', false );
+	update_option( 'apexoneiq_rewrite_version', '1.7.0', false );
 	update_option( 'apexoneiq_theme_installed_at', gmdate( 'c' ) );
 }
 
@@ -183,9 +186,9 @@ function apexoneiq_theme_activation_notice() {
  * Flush rewrites once when theme route definitions change.
  */
 function apexoneiq_maybe_flush_rewrite_routes() {
-	if ( '1.6.0' !== get_option( 'apexoneiq_rewrite_version' ) ) {
+	if ( '1.7.0' !== get_option( 'apexoneiq_rewrite_version' ) ) {
 		flush_rewrite_rules( false );
-		update_option( 'apexoneiq_rewrite_version', '1.6.0', false );
+		update_option( 'apexoneiq_rewrite_version', '1.7.0', false );
 	}
 }
 
@@ -194,7 +197,7 @@ function apexoneiq_maybe_flush_rewrite_routes() {
  */
 function apexoneiq_render_account_page() {
 	if ( ! is_user_logged_in() ) {
-		wp_safe_redirect( wp_login_url( home_url( '/account' ) ) );
+		wp_safe_redirect( add_query_arg( 'redirect_to', rawurlencode( home_url( '/account' ) ), home_url( '/sign-in.html' ) ) );
 		exit;
 	}
 

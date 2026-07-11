@@ -21,7 +21,7 @@ function apexoneiq_render_static_page( $page ) {
 	if ( ! $is_demo_request && ! apexoneiq_is_public_static_page( $page ) ) {
 		$required_capability = apexoneiq_required_capability_for_page( $page );
 		if ( $required_capability && ! is_user_logged_in() ) {
-			wp_safe_redirect( wp_login_url( home_url( '/' . $page ) ) );
+			wp_safe_redirect( add_query_arg( 'redirect_to', rawurlencode( home_url( '/' . $page ) ), home_url( '/sign-in.html' ) ) );
 			exit;
 		}
 
@@ -119,7 +119,7 @@ function apexoneiq_normalize_static_page( $page ) {
 function apexoneiq_transform_static_html( $html ) {
 	$asset_uri = APEXONEIQ_THEME_URI;
 	$site_url  = trailingslashit( home_url() );
-	$auth_url  = wp_login_url( home_url( '/free-dashboard.html' ) );
+	$auth_url  = home_url( '/sign-in.html' );
 	$register_url = home_url( '/register/' );
 	$is_demo = apexoneiq_is_demo_request( get_query_var( 'apexoneiq_static_page' ) );
 	$user_id = get_current_user_id();
