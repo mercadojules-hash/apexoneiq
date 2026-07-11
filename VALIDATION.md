@@ -386,3 +386,16 @@
 - Local JavaScript validation: `node --check` passed for the theme app script.
 - Local PHP lint limitation: PHP CLI is not installed in this shell; WordPress theme file editor validation accepted the PHP update and live HTTPS route checks confirmed the account route works.
 - Secrets scan: repository scan found no committed Stripe live keys, Sandbox keys, or webhook secrets after cleanup.
+
+## Phase 30 Intelligence Platform Foundation Validation
+
+- Local validation passed: `npm run validate`.
+- HTTP route checks returned 200 for Website Overview, Organic Keywords, Keyword Opportunities, Competitor Intelligence, Backlinks, Content Gap, Site Audit, AI Visibility Intelligence, Search Trends, Local Rankings, homepage, subscription, and dashboard.
+- Playwright CLI screenshots captured:
+  - `reports/phase-30-intelligence/website-overview-desktop.png`
+  - `reports/phase-30-intelligence/website-overview-mobile-after-sidebar.png`
+  - `reports/phase-30-intelligence/organic-keywords-desktop.png`
+  - `reports/phase-30-intelligence/ai-visibility-intelligence-desktop.png`
+  - `reports/phase-30-intelligence/subscription-desktop.png`
+- Visual review confirmed the new Intelligence pages render with the existing Executive Design System and the mobile sidebar no longer pushes Intelligence content far below the first viewport.
+- PHP lint remains blocked locally because PHP CLI is not installed in this shell.

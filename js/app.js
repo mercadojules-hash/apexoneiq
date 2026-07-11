@@ -25,6 +25,16 @@ const pageTitles = {
 	'forecast.html': 'ApexOneIQ - Future Simulation',
 	'reports.html': 'ApexOneIQ - Board Briefings',
 	'ai-visibility.html': 'ApexOneIQ - AI Recommendations',
+	'website-overview.html': 'ApexOneIQ - Website Overview',
+	'organic-keywords.html': 'ApexOneIQ - Organic Keywords',
+	'keyword-opportunities.html': 'ApexOneIQ - Keyword Opportunities',
+	'competitor-intelligence.html': 'ApexOneIQ - Competitor Intelligence',
+	'backlinks.html': 'ApexOneIQ - Backlink Intelligence',
+	'content-gap.html': 'ApexOneIQ - Content Gap',
+	'site-audit.html': 'ApexOneIQ - Site Audit Intelligence',
+	'intelligence-ai-visibility.html': 'ApexOneIQ - AI Visibility Intelligence',
+	'search-trends.html': 'ApexOneIQ - Search Trends',
+	'local-rankings.html': 'ApexOneIQ - Local Rankings',
 	'history.html': 'ApexOneIQ - Market Intelligence',
 	'alerts.html': 'ApexOneIQ - Decision Alerts',
 	'website-profile.html': 'ApexOneIQ - Website Health',
@@ -46,16 +56,26 @@ const executiveNav = [
 	['Executive', [
 		['Dashboard', 'dashboard.html'],
 		['Executive Brief', 'executive-brief.html'],
-		['Action Center', 'opportunities.html']
+		['Action Center', 'opportunities.html'],
+		['Forecast', 'forecast.html'],
+		['Reports', 'reports.html']
 	]],
 	['Intelligence', [
-		['Competitors', 'competitors.html'],
-		['Executive Timeline', 'business-timeline.html'],
-		['AI Visibility', 'ai-visibility.html'],
-		['Market Intelligence', 'history.html']
+		['Website Overview', 'website-overview.html'],
+		['Organic Keywords', 'organic-keywords.html'],
+		['Keyword Opportunities', 'keyword-opportunities.html'],
+		['Competitor Intelligence', 'competitor-intelligence.html'],
+		['Backlinks', 'backlinks.html'],
+		['Content Gap', 'content-gap.html'],
+		['Site Audit', 'site-audit.html'],
+		['AI Visibility', 'intelligence-ai-visibility.html'],
+		['Search Trends', 'search-trends.html'],
+		['Local Rankings', 'local-rankings.html']
 	]],
 	['Operations', [
-		['Website Health', 'website-profile.html'],
+		['Website Profile', 'website-profile.html'],
+		['AI Recommendations', 'ai-visibility.html'],
+		['Competitors', 'competitors.html'],
 		['Google Business', null],
 		['Content', null],
 		['Reviews', null],
@@ -68,9 +88,9 @@ const executiveNav = [
 		['Performance', null]
 	]],
 	['Planning', [
-		['Growth Forecast', 'forecast.html'],
+		['Executive Timeline', 'business-timeline.html'],
 		['Playbooks', 'opportunities.html?view=playbooks'],
-		['Reports', 'reports.html']
+		['Market Intelligence', 'history.html']
 	]],
 	['System', [
 		['Settings', 'settings.html'],
@@ -88,6 +108,9 @@ const freePreviewNav = [
 	]],
 	['Limited Preview', [
 		['Cloud Intelligence', 'dashboard.html?demo=1', 'Demo'],
+		['Website Overview', 'website-overview.html?demo=1', 'Preview'],
+		['Keyword Research', null, 'Upgrade'],
+		['AI Visibility', null, 'Upgrade'],
 		['Command Execution', null, 'Upgrade'],
 		['Concierge Service', null, 'Upgrade']
 	]]
@@ -97,9 +120,15 @@ const commandPreviewNav = [
 	['Cloud Intelligence', [
 		['Mission Control', 'dashboard.html'],
 		['Executive Brief', 'executive-brief.html'],
-		['Competitors', 'competitors.html'],
-		['AI Visibility', 'ai-visibility.html'],
 		['Reports', 'reports.html']
+	]],
+	['Intelligence Research', [
+		['Website Overview', 'website-overview.html'],
+		['Organic Keywords', 'organic-keywords.html'],
+		['Keyword Opportunities', 'keyword-opportunities.html'],
+		['Competitor Intelligence', 'competitor-intelligence.html'],
+		['AI Visibility', 'intelligence-ai-visibility.html'],
+		['Local Rankings', 'local-rankings.html']
 	]],
 	['Execution', [
 		['Command Center', 'command-dashboard.html'],
@@ -123,8 +152,11 @@ const essentialsPreviewNav = [
 		['Reports', 'concierge-essentials-dashboard.html#reports'],
 		['Support', 'mailto:support@apexoneiq.com']
 	]],
-	['Available Upgrades', [
+	['Included Intelligence Context', [
 		['Cloud Intelligence', 'dashboard.html?demo=1', 'Included context'],
+		['Website Overview', 'website-overview.html?demo=1', 'Preview'],
+		['AI Visibility', 'intelligence-ai-visibility.html?demo=1', 'Preview'],
+		['Keyword Opportunities', null, 'Cloud'],
 		['Command Execution', null, 'Upgrade'],
 		['Concierge Growth', null, 'Upgrade']
 	]]
@@ -290,6 +322,16 @@ const routeAskDefaults = {
 	'reports.html': "Explain today's report.",
 	'alerts.html': 'Which alert deserves action?',
 	'settings.html': 'What setup issue affects growth today?',
+	'website-overview.html': 'Where does my website stand?',
+	'organic-keywords.html': 'Which keyword should I improve first?',
+	'keyword-opportunities.html': 'Which opportunity has the highest ROI?',
+	'competitor-intelligence.html': 'Why is this competitor gaining?',
+	'backlinks.html': 'Which authority gap matters most?',
+	'content-gap.html': 'Which missing page has the largest business impact?',
+	'site-audit.html': 'Which site issue costs the most revenue?',
+	'intelligence-ai-visibility.html': 'How do I become a stronger AI recommendation?',
+	'search-trends.html': 'Which trend should I act on this week?',
+	'local-rankings.html': 'Which city needs attention first?',
 	'command-dashboard.html': 'Show active AI agent work.',
 	'enterprise-dashboard.html': 'Which region needs intervention?',
 	'concierge-dashboard.html': "Summarize today's Concierge progress.",
@@ -315,6 +357,16 @@ const routeAskSuggestions = {
 	'reports.html': ["Explain today's report.", 'Prepare the board summary.', 'What decision should this report drive?'],
 	'alerts.html': ['Which alert deserves action?', 'What can be archived?', 'What should interrupt me?'],
 	'settings.html': ['What setup issue affects growth today?', 'Explain billing status.', 'What privacy setting matters?'],
+	'website-overview.html': ['Where does my website stand?', 'What is holding me back?', 'Where is the biggest opportunity?'],
+	'organic-keywords.html': ['Which keyword should I improve first?', 'Why do competitors outrank us?', 'What page should support this keyword?'],
+	'keyword-opportunities.html': ['Which opportunity has the highest ROI?', 'Show easy wins.', 'What should become a landing page?'],
+	'competitor-intelligence.html': ['Why is this competitor gaining?', 'Which competitor is most dangerous?', 'What should I copy or avoid?'],
+	'backlinks.html': ['Which authority gap matters most?', 'What link would change trust?', 'Which mentions should I pursue?'],
+	'content-gap.html': ['Which missing page has the largest business impact?', 'Generate the next content brief.', 'What should wait?'],
+	'site-audit.html': ['Which site issue costs the most revenue?', 'Open the highest priority playbook.', 'What can be ignored?'],
+	'intelligence-ai-visibility.html': ['How do I become a stronger AI recommendation?', 'Which engine is weakest?', 'What proof is missing?'],
+	'search-trends.html': ['Which trend should I act on this week?', 'What trend affects revenue?', 'What should I monitor?'],
+	'local-rankings.html': ['Which city needs attention first?', 'Where is Map Pack movement possible?', 'Which ZIP has competitor pressure?'],
 	'command-dashboard.html': ['Run another citation campaign.', 'Pause all publishing.', 'Show failed automations.'],
 	'enterprise-dashboard.html': ['Which region needs intervention?', 'Why is Florida behind Texas?', 'Generate the executive board report.'],
 	'concierge-dashboard.html': ["Summarize today's Concierge progress.", 'Show work waiting for my approval.', 'Compare Concierge tiers.'],
