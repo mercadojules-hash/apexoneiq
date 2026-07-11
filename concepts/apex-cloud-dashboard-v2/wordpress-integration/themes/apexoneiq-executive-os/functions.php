@@ -15,6 +15,8 @@ define( 'APEXONEIQ_THEME_URI', trailingslashit( get_template_directory_uri() ) )
 
 require_once APEXONEIQ_THEME_DIR . 'inc/static-renderer.php';
 require_once APEXONEIQ_THEME_DIR . 'inc/billing-routes.php';
+require_once APEXONEIQ_THEME_DIR . 'inc/admin-settings.php';
+require_once APEXONEIQ_THEME_DIR . 'inc/subscription-state.php';
 
 add_action( 'after_setup_theme', 'apexoneiq_theme_setup' );
 add_action( 'wp_enqueue_scripts', 'apexoneiq_enqueue_assets' );
@@ -103,6 +105,11 @@ function apexoneiq_template_include( $template ) {
 
 	$static_page = get_query_var( 'apexoneiq_static_page' );
 	if ( $static_page ) {
+		if ( in_array( $static_page, array( 'sign-in.html', 'sign-in/index.html' ), true ) ) {
+			wp_safe_redirect( wp_login_url( home_url( '/dashboard.html' ) ) );
+			exit;
+		}
+
 		apexoneiq_render_static_page( $static_page );
 		exit;
 	}

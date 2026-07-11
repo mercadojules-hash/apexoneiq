@@ -306,6 +306,25 @@
 - Phase 25 SSL validation confirmed `https://apexoneiq.com/` responds over HTTPS, but certificate trust is still not fully validated from curl without `-k` because the current certificate chain reports as self-signed while SSL provisioning completes.
 - Phase 25 validation confirmed Twenty Twenty-Five was not modified; ApexOneIQ is served by a separate custom theme.
 - Phase 25 validation confirmed no production Stripe keys, live payment processing, Enterprise/Elite subscription logic changes, MixtapePSD changes, AICandlez changes, or production-site migrations were performed.
+- Phase 26 SSL validation confirmed `https://apexoneiq.com/` and `https://www.apexoneiq.com/` validate successfully without `curl -k`.
+- Phase 26 Stripe settings validation confirmed sandbox credentials were saved through trusted HTTPS in the WordPress admin settings page and were not written to repository files.
+- Phase 26 checkout route validation confirmed all four WordPress checkout routes returned HTTP 200 with Stripe-hosted Checkout URLs:
+  - `POST /api/billing/checkout/cloud`
+  - `POST /api/billing/checkout/command`
+  - `POST /api/billing/checkout/essentials`
+  - `POST /api/billing/checkout/growth`
+- Phase 26 hosted Checkout validation confirmed each returned Stripe Checkout URL loads a Stripe-hosted Checkout page with HTTP 200.
+- Phase 26 Stripe API validation confirmed each Checkout Session is in `subscription` mode, uses the expected Apex plan metadata, and contains the expected success and cancel URLs.
+- Phase 26 line-item validation confirmed the existing sandbox Price IDs are used:
+  - Cloud: `price_1Trqbv6cN69mDatfCqC2aa1K`
+  - Command: `price_1Trqfn6cN69mDatf5Pq20TGn`
+  - Essentials: `price_1TrqhW6cN69mDatfYcDP2YRb`
+  - Growth: `price_1TrqjY6cN69mDatfKVG2Twwo`
+- Phase 26 success/cancel validation confirmed `/checkout/success.html?session_id=...` and `/checkout/cancel.html` return HTTP 200.
+- Phase 26 live-key validation confirmed a dummy `sk_live_` value is rejected by the WordPress settings layer, and the checkout route remains sandbox-only in code.
+- Phase 26 key hygiene validation confirmed no provided Stripe sandbox keys and no live Stripe keys are present in the ApexOneIQ workspace or git metadata.
+- Phase 26 WordPress auth foundation validation confirmed rendered dashboard pages include WordPress auth configuration and Sign In routes through `wp-login.php`.
+- Phase 26 direct auth route validation confirmed `/sign-in.html` redirects to `wp-login.php` with `redirect_to=/dashboard.html`.
 
 ## Future Stripe Architecture Notes
 

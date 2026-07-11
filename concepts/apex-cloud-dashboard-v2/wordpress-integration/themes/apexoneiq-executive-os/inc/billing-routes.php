@@ -133,6 +133,16 @@ function apexoneiq_get_env_value( $key ) {
 		$value = constant( $key );
 	}
 
+	if ( false === $value || '' === $value ) {
+		$options = array(
+			'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY' => 'apexoneiq_stripe_publishable_key',
+			'STRIPE_SECRET_KEY'                 => 'apexoneiq_stripe_secret_key',
+		);
+
+		if ( isset( $options[ $key ] ) ) {
+			$value = get_option( $options[ $key ], '' );
+		}
+	}
+
 	return is_string( $value ) ? trim( $value ) : '';
 }
-

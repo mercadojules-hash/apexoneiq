@@ -232,3 +232,22 @@
 - Installed and activated the custom theme on the live ApexOneIQ WordPress development site.
 - Used temporary backup utility plugins only to create the fresh WordPress backup; both temporary plugins were removed from the live site after backup verification.
 - Preserved scope: no production Stripe keys, live payment processing, Enterprise/Elite subscription logic changes, dashboard redesign, Twenty Twenty-Five edits, MixtapePSD changes, AICandlez changes, or production-site migrations were performed.
+
+## Phase 26 - Stripe Sandbox End-to-End Validation
+
+- Added `inc/admin-settings.php` to provide a WordPress admin settings page for sandbox Stripe credentials without hardcoding or committing keys.
+- Updated `inc/billing-routes.php` so checkout routes can read sandbox keys from server environment values or WordPress options.
+- Preserved the existing sandbox-only guard: checkout still rejects non-`sk_test_` secret keys before contacting Stripe.
+- Configured the live WordPress development site with Stripe Sandbox credentials through trusted HTTPS after SSL validation passed.
+- Validated real Stripe Sandbox Checkout Session creation for:
+  - Apex Cloud
+  - Apex Command
+  - Apex Concierge Essentials
+  - Apex Concierge Growth
+- Verified all created sessions use the existing sandbox Price IDs and no new Stripe products were created.
+- Verified each checkout route returns a Stripe-hosted Checkout URL.
+- Verified checkout success and cancel pages return HTTP 200.
+- Added `inc/subscription-state.php` as the WordPress user subscription-state foundation for the future entitlement phase.
+- Updated the static renderer and theme JavaScript so dashboard Sign In routes through WordPress authentication while preserving the current Executive Dashboard UI.
+- Updated direct sign-in routes so `/sign-in.html` and `/sign-in/` hand off to WordPress login instead of the previous placeholder sign-in concept.
+- Preserved scope: no live Stripe credentials, pricing changes, new products, dashboard redesign, Enterprise/Elite checkout conversion, or entitlement enforcement were added.
