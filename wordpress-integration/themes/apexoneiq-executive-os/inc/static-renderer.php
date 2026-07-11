@@ -62,12 +62,13 @@ function apexoneiq_normalize_static_page( $page ) {
 function apexoneiq_transform_static_html( $html ) {
 	$asset_uri = APEXONEIQ_THEME_URI;
 	$site_url  = trailingslashit( home_url() );
+	$auth_url  = wp_login_url( home_url( '/dashboard.html' ) );
 
 	$replacements = array(
 		'href="css/app.css"' => 'href="' . esc_url( $asset_uri . 'assets/css/app.css?ver=' . APEXONEIQ_THEME_VERSION ) . '"',
 		'src="js/app.js"'    => 'src="' . esc_url( $asset_uri . 'assets/js/app.js?ver=' . APEXONEIQ_THEME_VERSION ) . '"',
-		'href="sign-in.html"' => 'href="' . esc_url( $site_url . 'sign-in.html' ) . '"',
-		'href="/sign-in/"'   => 'href="' . esc_url( $site_url . 'sign-in/' ) . '"',
+		'href="sign-in.html"' => 'href="' . esc_url( $auth_url ) . '"',
+		'href="/sign-in/"'   => 'href="' . esc_url( $auth_url ) . '"',
 	);
 
 	$html = strtr( $html, $replacements );
@@ -84,6 +85,21 @@ function apexoneiq_transform_static_html( $html ) {
 		},
 		$html
 	);
+
+	$app_script = '<script src="' . esc_url( $asset_uri . 'assets/js/app.js?ver=' . APEXONEIQ_THEME_VERSION ) . '"></script>';
+	$config     = sprintf(
+		'<script>window.ApexOneIQ=%s;</script>',
+		wp_json_encode(
+			array(
+				'baseUrl'      => $site_url,
+				'authUrl'      => $auth_url,
+				'isLoggedIn'   => is_user_logged_in(),
+				'subscription' => apexoneiq_get_current_user_subscription_state(),
+			)
+		)
+	);
+
+	$html = str_replace( $app_script, $config . $app_script, $html );
 
 	return $html;
 }

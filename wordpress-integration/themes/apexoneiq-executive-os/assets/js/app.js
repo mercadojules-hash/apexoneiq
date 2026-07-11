@@ -1,4 +1,5 @@
 const apexRoot = window.ApexOneIQ?.baseUrl || `${location.origin}/`;
+const apexAuthUrl = window.ApexOneIQ?.authUrl || `${apexRoot}wp-login.php`;
 const apexRoutePath = location.pathname.replace(/\/$/, '');
 const route = apexRoutePath.split('/').pop() || 'dashboard.html';
 const apexHref = href => {
@@ -98,7 +99,7 @@ document.querySelectorAll('.account').forEach(account => {
 		const signIn = document.createElement('a');
 		signIn.className = 'ghost-button sign-in-link';
 		signIn.dataset.signInLink = '';
-		signIn.href = apexHref('sign-in.html');
+		signIn.href = apexAuthUrl;
 		signIn.textContent = 'Sign In';
 		const ask = account.querySelector('[data-ask]');
 		const avatar = account.querySelector('.avatar');
