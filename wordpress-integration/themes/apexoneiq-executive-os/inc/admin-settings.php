@@ -36,12 +36,14 @@ function apexoneiq_render_admin_settings_page() {
 	$publishable_key = get_option( 'apexoneiq_stripe_publishable_key', '' );
 	$secret_key      = get_option( 'apexoneiq_stripe_secret_key', '' );
 	$webhook_secret  = get_option( 'apexoneiq_stripe_webhook_secret', '' );
+	$google_client_id = get_option( 'apexoneiq_google_client_id', '' );
+	$google_client_secret = get_option( 'apexoneiq_google_client_secret', '' );
 	$status          = isset( $_GET['apexoneiq_status'] ) ? sanitize_key( wp_unslash( $_GET['apexoneiq_status'] ) ) : '';
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'ApexOneIQ Settings', 'apexoneiq' ); ?></h1>
 		<?php if ( 'saved' === $status ) : ?>
-			<div class="notice notice-success"><p><?php esc_html_e( 'Sandbox Stripe settings saved.', 'apexoneiq' ); ?></p></div>
+			<div class="notice notice-success"><p><?php esc_html_e( 'ApexOneIQ settings saved.', 'apexoneiq' ); ?></p></div>
 		<?php elseif ( 'invalid' === $status ) : ?>
 			<div class="notice notice-error"><p><?php esc_html_e( 'Only Stripe sandbox keys are allowed.', 'apexoneiq' ); ?></p></div>
 		<?php endif; ?>
@@ -69,8 +71,22 @@ function apexoneiq_render_admin_settings_page() {
 						<p class="description"><?php esc_html_e( 'Must start with whsec_. Used to verify Stripe Sandbox webhook signatures.', 'apexoneiq' ); ?></p>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row"><label for="apexoneiq_google_client_id"><?php esc_html_e( 'Google OAuth client ID', 'apexoneiq' ); ?></label></th>
+					<td>
+						<input class="regular-text code" type="text" id="apexoneiq_google_client_id" name="apexoneiq_google_client_id" value="<?php echo esc_attr( $google_client_id ); ?>" autocomplete="off">
+						<p class="description"><?php esc_html_e( 'Preferred: define APEXONEIQ_GOOGLE_CLIENT_ID in wp-config.php. This option is a protected admin fallback.', 'apexoneiq' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="apexoneiq_google_client_secret"><?php esc_html_e( 'Google OAuth client secret', 'apexoneiq' ); ?></label></th>
+					<td>
+						<input class="regular-text code" type="password" id="apexoneiq_google_client_secret" name="apexoneiq_google_client_secret" value="<?php echo esc_attr( $google_client_secret ); ?>" autocomplete="off">
+						<p class="description"><?php esc_html_e( 'Never commit this value. The OAuth callback exchanges authorization codes server-side only.', 'apexoneiq' ); ?></p>
+					</td>
+				</tr>
 			</table>
-			<?php submit_button( __( 'Save Sandbox Settings', 'apexoneiq' ) ); ?>
+			<?php submit_button( __( 'Save ApexOneIQ Settings', 'apexoneiq' ) ); ?>
 		</form>
 	</div>
 	<?php
@@ -89,6 +105,8 @@ function apexoneiq_save_stripe_settings() {
 	$publishable_key = isset( $_POST['apexoneiq_stripe_publishable_key'] ) ? sanitize_text_field( wp_unslash( $_POST['apexoneiq_stripe_publishable_key'] ) ) : '';
 	$secret_key      = isset( $_POST['apexoneiq_stripe_secret_key'] ) ? sanitize_text_field( wp_unslash( $_POST['apexoneiq_stripe_secret_key'] ) ) : '';
 	$webhook_secret  = isset( $_POST['apexoneiq_stripe_webhook_secret'] ) ? sanitize_text_field( wp_unslash( $_POST['apexoneiq_stripe_webhook_secret'] ) ) : '';
+	$google_client_id = isset( $_POST['apexoneiq_google_client_id'] ) ? sanitize_text_field( wp_unslash( $_POST['apexoneiq_google_client_id'] ) ) : '';
+	$google_client_secret = isset( $_POST['apexoneiq_google_client_secret'] ) ? sanitize_text_field( wp_unslash( $_POST['apexoneiq_google_client_secret'] ) ) : '';
 
 	if ( $publishable_key && 0 !== strpos( $publishable_key, 'pk_test_' ) ) {
 		wp_safe_redirect( add_query_arg( 'apexoneiq_status', 'invalid', wp_get_referer() ?: admin_url( 'themes.php?page=apexoneiq-settings' ) ) );
@@ -108,6 +126,8 @@ function apexoneiq_save_stripe_settings() {
 	update_option( 'apexoneiq_stripe_publishable_key', $publishable_key, false );
 	update_option( 'apexoneiq_stripe_secret_key', $secret_key, false );
 	update_option( 'apexoneiq_stripe_webhook_secret', $webhook_secret, false );
+	update_option( 'apexoneiq_google_client_id', $google_client_id, false );
+	update_option( 'apexoneiq_google_client_secret', $google_client_secret, false );
 
 	wp_safe_redirect( add_query_arg( 'apexoneiq_status', 'saved', admin_url( 'themes.php?page=apexoneiq-settings' ) ) );
 	exit;

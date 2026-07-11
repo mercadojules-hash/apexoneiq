@@ -1,5 +1,5 @@
 const apexRoot = window.ApexOneIQ?.baseUrl || `${location.origin}/`;
-const apexAuthUrl = window.ApexOneIQ?.authUrl || `${apexRoot}wp-login.php`;
+const apexAuthUrl = window.ApexOneIQ?.authUrl || `${apexRoot}sign-in.html`;
 const apexRegisterUrl = window.ApexOneIQ?.registerUrl || `${apexRoot}register/`;
 const apexRoutePath = location.pathname.replace(/\/$/, '');
 const route = document.body.dataset.route || apexRoutePath.split('/').pop() || 'dashboard.html';

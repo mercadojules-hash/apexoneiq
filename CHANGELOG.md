@@ -1,5 +1,16 @@
 # Apex Cloud Dashboard v2 Changelog
 
+## Phase 31 - Homepage Authority Layer and Google OAuth
+
+- Replaced the homepage post-hero feature section with a premium trust and authority layer for ApexOneIQ as an executive operating system for business growth.
+- Added a smooth trusted-company logo marquee, large authority ticker, executive-team value cards, animated statistics, premium testimonial cards with photography, and stronger trust-oriented messaging.
+- Implemented server-side Google OAuth start and callback routes using `/oauth/google/` and `/oauth/google/callback/`.
+- Added Google OAuth account creation/linking for Free users, verified-email linking to existing users, server-side state/nonce handling, token exchange, and Google identity validation.
+- Added secure Google credential sources through `APEXONEIQ_GOOGLE_CLIENT_ID`, `APEXONEIQ_GOOGLE_CLIENT_SECRET`, environment variables, or protected WordPress admin options.
+- Updated public sign-in/register surfaces so Google Sign-In is the primary ApexOneIQ authentication path.
+- Redirected public WordPress login attempts to the ApexOneIQ sign-in page while preserving administrator access with `wp-login.php?apexoneiq_admin=1`.
+- Kept Apple OAuth inactive.
+
 ## Phase 30 - ApexOneIQ Intelligence Platform Foundation
 
 - Added the new Intelligence Layer as a research workspace separate from the Executive Dashboard landing experience.

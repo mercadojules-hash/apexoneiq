@@ -30,7 +30,7 @@ function apexoneiq_handle_checkout_request( $plan ) {
 			array(
 				'code'      => 'authentication_required',
 				'message'   => 'Sign in before starting ApexOneIQ Checkout.',
-				'login_url' => wp_login_url( home_url( '/subscription.html' ) ),
+				'login_url' => add_query_arg( 'redirect_to', rawurlencode( home_url( '/subscription.html' ) ), home_url( '/sign-in.html' ) ),
 			),
 			401
 		);
