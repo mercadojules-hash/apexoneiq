@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APEXONEIQ_THEME_VERSION', '0.1.6' );
+define( 'APEXONEIQ_THEME_VERSION', '0.1.9' );
 define( 'APEXONEIQ_THEME_DIR', trailingslashit( get_template_directory() ) );
 define( 'APEXONEIQ_THEME_URI', trailingslashit( get_template_directory_uri() ) );
 
@@ -85,6 +85,7 @@ function apexoneiq_register_rewrite_routes() {
 	add_rewrite_rule( '^([a-z0-9-]+\.html)$', 'index.php?apexoneiq_static_page=$matches[1]', 'top' );
 	add_rewrite_rule( '^api/billing/checkout/(cloud|command|essentials|growth)/?$', 'index.php?apexoneiq_checkout_plan=$matches[1]', 'top' );
 	add_rewrite_rule( '^api/stripe/webhook/?$', 'index.php?apexoneiq_stripe_webhook=1', 'top' );
+	add_rewrite_rule( '^api/onboarding/scan/?$', 'index.php?apexoneiq_onboarding_scan=1', 'top' );
 }
 
 /**
@@ -101,6 +102,7 @@ function apexoneiq_register_query_vars( $vars ) {
 	$vars[] = 'apexoneiq_register_page';
 	$vars[] = 'apexoneiq_oauth_start';
 	$vars[] = 'apexoneiq_oauth_provider';
+	$vars[] = 'apexoneiq_onboarding_scan';
 
 	return $vars;
 }
@@ -114,6 +116,11 @@ function apexoneiq_register_query_vars( $vars ) {
 function apexoneiq_template_include( $template ) {
 	if ( get_query_var( 'apexoneiq_stripe_webhook' ) ) {
 		apexoneiq_handle_stripe_webhook();
+		exit;
+	}
+
+	if ( get_query_var( 'apexoneiq_onboarding_scan' ) ) {
+		apexoneiq_handle_onboarding_scan();
 		exit;
 	}
 
@@ -178,7 +185,7 @@ function apexoneiq_theme_activation_notice() {
 	apexoneiq_register_rewrite_routes();
 	apexoneiq_install_subscription_schema();
 	flush_rewrite_rules();
-	update_option( 'apexoneiq_rewrite_version', '1.8.0', false );
+	update_option( 'apexoneiq_rewrite_version', '1.9.0', false );
 	update_option( 'apexoneiq_theme_installed_at', gmdate( 'c' ) );
 }
 
@@ -186,10 +193,56 @@ function apexoneiq_theme_activation_notice() {
  * Flush rewrites once when theme route definitions change.
  */
 function apexoneiq_maybe_flush_rewrite_routes() {
-	if ( '1.8.0' !== get_option( 'apexoneiq_rewrite_version' ) ) {
+	if ( '1.9.0' !== get_option( 'apexoneiq_rewrite_version' ) ) {
 		flush_rewrite_rules( false );
-		update_option( 'apexoneiq_rewrite_version', '1.8.0', false );
+		update_option( 'apexoneiq_rewrite_version', '1.9.0', false );
 	}
+}
+
+/**
+ * Persist the first Executive Scan so routing can distinguish first-time and returning users.
+ */
+function apexoneiq_handle_onboarding_scan() {
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( array( 'message' => __( 'Authentication required.', 'apexoneiq' ) ), 401 );
+	}
+
+	$nonce = isset( $_SERVER['HTTP_X_WP_NONCE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_WP_NONCE'] ) ) : '';
+	if ( ! wp_verify_nonce( $nonce, 'apexoneiq_scan' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Scan session expired.', 'apexoneiq' ) ), 403 );
+	}
+
+	$payload = json_decode( file_get_contents( 'php://input' ), true );
+	if ( ! is_array( $payload ) ) {
+		wp_send_json_error( array( 'message' => __( 'Invalid scan payload.', 'apexoneiq' ) ), 400 );
+	}
+
+	$website = isset( $payload['website'] ) ? esc_url_raw( $payload['website'] ) : '';
+	if ( ! wp_http_validate_url( $website ) || 0 !== strpos( $website, 'https://' ) ) {
+		wp_send_json_error( array( 'message' => __( 'A secure https:// website URL is required.', 'apexoneiq' ) ), 400 );
+	}
+
+	$user_id = get_current_user_id();
+	$host    = wp_parse_url( $website, PHP_URL_HOST );
+	$host    = $host ? preg_replace( '/^www\./', '', $host ) : __( 'Your Business', 'apexoneiq' );
+	$score   = isset( $payload['score'] ) ? absint( $payload['score'] ) : 61;
+	$score   = max( 1, min( 100, $score ) );
+	$trend   = isset( $payload['trend'] ) && is_array( $payload['trend'] ) ? array_map( 'absint', $payload['trend'] ) : array( 12, 28, 41, 55, $score );
+
+	update_user_meta( $user_id, 'apexoneiq_business_name', sanitize_text_field( $host ) );
+	update_user_meta( $user_id, 'apexoneiq_business_website', $website );
+	update_user_meta( $user_id, 'apexoneiq_onboarding_completed', '1' );
+	update_user_meta( $user_id, 'apexoneiq_free_snapshot_status', 'executive_scan_completed' );
+	update_user_meta( $user_id, 'apexoneiq_executive_score', $score );
+	update_user_meta( $user_id, 'apexoneiq_executive_trend', wp_json_encode( array_slice( $trend, -8 ) ) );
+	update_user_meta( $user_id, 'apexoneiq_scan_completed_at', gmdate( 'c' ) );
+
+	wp_send_json_success(
+		array(
+			'dashboardUrl' => home_url( '/dashboard.html?scan=complete' ),
+			'score'        => $score,
+		)
+	);
 }
 
 /**
