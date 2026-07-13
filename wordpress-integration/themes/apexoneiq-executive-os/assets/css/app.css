@@ -449,6 +449,10 @@ h3 {
 	gap: 14px;
 }
 
+.account-workspace .grid-3 {
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
 .chart-panel {
 	padding: 22px;
 }
@@ -692,11 +696,13 @@ h3 {
 
 .ai-grid {
 	display: grid;
-	grid-template-columns: repeat(5, minmax(0, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 	gap: 12px;
 }
 
 .engine {
+	min-width: 0;
+	overflow: hidden;
 	padding: 18px;
 	border: 1px solid var(--line);
 	border-radius: 14px;
@@ -706,7 +712,9 @@ h3 {
 .engine strong {
 	display: block;
 	margin: 10px 0;
-	font-size: 25px;
+	font-size: clamp(18px, 2vw, 22px);
+	line-height: 1.08;
+	overflow-wrap: anywhere;
 }
 
 .timeline-item {
@@ -7107,6 +7115,7 @@ button[disabled],
 .trend-chart,
 .gap-map div,
 .local-map-grid button {
+	min-width: 0;
 	border: 1px solid rgba(255, 255, 255, .1);
 	background: linear-gradient(145deg, rgba(255, 255, 255, .065), rgba(255, 255, 255, .025));
 	border-radius: 8px;
@@ -7156,6 +7165,7 @@ button[disabled],
 .local-map-grid span,
 .local-map-grid small {
 	color: var(--muted);
+	overflow-wrap: anywhere;
 }
 
 .intel-kpi i,
