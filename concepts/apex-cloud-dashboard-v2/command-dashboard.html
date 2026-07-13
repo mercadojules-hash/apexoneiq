@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ApexOneIQ - Command Center</title><link rel="stylesheet" href="css/app.css"></head>
+<body>
+	<div class="app command-workspace">
+		<aside class="sidebar">
+			<div class="brand"><div class="logo">IQ</div><div><strong>ApexOneIQ</strong><span>Command Workspace</span></div></div>
+			<div class="site-card"><span class="eyebrow"><span class="live-dot"></span>Execution live</span><strong>example.com</strong><p>43 AI tasks running / 12 completed today</p></div>
+			<div class="nav-section">Workspaces</div>
+			<nav class="workspace-nav">
+				<a class="nav-link" href="dashboard.html"><span>Cloud Intelligence</span></a>
+				<a class="nav-link active" href="command-dashboard.html"><span>Command Center</span></a>
+				<a class="nav-link" href="enterprise-dashboard.html"><span>Enterprise Ops</span></a>
+			</nav>
+			<div class="nav-section">Command</div>
+			<nav class="workspace-nav">
+				<a class="nav-link" href="command-dashboard.html#agent-queue" data-ask="Show active AI agent work."><span>Agent Queue</span></a>
+				<a class="nav-link" href="command-dashboard.html#approvals" data-ask="Show tasks waiting for approval."><span>Approvals</span><small>2</small></a>
+				<a class="nav-link" href="command-dashboard.html#execute-now" data-ask="What should I execute next?"><span>Execute Now</span></a>
+				<a class="nav-link" href="command-dashboard.html#activity" data-ask="Show today's execution log."><span>Activity Feed</span></a>
+			</nav>
+			<div class="system-card"><span class="eyebrow">Execution mode</span><p>Command performs work after Cloud decides what deserves action.</p><a class="button" href="dashboard.html">Return to Cloud</a></div>
+		</aside>
+		<main class="main">
+			<header class="topbar"><div><span class="eyebrow"><span class="live-dot"></span>Command center online</span></div><div class="account"><span class="status-pill status-ok">43 active tasks</span><div class="avatar">JM</div></div></header>
+			<section class="command-hero">
+				<div>
+					<div class="page-kicker">Apex Command</div>
+					<h1>Command Center Active</h1>
+					<p>Your AI workforce is executing approved growth work across content, trust, AI visibility, and local presence.</p>
+				</div>
+				<div class="command-hero-grid">
+					<button class="command-stat primary" data-ask="Show all AI tasks currently running."><span>AI Tasks Running</span><strong>43</strong><small>8 agents active</small></button>
+					<button class="command-stat" data-ask="Summarize today's completed executions."><span>Completed Today</span><strong>12</strong><small>6 shipped to production</small></button>
+					<button class="command-stat warning" data-ask="Show tasks awaiting approval."><span>Awaiting Approval</span><strong>2</strong><small>Owner review needed</small></button>
+					<button class="command-stat" data-ask="What completes in four minutes?"><span>Next Completion</span><strong>4 min</strong><small>Schema validation</small></button>
+				</div>
+			</section>
+
+			<section class="command-panel" id="agent-queue">
+				<div class="panel-head"><div><div class="panel-label">Active Agent Queue</div><h3>AI agents currently executing approved business work.</h3></div><div class="filter"><button class="active" data-filter="all">All</button><button data-filter="running">Running</button><button data-filter="approval">Approval</button><button data-filter="publishing">Publishing</button><button data-filter="failed">Failed</button></div></div>
+				<div class="command-table">
+					<div class="command-row header"><span>Task</span><span>Status</span><span>Progress</span><span>ETA</span><span>AI</span><span>Priority</span><span>Action</span></div>
+					<div class="command-row" data-opportunity="running"><strong>Writing service-area article</strong><span class="status-pill status-ok">Running</span><i style="--w:72%"></i><span>11 min</span><span>Content AI</span><span>High</span><button class="row-action" data-ask="Explain the writing service-area article task.">Open</button></div>
+					<div class="command-row" data-opportunity="publishing"><strong>Publishing Google Business update</strong><span class="status-pill">Publishing</span><i style="--w:88%"></i><span>4 min</span><span>GBP AI</span><span>Critical</span><button class="row-action" data-ask="Show GBP publishing status.">Open</button></div>
+					<div class="command-row" data-opportunity="running"><strong>Creating FAQ answer set</strong><span class="status-pill status-ok">Running</span><i style="--w:54%"></i><span>18 min</span><span>Content AI</span><span>Medium</span><button class="row-action" data-ask="Review the FAQ answer set.">Review</button></div>
+					<div class="command-row" data-opportunity="approval"><strong>Comparison page draft</strong><span class="status-pill status-high">Approval</span><i style="--w:100%"></i><span>Ready</span><span>SEO AI</span><span>High</span><button class="row-action" data-ask="Approve the comparison page draft.">Approve</button></div>
+					<div class="command-row" data-opportunity="failed"><strong>Citation submission retry</strong><span class="status-pill status-critical">Failed</span><i style="--w:36%"></i><span>Retry</span><span>Citation AI</span><span>Medium</span><button class="row-action" data-ask="Show failed citation automation and retry options.">Retry</button></div>
+				</div>
+			</section>
+
+			<section class="command-grid">
+				<div class="command-panel">
+					<div class="panel-head"><div><div class="panel-label">Command Pipeline</div><h3>Execution states from queue to completion.</h3></div></div>
+					<div class="pipeline-board">
+						<div><span>Queued</span><strong>9</strong></div><div><span>Running</span><strong>43</strong></div><div><span>Approval</span><strong>2</strong></div><div><span>Publishing</span><strong>5</strong></div><div><span>Completed</span><strong>12</strong></div><div><span>Failed</span><strong class="alert">1</strong></div>
+					</div>
+				</div>
+				<div class="command-panel">
+					<div class="panel-head"><div><div class="panel-label">Automation Health</div><h3>System execution status.</h3></div></div>
+					<div class="health-stack">
+						<div><span>Running workflows</span><strong>18</strong></div><div><span>Scheduled automations</span><strong>31</strong></div><div><span>Success rate</span><strong class="pos">96%</strong></div><div><span>Failure rate</span><strong class="alert">2.1%</strong></div>
+					</div>
+				</div>
+			</section>
+
+			<section class="command-panel production-panel">
+				<div class="panel-head"><div><div class="panel-label">Today's Production</div><h3>What Apex Command shipped or generated today.</h3></div></div>
+				<div class="production-grid">
+					<button data-ask="Show articles published today."><span>Articles Published</span><strong>3</strong></button>
+					<button data-ask="Show pages built today."><span>Pages Built</span><strong>2</strong></button>
+					<button data-ask="Show review requests sent today."><span>Reviews Requested</span><strong>18</strong></button>
+					<button data-ask="Show citations created today."><span>Citations Created</span><strong>7</strong></button>
+					<button data-ask="Show schema generated today."><span>Schema Generated</span><strong>9</strong></button>
+					<button data-ask="Show AI responses generated today."><span>AI Responses</span><strong>41</strong></button>
+				</div>
+			</section>
+
+			<section class="command-panel" id="execute-now">
+				<div class="panel-head"><div><div class="panel-label">Execute Now</div><h3>Launch approved work from Cloud recommendations.</h3></div><button class="ghost-button" data-ask="Which execution should I launch first?">Ask Apex</button></div>
+				<div class="execute-grid">
+					<button data-ask="Generate a blog article."><strong>Generate Blog</strong><span>Content AI / 22 min</span></button>
+					<button data-ask="Publish a service page."><strong>Publish Service Page</strong><span>SEO AI / approval required</span></button>
+					<button data-ask="Optimize Google Business Profile."><strong>Optimize GBP</strong><span>GBP AI / 18 min</span></button>
+					<button data-ask="Run an AI visibility audit."><strong>Run AI Audit</strong><span>Analytics AI / 9 min</span></button>
+					<button data-ask="Create a comparison page."><strong>Create Comparison Page</strong><span>Content AI / 3 hrs</span></button>
+					<button data-ask="Start a citation campaign."><strong>Start Citation Campaign</strong><span>Citation AI / 2 hrs</span></button>
+					<button data-ask="Launch a review request."><strong>Launch Review Request</strong><span>Review AI / 4 min</span></button>
+				</div>
+			</section>
+
+			<section class="command-grid">
+				<div class="command-panel">
+					<div class="panel-head"><div><div class="panel-label">AI Workforce</div><h3>Operational agents and queue health.</h3></div></div>
+					<div class="agent-grid">
+						<button data-ask="Open Content AI status."><strong>Content AI</strong><span>CPU 74% / 6 queued</span><small>Writing article</small></button>
+						<button data-ask="Open SEO AI status."><strong>SEO AI</strong><span>CPU 61% / 4 queued</span><small>Comparison page</small></button>
+						<button data-ask="Open GBP AI status."><strong>GBP AI</strong><span>CPU 48% / 2 queued</span><small>Publishing update</small></button>
+						<button data-ask="Open Review AI status."><strong>Review AI</strong><span>CPU 32% / 1 queued</span><small>Review campaign</small></button>
+						<button data-ask="Open Citation AI status."><strong>Citation AI</strong><span>CPU 58% / 7 queued</span><small>Retry needed</small></button>
+						<button data-ask="Open Schema AI status."><strong>Schema AI</strong><span>CPU 44% / 3 queued</span><small>Validation</small></button>
+					</div>
+				</div>
+				<div class="command-panel" id="approvals">
+					<div class="panel-head"><div><div class="panel-label">Approval Center</div><h3>Work ready for human decision.</h3></div></div>
+					<div class="approval-list">
+						<div><strong>Comparison page draft</strong><span>SEO AI / high impact</span><div><button data-ask="Approve comparison page draft.">Approve</button><button data-ask="Reject comparison page draft.">Reject</button><button data-ask="Send comparison page draft back to AI.">Send to AI</button></div></div>
+						<div><strong>GBP service update</strong><span>GBP AI / trust lift</span><div><button data-ask="Approve GBP service update.">Approve</button><button data-ask="Edit GBP service update.">Edit</button><button data-ask="Send GBP update back to AI.">Send to AI</button></div></div>
+					</div>
+				</div>
+			</section>
+
+			<section class="command-grid">
+				<div class="command-panel" id="activity">
+					<div class="panel-head"><div><div class="panel-label">Activity Feed</div><h3>Execution log.</h3></div></div>
+					<div class="activity-feed">
+						<div><span class="feed-time">14:32</span><strong>Article published</strong><p>Service-area content deployed successfully.</p></div>
+						<div><span class="feed-time">14:26</span><strong>Schema validation complete</strong><p>No blocking structured-data issues found.</p></div>
+						<div><span class="feed-time">14:18</span><strong>Citation approved</strong><p>Trusted listing accepted by local directory.</p></div>
+						<div><span class="feed-time">14:07</span><strong>Review request sent</strong><p>18 customers queued for review campaign.</p></div>
+					</div>
+				</div>
+				<div class="command-panel">
+					<div class="panel-head"><div><div class="panel-label">Performance</div><h3>AI productivity today.</h3></div></div>
+					<div class="performance-grid">
+						<div><span>Hours saved</span><strong class="pos">37.5</strong></div><div><span>Tasks completed</span><strong>12</strong></div><div><span>Revenue created</span><strong class="pos">$2.1k</strong></div><div><span>Projected lift</span><strong class="pos">+9%</strong></div>
+					</div>
+				</div>
+			</section>
+		</main>
+		<div class="live-notifications" aria-label="Live command notifications">
+			<div>Article Published</div><div>Citation Approved</div><div>GBP Updated</div><div>Automation Complete</div>
+		</div>
+	</div>
+	<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,56 +1,53 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ApexOneIQ - Executive Sign In</title><link rel="stylesheet" href="css/app.css"></head>
-<body>
-	<div class="app auth-workspace sign-in-workspace">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ApexOneIQ - Welcome</title><link rel="stylesheet" href="css/app.css"></head>
+<body data-route="sign-in.html">
+	<div class="app auth-workspace sign-in-workspace welcome-workspace">
 		<aside class="sidebar">
 			<div class="brand"><div class="logo">IQ</div><div><strong>ApexOneIQ</strong><span>Executive Access</span></div></div>
-			<div class="site-card"><span class="eyebrow"><span class="live-dot"></span>Secure access</span><strong>Sign in to continue</strong><p>Google Sign-In opens your Free Snapshot or subscribed workspace.</p></div>
-			<div class="nav-section">Account</div>
-			<nav class="workspace-nav">
-				<a class="nav-link active" href="/sign-in/"><span>Sign In</span></a>
-				<a class="nav-link" href="subscription.html"><span>Plans</span></a>
-				<a class="nav-link" href="free-dashboard.html"><span>Free Snapshot</span></a>
-				<a class="nav-link" href="dashboard.html"><span>Cloud Preview</span></a>
+			<div class="site-card"><span class="eyebrow"><span class="live-dot"></span>Onboarding</span><strong>Executive scan setup</strong><p>Google identity first. Business website second. Dashboard third.</p></div>
+			<div class="nav-section">Flow</div>
+			<nav class="workspace-nav onboarding-step-nav">
+				<span class="nav-link active"><span>Google Sign In</span><small>1</small></span>
+				<span class="nav-link active"><span>Business Website</span><small>2</small></span>
+				<span class="nav-link"><span>Executive Scan</span><small>3</small></span>
+				<span class="nav-link"><span>Dashboard</span><small>4</small></span>
 			</nav>
-			<div class="system-card"><span class="eyebrow">Secure login</span><p>Public users authenticate through ApexOneIQ. WordPress login is reserved for administrators.</p><a class="button" href="subscription.html">Compare plans</a></div>
+			<div class="system-card"><span class="eyebrow">Secure login</span><p>Public users authenticate through ApexOneIQ. WordPress login is reserved for administrators.</p><a class="button" href="/wp-login.php?apexoneiq_admin=1">Admin Access</a></div>
 		</aside>
 		<main class="main">
-			<header class="topbar"><div><span class="eyebrow"><span class="live-dot"></span>Executive sign in</span></div><div class="account"><button class="ghost-button" data-ask="Explain the ApexOneIQ sign-in options.">Ask Apex</button><div class="avatar">JM</div></div></header>
-			<section class="auth-hero">
+			<header class="topbar"><div><span class="eyebrow"><span class="live-dot"></span>Welcome to ApexOneIQ</span></div><div class="account"><a class="ghost-button" href="/oauth/google/?redirect_to=/sign-in.html">Google Sign In</a><div class="avatar">IQ</div></div></header>
+			<section class="welcome-hero">
 				<div>
-					<div class="page-kicker">Executive Access</div>
-					<h1>Sign in with Google to open your ApexOneIQ workspace.</h1>
-					<p>The Free experience begins after authentication so Apex can save business context, recommendations, and future subscription state.</p>
+					<div class="page-kicker">Welcome to ApexOneIQ</div>
+					<h1>Let's analyze your business.</h1>
+					<p>Enter the business website and ApexOneIQ will begin an executive scan before opening the dashboard.</p>
 				</div>
-				<div class="auth-panel">
-					<div class="panel-label">Executive Sign In</div>
-					<h3>Continue through ApexOneIQ.</h3>
-					<p>Google verifies your identity, ApexOneIQ creates or opens your Free account, and your workspace starts at the Free Dashboard.</p>
-					<a class="button" href="/oauth/google/">Continue with Google</a>
-					<a class="ghost-button" href="/register/">Create Free Account</a>
-					<a class="admin-login-link" href="/wp-login.php?apexoneiq_admin=1">Administrator access</a>
+				<form class="welcome-scan-card" data-executive-scan-form>
+					<div class="scan-auth-status" data-google-status>Google Sign In ready</div>
+					<label>
+						<span>Business Website</span>
+						<input name="website" type="url" inputmode="url" placeholder="https://" autocomplete="url" required>
+					</label>
+					<button class="button" type="submit">Start Executive Scan</button>
+					<p class="form-status" data-executive-scan-status>Use a full website URL beginning with https://.</p>
+				</form>
+			</section>
+			<section class="scan-experience" data-scan-experience hidden>
+				<div class="scan-ring"><span data-scan-percent>0%</span></div>
+				<div class="scan-copy">
+					<div class="page-kicker">Scanning Experience</div>
+					<h2 data-scan-title>Reading website signals.</h2>
+					<p data-scan-detail>Checking business identity, trust signals, search visibility, reviews, competitor pressure, and AI recommendation readiness.</p>
+					<div class="scan-track"><i data-scan-bar></i></div>
 				</div>
 			</section>
-			<section class="auth-grid">
-				<div class="auth-panel">
-					<div class="panel-label">First-Time Users</div>
-					<h3>Start on the Free Dashboard.</h3>
-					<p>New Google users are created as Free accounts. ApexOneIQ never drops a new user directly into a paid workspace.</p>
-					<a class="ghost-button" href="/oauth/google/">Start with Google</a>
-				</div>
-				<div class="auth-panel">
-					<div class="panel-label">Returning Users</div>
-					<h3>Open the account linked to your Google email.</h3>
-					<p>If a verified Google email matches an existing ApexOneIQ account, Apex links the Google identity and signs the user in.</p>
-					<button class="ghost-button" data-ask="How does ApexOneIQ link Google accounts?">How account linking works</button>
-				</div>
-				<div class="auth-panel">
-					<div class="panel-label">After Sign In</div>
-					<h3>Start with the Free Executive Snapshot.</h3>
-					<p>Free users land in the Free Snapshot and can upgrade into Cloud, Command, Concierge, or Enterprise when ready.</p>
-					<a class="button" href="free-dashboard.html">Preview Free Snapshot</a>
-				</div>
+			<section class="onboarding-flow compact" aria-label="Current onboarding path">
+				<article><span>Landing Page</span><strong>Complete</strong></article>
+				<article><span>Google Sign In</span><strong>Identity</strong></article>
+				<article><span>Business Website</span><strong>https://</strong></article>
+				<article><span>Scanning Experience</span><strong>Next</strong></article>
+				<article><span>Executive Dashboard</span><strong>Final</strong></article>
 			</section>
 		</main>
 	</div>

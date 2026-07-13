@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ApexOneIQ - Concierge Workspace</title><link rel="stylesheet" href="css/app.css"></head>
+<body>
+	<div class="app concierge-workspace">
+		<aside class="sidebar">
+			<div class="brand"><div class="logo">IQ</div><div><strong>ApexOneIQ</strong><span>Concierge Workspace</span></div></div>
+			<div class="site-card"><span class="eyebrow"><span class="live-dot"></span>Concierge live</span><strong>Growth Plan</strong><p>Apex team working / next update 4:00 PM</p></div>
+			<div class="nav-section">Workspaces</div>
+			<nav class="workspace-nav">
+				<a class="nav-link" href="dashboard.html"><span>Cloud Intelligence</span></a>
+				<a class="nav-link" href="command-dashboard.html"><span>Command Center</span></a>
+				<a class="nav-link" href="enterprise-dashboard.html"><span>Enterprise Ops</span></a>
+				<a class="nav-link active" href="concierge-dashboard.html"><span>Concierge</span></a>
+			</nav>
+			<div class="nav-section">Concierge</div>
+			<nav class="workspace-nav">
+				<a class="nav-link" href="concierge-dashboard.html#progress" data-ask="Summarize today's Concierge progress."><span>Daily Progress</span></a>
+				<a class="nav-link" href="concierge-dashboard.html#queue" data-ask="Show the live Concierge work queue."><span>Work Queue</span><small>14</small></a>
+				<a class="nav-link" href="concierge-dashboard.html#approvals" data-ask="Show work waiting for my approval."><span>Approvals</span><small>3</small></a>
+				<a class="nav-link" href="concierge-dashboard.html#messages" data-ask="Open client messaging summary."><span>Client Messaging</span></a>
+			</nav>
+			<div class="system-card"><span class="eyebrow">Done for you</span><p>Apex Concierge combines expert execution with ApexOneIQ intelligence.</p><a class="button" href="reports.html">View reports</a></div>
+		</aside>
+		<main class="main">
+			<header class="topbar"><div><span class="eyebrow"><span class="live-dot"></span>Concierge team active</span></div><div class="account"><span class="status-pill status-ok">Growth plan recommended</span><div class="avatar">JM</div></div></header>
+			<section class="concierge-hero">
+				<div>
+					<div class="page-kicker">Apex Concierge</div>
+					<h1>Your Apex growth team is working today.</h1>
+					<p>Watch expert-led execution, approvals, strategy, messaging, and business impact in one premium client workspace.</p>
+				</div>
+				<div class="concierge-plan-card">
+					<span>Current recommendation</span>
+					<strong>Concierge Growth</strong>
+					<p>$999/month / best fit for daily execution, strategy, reporting, and measurable growth support.</p>
+					<div><button data-ask="Explain why Concierge Growth is recommended.">Explain plan</button><button data-ask="Compare Concierge Essentials, Growth, and Elite.">Compare tiers</button></div>
+				</div>
+			</section>
+
+			<section class="concierge-panel" id="progress">
+				<div class="panel-head"><div><div class="panel-label">Daily Executive Progress Report</div><h3>What Apex completed, what is moving, and what needs your approval.</h3></div><button class="ghost-button" data-ask="Summarize today's Concierge progress.">Ask Apex</button></div>
+				<div class="concierge-status-grid">
+					<button data-ask="Show completed Concierge tasks today."><span>Completed Today</span><strong class="pos">9</strong><small>2 pages, 4 listings, 3 reviews</small></button>
+					<button data-ask="Show tasks currently in progress."><span>In Progress</span><strong>5</strong><small>Team execution active</small></button>
+					<button data-ask="Show work waiting for client approval."><span>Waiting Approval</span><strong class="alert">3</strong><small>Review before publish</small></button>
+					<button data-ask="Show upcoming scheduled work."><span>Scheduled</span><strong>11</strong><small>Next 14 days</small></button>
+					<button data-ask="Explain this month's ROI movement."><span>Estimated Revenue Growth</span><strong class="pos">+$8.4k/mo</strong><small>Modeled from completed work</small></button>
+					<button data-ask="Explain Executive Memory integration."><span>Executive Memory</span><strong>Learning</strong><small>Decisions and results linked</small></button>
+				</div>
+			</section>
+
+			<section class="concierge-grid">
+				<div class="concierge-panel" id="queue">
+					<div class="panel-head"><div><div class="panel-label">Live Work Queue</div><h3>Real work being completed by the Apex team.</h3></div><div class="filter"><button class="active" data-filter="all">All</button><button data-filter="progress">In Progress</button><button data-filter="approval">Approval</button><button data-filter="scheduled">Scheduled</button></div></div>
+					<div class="concierge-table">
+						<div class="concierge-row header"><span>Work</span><span>Status</span><span>Owner</span><span>ETA</span><span>Impact</span><span>Action</span></div>
+						<div class="concierge-row" data-opportunity="progress"><strong>Service page build</strong><span class="status-pill status-ok">In Progress</span><span>Content Strategist</span><span>Today</span><span class="pos">+4 trust</span><button class="row-action" data-ask="Show service page build progress.">Open</button></div>
+						<div class="concierge-row" data-opportunity="approval"><strong>GBP update copy</strong><span class="status-pill status-high">Approval</span><span>GBP Specialist</span><span>Ready</span><span class="pos">+9 calls/mo</span><button class="row-action" data-ask="Review GBP update copy for approval.">Review</button></div>
+						<div class="concierge-row" data-opportunity="progress"><strong>Citation submissions</strong><span class="status-pill status-ok">In Progress</span><span>Local SEO Lead</span><span>2 hrs</span><span>Trust consistency</span><button class="row-action" data-ask="Show citation submission status.">Open</button></div>
+						<div class="concierge-row" data-opportunity="scheduled"><strong>Review campaign</strong><span class="status-pill">Scheduled</span><span>Client Success</span><span>Friday</span><span class="pos">+18 requests</span><button class="row-action" data-ask="Explain the scheduled review campaign.">Preview</button></div>
+					</div>
+				</div>
+				<div class="concierge-panel" id="approvals">
+					<div class="panel-head"><div><div class="panel-label">Waiting for Client Approval</div><h3>Approve, request edits, or send back to Apex.</h3></div></div>
+					<div class="approval-list concierge-approvals">
+						<div><strong>GBP service update</strong><span>Ready to publish</span><div><button data-ask="Approve GBP service update.">Approve</button><button data-ask="Request edits for GBP service update.">Edit</button><button data-ask="Send GBP update back to Apex.">Send to Apex</button></div></div>
+						<div><strong>Comparison page outline</strong><span>Strategy review needed</span><div><button data-ask="Approve comparison page outline.">Approve</button><button data-ask="Request edits for comparison page outline.">Edit</button><button data-ask="Send comparison outline back to Apex.">Send to Apex</button></div></div>
+						<div><strong>Review response batch</strong><span>Brand tone approval</span><div><button data-ask="Approve review response batch.">Approve</button><button data-ask="Edit review response batch.">Edit</button><button data-ask="Send review responses back to Apex.">Send to Apex</button></div></div>
+					</div>
+				</div>
+			</section>
+
+			<section class="concierge-grid">
+				<div class="concierge-panel">
+					<div class="panel-head"><div><div class="panel-label">Completed Tasks Timeline</div><h3>Proof that the team is working every day.</h3></div></div>
+					<div class="concierge-timeline">
+						<button data-ask="Explain today's completed service proof block."><span>Today</span><strong>Service proof block completed</strong><small>Expected trust +2</small></button>
+						<button data-ask="Explain yesterday's citation approvals."><span>Yesterday</span><strong>4 citations approved</strong><small>Local consistency improved</small></button>
+						<button data-ask="Explain Monday's review campaign."><span>Monday</span><strong>Review campaign launched</strong><small>18 customers contacted</small></button>
+						<button data-ask="Explain last week's strategy update."><span>Last week</span><strong>Monthly strategy adjusted</strong><small>Northstar response added</small></button>
+					</div>
+				</div>
+				<div class="concierge-panel">
+					<div class="panel-head"><div><div class="panel-label">Assigned Apex Team</div><h3>Your digital growth team.</h3></div></div>
+					<div class="team-roster">
+						<button data-ask="Open the strategist role summary."><strong>Strategy Lead</strong><span>Roadmap and priorities</span><small>Active today</small></button>
+						<button data-ask="Open the content specialist role summary."><strong>Content Specialist</strong><span>Pages and articles</span><small>Building page</small></button>
+						<button data-ask="Open the local SEO role summary."><strong>Local SEO Lead</strong><span>GBP, citations, trust</span><small>Submitting listings</small></button>
+						<button data-ask="Open client success role summary."><strong>Client Success</strong><span>Approvals and meetings</span><small>Next update 4 PM</small></button>
+					</div>
+				</div>
+			</section>
+
+			<section class="concierge-panel">
+				<div class="panel-head"><div><div class="panel-label">Business Impact Dashboard</div><h3>How done-for-you work is changing business outcomes.</h3></div><button class="ghost-button" data-ask="Explain Concierge ROI this month.">Explain ROI</button></div>
+				<div class="roi-grid">
+					<button data-ask="Explain estimated revenue growth."><span>Estimated Revenue Growth</span><strong class="pos">+$8.4k/mo</strong></button>
+					<button data-ask="Explain leads influenced by Concierge work."><span>Leads Influenced</span><strong class="pos">+47/mo</strong></button>
+					<button data-ask="Explain hours saved."><span>Owner Hours Saved</span><strong>62</strong></button>
+					<button data-ask="Explain trust improvement."><span>Trust Improvement</span><strong class="pos">+11</strong></button>
+					<button data-ask="Explain customer discovery growth."><span>Discovery Growth</span><strong class="pos">+18%</strong></button>
+					<button data-ask="Explain ROI confidence."><span>ROI Confidence</span><strong>89%</strong></button>
+				</div>
+			</section>
+
+			<section class="concierge-grid">
+				<div class="concierge-panel">
+					<div class="panel-head"><div><div class="panel-label">Monthly Strategy Roadmap</div><h3>What Apex is executing next.</h3></div><button class="ghost-button" data-ask="Summarize this month's strategy roadmap.">Summarize</button></div>
+					<div class="roadmap-lanes">
+						<div><span>Week 1</span><strong>Trust layer completion</strong><small>GBP, citations, service proof</small></div>
+						<div><span>Week 2</span><strong>Comparison content</strong><small>Buyer decision pages</small></div>
+						<div><span>Week 3</span><strong>Review acceleration</strong><small>Campaign and responses</small></div>
+						<div><span>Week 4</span><strong>Forecast review</strong><small>Report and next plan</small></div>
+					</div>
+				</div>
+				<div class="concierge-panel" id="messages">
+					<div class="panel-head"><div><div class="panel-label">Client Messaging</div><h3>Priority support and strategy communication.</h3></div><button class="ghost-button" data-ask="Draft a message to my Apex team.">Message Team</button></div>
+					<div class="message-list">
+						<div><strong>Apex Strategy Lead</strong><p>Today's service page draft is on track. Approval needed by 3 PM.</p><span>18 min ago</span></div>
+						<div><strong>Client Success</strong><p>Your monthly strategy meeting is available Wednesday or Thursday.</p><span>1 hr ago</span></div>
+						<div><strong>Local SEO Lead</strong><p>Four citations were approved; three are still pending directory review.</p><span>Today</span></div>
+					</div>
+				</div>
+			</section>
+
+			<section class="concierge-grid">
+				<div class="concierge-panel">
+					<div class="panel-head"><div><div class="panel-label">Executive Reports and Task History</div><h3>Board-ready progress records.</h3></div></div>
+					<div class="report-actions">
+						<button data-ask="Open this week's Concierge executive report.">Weekly Executive Report</button>
+						<button data-ask="Open monthly ROI report.">Monthly ROI Report</button>
+						<button data-ask="Open task history.">Task History</button>
+						<button data-ask="Open Executive Memory integration.">Executive Memory</button>
+					</div>
+				</div>
+				<div class="concierge-panel">
+					<div class="panel-head"><div><div class="panel-label">Strategy Meeting Scheduler</div><h3>Priority support for done-for-you clients.</h3></div></div>
+					<div class="meeting-options">
+						<button data-ask="Schedule a strategy meeting for Wednesday."><strong>Wednesday</strong><span>11:00 AM available</span></button>
+						<button data-ask="Schedule a strategy meeting for Thursday."><strong>Thursday</strong><span>2:30 PM available</span></button>
+						<button data-ask="Request priority support today."><strong>Priority Support</strong><span>Response under 2 hours</span></button>
+					</div>
+				</div>
+			</section>
+
+			<section class="concierge-panel">
+				<div class="panel-head"><div><div class="panel-label">Concierge Pricing</div><h3>Compact service overview. Full comparison lives on the subscription page.</h3></div><a class="ghost-button" href="subscription.html">View full plans</a></div>
+				<div class="pricing-grid">
+					<button data-ask="Explain Concierge Essentials."><span>Concierge Essentials</span><strong>$499/mo</strong><small>Best fit: one small business with limited monthly needs. Includes core monthly optimization, GBP maintenance, citation monitoring, one priority campaign, monthly report, and email support.</small><em>Cadence: monthly / CTA: Choose Essentials</em></button>
+					<button class="recommended" data-ask="Explain why Concierge Growth is recommended."><span>Concierge Growth</span><strong>$999/mo</strong><small>Best fit: businesses that want a managed growth team. Includes weekly prioritized execution, assigned Apex team, approvals, progress briefs, strategy meeting, and ROI reporting.</small><em>Cadence: weekly / CTA: Apply for Growth</em></button>
+					<button data-ask="Explain Concierge Elite."><span>Concierge Elite</span><strong>$2,500+</strong><small>Best fit: high-value or multi-location organizations. Includes advanced strategy, higher execution capacity, specialists, executive meetings, custom reporting, and service agreement.</small><em>Cadence: custom / CTA: Request custom plan</em></button>
+				</div>
+			</section>
+		</main>
+	</div>
+	<script src="js/app.js"></script>
+</body>
+</html>

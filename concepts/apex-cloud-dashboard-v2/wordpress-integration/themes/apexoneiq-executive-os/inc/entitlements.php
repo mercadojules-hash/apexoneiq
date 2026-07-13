@@ -47,6 +47,7 @@ function apexoneiq_plan_capabilities() {
 		'competitors.access',
 		'timeline.access',
 		'executive_brief.access',
+		'action_center.access',
 		'market_intelligence.access',
 		'forecast.access',
 		'alerts.access',
@@ -115,9 +116,9 @@ function apexoneiq_required_capability_for_page( $page ) {
 	$page = apexoneiq_normalize_static_page( $page );
 
 	$map = array(
-		'dashboard.html'                       => 'dashboard.access',
+		'dashboard.html'                       => 'free_dashboard.access',
 		'executive-brief.html'                 => 'executive_brief.access',
-		'opportunities.html'                   => 'dashboard.access',
+		'opportunities.html'                   => 'action_center.access',
 		'ai-visibility.html'                   => 'ai.access',
 		'competitors.html'                     => 'competitors.access',
 		'forecast.html'                        => 'forecast.access',

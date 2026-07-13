@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ApexOneIQ - Concierge Enrollment</title><link rel="stylesheet" href="css/app.css"></head>
+<body>
+	<div class="app enrollment-workspace">
+		<aside class="sidebar">
+			<div class="brand"><div class="logo">IQ</div><div><strong>ApexOneIQ</strong><span>Concierge Enrollment</span></div></div>
+			<div class="site-card"><span class="eyebrow"><span class="live-dot"></span>Application concept</span><strong>Selective onboarding</strong><p>Apply for done-for-you growth support.</p></div>
+			<div class="nav-section">Plans</div>
+			<nav class="workspace-nav">
+				<a class="nav-link" href="subscription.html"><span>Plan Comparison</span></a>
+				<a class="nav-link" href="concierge-dashboard.html"><span>Concierge Preview</span></a>
+				<a class="nav-link" href="dashboard.html"><span>Cloud Preview</span></a>
+				<a class="nav-link" href="command-dashboard.html"><span>Command Preview</span></a>
+			</nav>
+			<div class="system-card"><span class="eyebrow">Scope note</span><p>Concierge service is delivered within an approved monthly scope and roadmap.</p><a class="button" href="subscription.html">Compare plans</a></div>
+		</aside>
+		<main class="main">
+			<header class="topbar"><div><span class="eyebrow"><span class="live-dot"></span>Concierge application</span></div><div class="account"><button class="ghost-button" data-ask="Help me choose a Concierge plan.">Ask Apex</button><span class="status-pill status-ok">Premium onboarding</span><div class="avatar">JM</div></div></header>
+			<section class="enrollment-hero">
+				<div><div class="page-kicker">Apply for Apex Concierge</div><h1>Tell Apex what your growth team should prepare.</h1><p>This concept flow collects the information needed to review fit, confirm scope, schedule strategy, and prepare the first 30-day growth roadmap.</p></div>
+				<div class="enrollment-progress" aria-label="Enrollment progress">
+					<span class="active" data-step-dot="1">1</span><span data-step-dot="2">2</span><span data-step-dot="3">3</span><span data-step-dot="4">4</span><span data-step-dot="5">5</span><span data-step-dot="6">6</span><span data-step-dot="7">7</span>
+				</div>
+			</section>
+
+			<section class="enrollment-flow" data-current-step="1">
+				<div class="enroll-step active" data-step="1">
+					<div class="panel-head"><div><div class="panel-label">Step 1</div><h3>Choose Managed Plan</h3></div></div>
+					<div class="enroll-plan-grid">
+						<button data-select-plan="Essentials" data-price="$499/month"><span>Essentials</span><strong>$499/mo</strong><small>Limited monthly needs</small></button>
+						<button class="recommended active" data-select-plan="Growth" data-price="$999/month"><span>Recommended</span><strong>Growth - $999/mo</strong><small>Flagship done-for-you plan</small></button>
+						<button data-select-plan="Elite" data-price="Custom"><span>Elite</span><strong>Custom</strong><small>Advanced or multi-location scope</small></button>
+					</div>
+					<input type="hidden" name="selected_plan" value="Growth"><input type="hidden" name="selected_price" value="$999/month">
+				</div>
+
+				<div class="enroll-step" data-step="2">
+					<div class="panel-head"><div><div class="panel-label">Step 2</div><h3>Business Information</h3></div></div>
+					<div class="form-grid">
+						<label>Business name<input required name="business_name" placeholder="Apex Dental Group"></label>
+						<label>Website<input required name="website" placeholder="https://example.com"></label>
+						<label>Industry<input required name="industry" placeholder="Dental, legal, home services..."></label>
+						<label>Primary location<input required name="location" placeholder="Austin, TX"></label>
+						<label>Number of locations<input required name="locations" type="number" min="1" placeholder="1"></label>
+						<label>Primary contact<input required name="contact" placeholder="Jane Smith"></label>
+						<label>Email<input required name="email" type="email" placeholder="owner@example.com"></label>
+						<label>Phone<input required name="phone" placeholder="(555) 555-0100"></label>
+					</div>
+				</div>
+
+				<div class="enroll-step" data-step="3">
+					<div class="panel-head"><div><div class="panel-label">Step 3</div><h3>Current Priorities</h3></div></div>
+					<div class="choice-grid" data-choice-group="priorities">
+						<label><input type="checkbox" value="Google Business Profile">Google Business Profile</label><label><input type="checkbox" value="Local rankings">Local rankings</label><label><input type="checkbox" value="Reviews">Reviews</label><label><input type="checkbox" value="Content">Content</label><label><input type="checkbox" value="Citations">Citations</label><label><input type="checkbox" value="AI visibility">AI visibility</label><label><input type="checkbox" value="Website health">Website health</label><label><input type="checkbox" value="Competitor pressure">Competitor pressure</label><label><input type="checkbox" value="Multi-location management">Multi-location management</label><label><input type="checkbox" value="Other">Other</label>
+					</div>
+				</div>
+
+				<div class="enroll-step" data-step="4">
+					<div class="panel-head"><div><div class="panel-label">Step 4</div><h3>Business Goals</h3></div></div>
+					<div class="choice-grid" data-choice-group="goals">
+						<label><input type="checkbox" value="More calls">More calls</label><label><input type="checkbox" value="More appointments">More appointments</label><label><input type="checkbox" value="More qualified leads">More qualified leads</label><label><input type="checkbox" value="Better rankings">Better rankings</label><label><input type="checkbox" value="Improved trust">Improved trust</label><label><input type="checkbox" value="More AI recommendations">More AI recommendations</label><label><input type="checkbox" value="Expansion into new markets">Expansion into new markets</label><label><input type="checkbox" value="Reputation improvement">Reputation improvement</label>
+					</div>
+				</div>
+
+				<div class="enroll-step" data-step="5">
+					<div class="panel-head"><div><div class="panel-label">Step 5</div><h3>Connections</h3></div></div>
+					<div class="connection-grid">
+						<button data-connection="Website"><span>Website</span><strong class="pos">Ready</strong></button>
+						<button data-connection="Google Business Profile"><span>Google Business Profile</span><strong>Invite needed</strong></button>
+						<button data-connection="Google Search Console"><span>Google Search Console</span><strong>Optional</strong></button>
+						<button data-connection="Google Analytics"><span>Google Analytics</span><strong>Optional</strong></button>
+						<button data-connection="WordPress"><span>WordPress</span><strong>Optional</strong></button>
+						<button data-connection="Business platforms"><span>Business platforms</span><strong>Later</strong></button>
+					</div>
+				</div>
+
+				<div class="enroll-step" data-step="6">
+					<div class="panel-head"><div><div class="panel-label">Step 6</div><h3>Strategy Call</h3></div></div>
+					<div class="meeting-options enrollment-meetings">
+						<button data-select-meeting="Wednesday 11:00 AM"><strong>Wednesday</strong><span>11:00 AM</span></button>
+						<button class="active" data-select-meeting="Thursday 2:30 PM"><strong>Thursday</strong><span>2:30 PM</span></button>
+						<button data-select-meeting="Friday 10:00 AM"><strong>Friday</strong><span>10:00 AM</span></button>
+					</div>
+					<input type="hidden" name="selected_meeting" value="Thursday 2:30 PM">
+				</div>
+
+				<div class="enroll-step" data-step="7">
+					<div class="panel-head"><div><div class="panel-label">Step 7</div><h3>Review and Submit</h3></div></div>
+					<div class="enrollment-summary" data-enrollment-summary></div>
+				</div>
+
+				<div class="enrollment-success" hidden>
+					<div class="panel-label">Application Submitted</div>
+					<h2>Your Apex growth team is being prepared.</h2>
+					<ol><li>Apex reviews your business.</li><li>Your strategy call is confirmed.</li><li>Your first 30-day growth roadmap is created.</li><li>Work begins after approval.</li></ol>
+					<a class="button" href="concierge-dashboard.html">Open Concierge Preview</a>
+				</div>
+
+				<div class="enrollment-actions">
+					<button class="ghost-button" data-enroll-back disabled>Back</button>
+					<button class="button" data-enroll-continue>Continue</button>
+					<button class="button" data-enroll-submit hidden>Submit Concierge Application</button>
+				</div>
+			</section>
+		</main>
+	</div>
+	<script src="js/app.js"></script>
+</body>
+</html>
