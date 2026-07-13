@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APEXONEIQ_THEME_VERSION', '0.2.0' );
+define( 'APEXONEIQ_THEME_VERSION', '0.2.1' );
 define( 'APEXONEIQ_THEME_DIR', trailingslashit( get_template_directory() ) );
 define( 'APEXONEIQ_THEME_URI', trailingslashit( get_template_directory_uri() ) );
 

@@ -1155,6 +1155,12 @@ document.addEventListener('click', event => {
 		return;
 	}
 
+	const comingSoon = event.target.closest('[data-coming-soon]');
+	if (comingSoon) {
+		openAsk(comingSoon.dataset.comingSoon || 'This production action is coming soon.');
+		return;
+	}
+
 	const checkoutButton = event.target.closest('[data-checkout-plan]');
 	if (checkoutButton) {
 		startCheckout(checkoutButton.dataset.checkoutPlan, checkoutButton);
@@ -1180,7 +1186,7 @@ document.addEventListener('click', event => {
 		return;
 	}
 
-	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]), a[href="#"]');
+	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]):not([data-coming-soon]), a[href="#"]');
 	if (genericControl && !genericControl.disabled && !genericControl.closest('[data-drawer-text]')) {
 		const text = genericControl.textContent.trim() || genericControl.getAttribute('aria-label') || routeAskDefaults[route] || 'What should I do next?';
 		openAsk(text);
