@@ -40,6 +40,15 @@ function apexoneiq_get_user_subscription_state( $user_id ) {
 		return $state;
 	}
 
+	if ( apexoneiq_user_has_qa_pro_override( $user_id ) ) {
+		$state = apexoneiq_default_subscription_state( true );
+		$state['plan'] = 'command';
+		$state['status'] = 'qa_override';
+		$state['active'] = true;
+		$state['capabilities'] = apexoneiq_capabilities_for_plan( 'command' );
+		return $state;
+	}
+
 	$record = apexoneiq_get_subscription_record_by_user( $user_id );
 	if ( ! $record ) {
 		$state = apexoneiq_default_subscription_state( true );
@@ -101,6 +110,41 @@ function apexoneiq_default_subscription_state( $authenticated ) {
 		'stripe_subscription_id' => '',
 		'stripe_price_id'        => '',
 	);
+}
+
+/**
+ * Return the temporary QA Pro allowlist.
+ *
+ * @return array<int,string>
+ */
+function apexoneiq_qa_pro_override_emails() {
+	$raw = '';
+
+	if ( defined( 'APEXONEIQ_QA_PRO_EMAILS' ) ) {
+		$raw = (string) APEXONEIQ_QA_PRO_EMAILS;
+	} elseif ( getenv( 'APEXONEIQ_QA_PRO_EMAILS' ) ) {
+		$raw = (string) getenv( 'APEXONEIQ_QA_PRO_EMAILS' );
+	}
+
+	$emails = array_filter( array_map( 'trim', explode( ',', strtolower( $raw ) ) ) );
+	$emails[] = 'mercadojules@gmail.com';
+
+	return array_values( array_unique( array_filter( $emails, 'is_email' ) ) );
+}
+
+/**
+ * Check whether a logged-in user has the temporary QA Pro override.
+ *
+ * @param int $user_id WordPress user ID.
+ * @return bool
+ */
+function apexoneiq_user_has_qa_pro_override( $user_id ) {
+	$user = get_user_by( 'id', absint( $user_id ) );
+	if ( ! $user || empty( $user->user_email ) ) {
+		return false;
+	}
+
+	return in_array( strtolower( $user->user_email ), apexoneiq_qa_pro_override_emails(), true );
 }
 
 /**

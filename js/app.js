@@ -4,6 +4,9 @@ const apexRegisterUrl = window.ApexOneIQ?.registerUrl || `${apexRoot}register/`;
 const apexRoutePath = location.pathname.replace(/\/$/, '');
 const route = document.body.dataset.route || apexRoutePath.split('/').pop() || 'dashboard.html';
 const apexDemoMode = Boolean(window.ApexOneIQ?.demoMode) || new URLSearchParams(location.search).get('demo') === '1';
+const apexWordPressMode = typeof window.ApexOneIQ !== 'undefined';
+const apexProfileKey = 'apexoneiq_free_profile';
+const apexSessionKey = 'apexoneiq_auth_user';
 const apexHref = href => {
 	if (!href || /^(https?:|mailto:|tel:|#|\/)/.test(href)) {
 		return href;
@@ -11,8 +14,133 @@ const apexHref = href => {
 
 	return `${apexRoot}${href}`;
 };
+const apexPageUrl = page => new URL(apexHref(page), window.location.origin).toString();
 document.body.classList.add(`route-${route.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`);
 if (apexDemoMode) document.body.classList.add('demo-mode');
+
+function safeJsonParse(value, fallback = null) {
+	try {
+		return JSON.parse(value || 'null') || fallback;
+	} catch (error) {
+		return fallback;
+	}
+}
+
+function readStorage(key, fallback = null) {
+	try {
+		return safeJsonParse(localStorage.getItem(key), fallback);
+	} catch (error) {
+		return fallback;
+	}
+}
+
+function writeStorage(key, value) {
+	try {
+		localStorage.setItem(key, JSON.stringify(value));
+	} catch (error) {
+		// Local storage is a convenience for the standalone prototype; WordPress remains the source of truth.
+	}
+}
+
+function initialsFor(nameOrEmail = 'JM') {
+	const source = String(nameOrEmail || 'JM').replace(/@.*$/, '').trim();
+	const parts = source.split(/[\s._-]+/).filter(Boolean);
+	const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : source.slice(0, 2);
+	return initials.toUpperCase() || 'JM';
+}
+
+function getApexUser() {
+	const wpUser = window.ApexOneIQ?.isLoggedIn ? {
+		name: window.ApexOneIQ?.userName || window.ApexOneIQ?.businessName || window.ApexOneIQ?.businessEmail || 'Apex User',
+		email: window.ApexOneIQ?.businessEmail || '',
+		initials: window.ApexOneIQ?.userInitials || initialsFor(window.ApexOneIQ?.userName || window.ApexOneIQ?.businessEmail || 'JM'),
+		source: 'wordpress'
+	} : null;
+	return wpUser || readStorage(apexSessionKey, null);
+}
+
+function ensurePrototypeUser() {
+	const existing = getApexUser();
+	if (existing) return existing;
+	const user = {
+		name: 'Jules Mercado',
+		email: 'owner@apexoneiq.com',
+		initials: 'JM',
+		source: 'prototype',
+		createdAt: new Date().toISOString()
+	};
+	writeStorage(apexSessionKey, user);
+	return user;
+}
+
+function getStoredProfile() {
+	const stored = readStorage(apexProfileKey, null);
+	if (stored?.website) return stored;
+	if (window.ApexOneIQ?.businessWebsite) {
+		const score = Number(window.ApexOneIQ.scanScore || 0) || scanScoreFor(window.ApexOneIQ.businessWebsite);
+		return {
+			businessName: window.ApexOneIQ.businessName || new URL(window.ApexOneIQ.businessWebsite).hostname.replace(/^www\./, ''),
+			website: window.ApexOneIQ.businessWebsite,
+			email: window.ApexOneIQ.businessEmail || '',
+			scanCompleted: Boolean(window.ApexOneIQ.scanCompleted),
+			score,
+			createdAt: new Date().toISOString(),
+			completedAt: window.ApexOneIQ.scanCompletedAt || '',
+			trend: Array.isArray(window.ApexOneIQ.scanTrend) && window.ApexOneIQ.scanTrend.length ? window.ApexOneIQ.scanTrend : [12, 28, 41, 55, score],
+			dataMode: 'wordpress-profile'
+		};
+	}
+	return null;
+}
+
+function saveProfile(profile) {
+	writeStorage(apexProfileKey, profile);
+	return profile;
+}
+
+function scoreLabel(score) {
+	if (score >= 85) return 'Excellent';
+	if (score >= 72) return 'Strong';
+	if (score >= 62) return 'Good';
+	if (score >= 45) return 'Needs Attention';
+	return 'Critical';
+}
+
+function scanScoreFor(website) {
+	const host = new URL(website).hostname.replace(/^www\./, '');
+	const seed = [...host].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+	return 54 + (seed % 18);
+}
+
+function workspaceDomain(website) {
+	if (!website) return '';
+	try {
+		return new URL(website).hostname.replace(/^www\./, '');
+	} catch (error) {
+		return String(website).replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+	}
+}
+
+function formatWorkspaceDate(value) {
+	if (!value) return 'No completed scan';
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) return value;
+	return date.toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function getWorkspaceContext() {
+	const profile = getStoredProfile();
+	const domain = workspaceDomain(profile?.website) || profile?.businessName || 'Business not selected';
+	const scanCompleted = Boolean(profile?.scanCompleted);
+	const lastScan = scanCompleted ? formatWorkspaceDate(profile?.completedAt || profile?.createdAt) : 'No completed scan';
+	return {
+		domain,
+		status: scanCompleted ? 'Executive profile active' : 'Executive scan pending',
+		lastScan,
+		lastUpdate: scanCompleted ? lastScan : 'Awaiting first scan',
+		website: profile?.website || ''
+	};
+}
 
 const pageTitles = {
 	'index.html': 'ApexOneIQ - AI Executive Intelligence for Business Growth',
@@ -42,7 +170,6 @@ const pageTitles = {
 	'command-dashboard.html': 'ApexOneIQ - Command Center',
 	'enterprise-dashboard.html': 'ApexOneIQ - Enterprise Operations',
 	'concierge-dashboard.html': 'ApexOneIQ - Concierge Workspace',
-	'free-dashboard.html': 'ApexOneIQ - Free Executive Snapshot',
 	'concierge-essentials-dashboard.html': 'ApexOneIQ - Concierge Essentials',
 	'subscription.html': 'ApexOneIQ - Subscription Plans',
 	'concierge-enrollment.html': 'ApexOneIQ - Concierge Enrollment',
@@ -99,23 +226,6 @@ const executiveNav = [
 	]]
 ];
 
-const freePreviewNav = [
-	['Free Snapshot', [
-		['Dashboard', 'free-dashboard.html'],
-		['Business Snapshot', 'free-dashboard.html#snapshot'],
-		['Top Recommendations', 'free-dashboard.html#recommendations'],
-		['Upgrade Options', 'subscription.html']
-	]],
-	['Limited Preview', [
-		['Cloud Intelligence', 'dashboard.html?demo=1', 'Demo'],
-		['Website Overview', 'website-overview.html?demo=1', 'Preview'],
-		['Keyword Research', null, 'Upgrade'],
-		['AI Visibility', null, 'Upgrade'],
-		['Command Execution', null, 'Upgrade'],
-		['Concierge Service', null, 'Upgrade']
-	]]
-];
-
 const commandPreviewNav = [
 	['Cloud Intelligence', [
 		['Mission Control', 'dashboard.html'],
@@ -163,7 +273,6 @@ const essentialsPreviewNav = [
 ];
 
 function navForRoute(currentRoute) {
-	if (currentRoute === 'free-dashboard.html') return freePreviewNav;
 	if (currentRoute === 'command-dashboard.html') return commandPreviewNav;
 	if (currentRoute === 'concierge-essentials-dashboard.html') return essentialsPreviewNav;
 	return executiveNav;
@@ -214,27 +323,76 @@ if (apexDemoMode) {
 document.querySelectorAll('.brand strong').forEach(item => item.textContent = 'ApexOneIQ');
 document.querySelectorAll('.brand span').forEach(item => item.textContent = 'Executive Intelligence OS');
 document.querySelectorAll('.logo').forEach(item => item.textContent = 'IQ');
-document.querySelectorAll('.site-card p').forEach(item => item.textContent = 'ApexOneIQ / Last update 42 seconds ago');
 document.querySelectorAll('.system-card .eyebrow').forEach(item => item.textContent = 'ApexOneIQ focus');
 document.querySelectorAll('.system-card p').forEach(item => item.textContent = 'Executive OS concept remains isolated until reviewed and approved.');
 document.querySelectorAll('.system-card .button').forEach(item => item.textContent = 'Review ApexOneIQ');
 
-document.querySelectorAll('.account').forEach(account => {
-	if (!account.querySelector('[data-sign-in-link]')) {
-		const signIn = document.createElement('a');
-		signIn.className = 'ghost-button sign-in-link';
-		signIn.dataset.signInLink = '';
-		signIn.href = apexAuthUrl;
-		signIn.textContent = 'Sign In';
-		const ask = account.querySelector('[data-ask]');
-		const avatar = account.querySelector('.avatar');
-		if (ask) {
-			ask.insertAdjacentElement('afterend', signIn);
-		} else {
-			account.insertBefore(signIn, avatar || null);
+function renderWorkspaceContext() {
+	if (apexDemoMode || !getApexUser()) return;
+	const context = getWorkspaceContext();
+	document.querySelectorAll('.site-card').forEach(card => {
+		const eyebrow = card.querySelector('.eyebrow');
+		const title = card.querySelector('strong');
+		const copy = card.querySelector('p');
+		if (eyebrow) eyebrow.innerHTML = `<span class="live-dot"></span>${escapeHtml(context.status)}`;
+		if (title) title.textContent = context.domain;
+		if (copy) copy.textContent = `Last scan: ${context.lastScan} / Last update: ${context.lastUpdate}`;
+		card.dataset.workspaceContext = '';
+	});
+	document.querySelectorAll('.topbar .account').forEach(account => {
+		if (account.querySelector('[data-workspace-pill]')) return;
+		const pill = document.createElement('span');
+		pill.className = 'status-pill status-ok';
+		pill.dataset.workspacePill = '';
+		pill.textContent = context.domain;
+		account.prepend(pill);
+	});
+}
+
+function renderAccountState() {
+	if (apexDemoMode) return;
+	const user = getApexUser();
+
+	document.querySelectorAll('.account').forEach(account => {
+		const askQuestion = account.querySelector('[data-ask]')?.dataset.ask || routeAskDefaults[route] || 'What should I do next?';
+		if (!user) {
+			account.innerHTML = `<a class="ghost-button sign-in-link" data-sign-in-link href="${escapeHtml(apexAuthUrl)}">Sign In</a><div class="avatar">IQ</div>`;
+			return;
 		}
+
+		account.innerHTML = `
+			<button class="ghost-button" type="button" data-ask="${escapeHtml(askQuestion)}">Ask Apex</button>
+			<div class="account-menu" data-account-menu>
+				<button class="account-trigger" type="button" data-account-toggle aria-expanded="false">
+					<span class="avatar">${escapeHtml(user.initials || initialsFor(user.name || user.email))}</span>
+					<span>${escapeHtml(user.initials || initialsFor(user.name || user.email))}</span>
+					<small>v</small>
+				</button>
+				<div class="account-dropdown" role="menu">
+					<a href="${escapeHtml(apexPageUrl('dashboard.html'))}" role="menuitem">My Workspace</a>
+					<a href="${escapeHtml(apexPageUrl('account.html'))}" role="menuitem">Account</a>
+					<a href="${escapeHtml(apexPageUrl('subscription.html'))}" role="menuitem">Billing</a>
+					<a href="${escapeHtml(apexPageUrl('settings.html'))}" role="menuitem">Settings</a>
+					<button type="button" data-apex-logout role="menuitem">Logout</button>
+				</div>
+			</div>
+		`;
+	});
+
+	if (user) {
+		document.querySelectorAll('.landing-nav .nav-cta').forEach(link => {
+			link.textContent = 'My Workspace';
+			link.href = apexPageUrl(getStoredProfile()?.scanCompleted ? 'dashboard.html' : 'sign-in.html');
+		});
+		document.querySelectorAll('.landing-nav a').forEach(link => {
+			if (/sign in|google sign in/i.test(link.textContent || '')) {
+				link.textContent = 'My Workspace';
+				link.href = apexPageUrl(getStoredProfile()?.scanCompleted ? 'dashboard.html' : 'sign-in.html');
+			}
+		});
 	}
-});
+	renderWorkspaceContext();
+}
 
 document.querySelectorAll('[data-nav]').forEach(link => {
 	const hrefRoute = link.getAttribute('href').split('/').pop();
@@ -335,7 +493,6 @@ const routeAskDefaults = {
 	'command-dashboard.html': 'Show active AI agent work.',
 	'enterprise-dashboard.html': 'Which region needs intervention?',
 	'concierge-dashboard.html': "Summarize today's Concierge progress.",
-	'free-dashboard.html': 'What should I do first on the Free plan?',
 	'concierge-essentials-dashboard.html': 'Explain Concierge Essentials.',
 	'subscription.html': 'Which ApexOneIQ workspace should I preview first?',
 	'concierge-enrollment.html': 'Help me choose a Concierge plan.',
@@ -370,13 +527,14 @@ const routeAskSuggestions = {
 	'command-dashboard.html': ['Run another citation campaign.', 'Pause all publishing.', 'Show failed automations.'],
 	'enterprise-dashboard.html': ['Which region needs intervention?', 'Why is Florida behind Texas?', 'Generate the executive board report.'],
 	'concierge-dashboard.html': ["Summarize today's Concierge progress.", 'Show work waiting for my approval.', 'Compare Concierge tiers.'],
-	'free-dashboard.html': ['What should I do first on the Free plan?', 'Why should I upgrade to Cloud?', 'Explain my Executive Score.'],
 	'concierge-essentials-dashboard.html': ['Explain Concierge Essentials.', 'What is pending approval?', 'Should I upgrade to Growth?'],
 	'subscription.html': ['Which plan is right for me?', 'Compare Concierge tiers.', 'Explain annual software billing.'],
 	'concierge-enrollment.html': ['Help me choose a Concierge plan.', 'What happens after I submit?', 'What should I connect first?'],
 	'sign-in.html': ['Explain the ApexOneIQ sign-in options.', 'What happens after I create an account?', 'Why does Free start after sign-in?'],
 	'register': ['What happens after I create a free account?', 'Why do I start on Free?', 'How does Google sign-in get enabled?']
 };
+
+renderAccountState();
 
 const simScenarios = {
 	current: {
@@ -473,7 +631,7 @@ function responseFor(question) {
 	if (lower.includes('report') || lower.includes('brief')) return askResponses["Explain today's report."];
 	if (lower.includes('rank') || lower.includes('#1') || lower.includes('order')) return askResponses['Why is this ranked #1?'];
 	if (lower.includes('issue') || lower.includes('health')) return askResponses['Explain the largest issue.'];
-	if (lower.includes('plan') || lower.includes('pricing') || lower.includes('free')) return 'Start with the Free Snapshot if you want fast business clarity. Upgrade to Cloud when you want daily executive briefings, competitor intelligence, AI visibility, forecasting, playbooks, and business-impact prioritization.';
+	if (lower.includes('plan') || lower.includes('pricing') || lower.includes('free')) return 'Start with the Executive Scan if you want fast business clarity. Upgrade to Cloud when you want daily executive briefings, competitor intelligence, AI visibility, forecasting, playbooks, and business-impact prioritization.';
 	return 'Apex is reading the current page as an executive decision surface. The main pattern is business condition, business consequence, recommended action, and expected result. For this concept, the safest next move is still completing the local trust layer before adding more content or lower-priority work.';
 }
 
@@ -567,6 +725,166 @@ function setupLandingCapture() {
 	});
 }
 
+function setupExecutiveScan() {
+	const form = document.querySelector('[data-executive-scan-form]');
+	if (!form) return;
+	if (!apexWordPressMode) ensurePrototypeUser();
+	renderAccountState();
+
+	const status = form.querySelector('[data-executive-scan-status]');
+	const scan = document.querySelector('[data-scan-experience]');
+	const scanRing = document.querySelector('.scan-ring');
+	const percent = document.querySelector('[data-scan-percent]');
+	const bar = document.querySelector('[data-scan-bar]');
+	const title = document.querySelector('[data-scan-title]');
+	const detail = document.querySelector('[data-scan-detail]');
+	const googleStatus = document.querySelector('[data-google-status]');
+	const savedProfile = getStoredProfile();
+
+	const currentUser = getApexUser();
+	if (currentUser && googleStatus) {
+		googleStatus.textContent = 'Google Sign In connected';
+	} else if (googleStatus) {
+		googleStatus.textContent = 'Google Sign In required';
+	}
+	if (savedProfile?.website && form.elements.website) {
+		form.elements.website.value = savedProfile.website;
+	}
+	if (savedProfile?.website && savedProfile.scanCompleted) {
+		status.textContent = 'Existing business found. Opening your Executive Dashboard...';
+		setTimeout(() => window.location.assign(apexHref('dashboard.html?existing=1')), 850);
+		return;
+	}
+
+	const scanSteps = [
+		[9, 'Identifying Business...', 'Business Identified', 'Resolving the submitted website into a business identity and market context.'],
+		[18, 'Verifying DNS...', 'DNS Verification Complete', 'Checking domain resolution and technical reachability.'],
+		[27, 'Inspecting SSL...', 'SSL Inspection Complete', 'Confirming secure access and browser trust requirements.'],
+		[36, 'Analyzing Website Architecture...', 'Website Architecture Mapped', 'Reviewing page hierarchy, crawl readiness, metadata, and conversion structure.'],
+		[45, 'Reviewing Technical SEO...', 'Technical SEO Indexed', 'Checking indexability, titles, descriptions, headings, and structural signals.'],
+		[54, 'Locating Google Business Profile...', 'Business Profile Located', 'Matching local identity signals, categories, reviews, photos, and NAP consistency.'],
+		[63, 'Reading Reviews...', 'Review Layer Assessed', 'Measuring public proof, rating depth, recency, and buyer confidence.'],
+		[72, 'Testing Performance...', 'Performance Baseline Created', 'Estimating responsiveness, mobile confidence, and page experience signals.'],
+		[81, 'Scanning AI Visibility...', 'AI Visibility Indexed', 'Testing whether answer engines can understand and recommend the business.'],
+		[90, 'Checking Local Citations...', 'Local Citations Reviewed', 'Comparing directory consistency, trust references, and location proof.'],
+		[98, 'Scoring Opportunities...', 'Executive Snapshot Ready', 'Prioritizing business trust, search visibility, and the next executive action.']
+	];
+	let scanList = scan?.querySelector('[data-scan-systems]');
+	if (scan && !scanList) {
+		scanList = document.createElement('div');
+		scanList.className = 'scan-system-list';
+		scanList.dataset.scanSystems = '';
+		scan.appendChild(scanList);
+	}
+	if (scanList) {
+		scanList.innerHTML = scanSteps.map(([nextPercent, nextTitle]) => `
+			<div class="scan-system-row" data-scan-row="${nextPercent}">
+				<span></span>
+				<strong>${escapeHtml(nextTitle)}</strong>
+				<small>Queued</small>
+			</div>
+		`).join('');
+	}
+
+	form.addEventListener('submit', event => {
+		event.preventDefault();
+		if (apexWordPressMode && !getApexUser()) {
+			status.textContent = 'Sign in with Google before ApexOneIQ can save your Executive Scan.';
+			window.location.assign(apexHref('oauth/google/?redirect_to=/sign-in.html'));
+			return;
+		}
+		const website = form.elements.website.value.trim();
+		const validWebsite = /^https:\/\/[^\s]+\.[^\s]+$/i.test(website);
+
+		if (!validWebsite) {
+			form.classList.add('has-error');
+			status.textContent = 'Enter a secure website URL beginning with https://.';
+			return;
+		}
+
+		form.classList.remove('has-error');
+		status.textContent = 'Executive scan started.';
+		form.querySelector('button[type="submit"]').disabled = true;
+		scan.hidden = false;
+		scan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+		const host = new URL(website).hostname.replace(/^www\./, '');
+		saveProfile({
+			businessName: window.ApexOneIQ?.businessName || host,
+			website,
+			email: window.ApexOneIQ?.businessEmail || getApexUser()?.email || '',
+			scanCompleted: false,
+			score: scanScoreFor(website),
+			createdAt: new Date().toISOString(),
+			dataMode: window.ApexOneIQ?.isLoggedIn ? 'wordpress-onboarding' : 'static-onboarding'
+		});
+
+		scanSteps.forEach(([nextPercent, nextTitle, completeLabel, nextDetail], index) => {
+			setTimeout(() => {
+				if (percent) percent.textContent = `${nextPercent}%`;
+				if (bar) bar.style.width = `${nextPercent}%`;
+				if (scanRing) scanRing.style.background = `conic-gradient(var(--green) 0 ${nextPercent}%, rgba(111, 180, 255, .13) ${nextPercent}% 100%)`;
+				if (title) title.textContent = nextTitle;
+				if (detail) detail.textContent = nextDetail;
+				const row = scanList?.querySelector(`[data-scan-row="${nextPercent}"]`);
+				row?.classList.add('active');
+				if (row) row.querySelector('small').textContent = 'Analyzing';
+				setTimeout(() => {
+					row?.classList.add('complete');
+					if (row) {
+						row.querySelector('strong').textContent = completeLabel;
+						row.querySelector('small').textContent = 'Complete';
+					}
+				}, 430);
+			}, 360 + index * 680);
+		});
+
+		setTimeout(() => {
+			const profile = getStoredProfile();
+			const completedProfile = saveProfile({
+				...profile,
+				scanCompleted: true,
+				completedAt: new Date().toISOString(),
+				trend: [12, 28, 41, 55, profile?.score || scanScoreFor(website)]
+			});
+			status.textContent = 'Scan complete. Opening Executive Dashboard...';
+			persistExecutiveScan(completedProfile).then(dashboardUrl => {
+				const nextUrl = new URL(dashboardUrl || apexHref('dashboard.html'), window.location.origin);
+				nextUrl.searchParams.set('scan', 'complete');
+				window.location.assign(nextUrl.toString());
+			});
+		}, 7600);
+	});
+}
+
+async function persistExecutiveScan(profile) {
+	if (!window.ApexOneIQ?.scanEndpoint || !window.ApexOneIQ?.scanNonce || !profile?.website) {
+		return apexHref('dashboard.html');
+	}
+
+	try {
+		const response = await fetch(window.ApexOneIQ.scanEndpoint, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-WP-Nonce': window.ApexOneIQ.scanNonce
+			},
+			body: JSON.stringify({
+				website: profile.website,
+				score: profile.score,
+				trend: profile.trend
+			})
+		});
+		const body = await response.json();
+		if (response.ok && body?.success && body?.data?.dashboardUrl) return body.data.dashboardUrl;
+	} catch (error) {
+		// Local storage still supports the immediate dashboard; WordPress persistence is retried on the next scan.
+	}
+
+	return apexHref('dashboard.html');
+}
+
 function setupRegistrationForm() {
 	const form = document.querySelector('[data-register-form]');
 	if (!form) return;
@@ -602,56 +920,165 @@ function setupRegistrationForm() {
 		form.classList.remove('has-error');
 		status.textContent = 'Creating your free business snapshot...';
 		try {
-			localStorage.setItem('apexoneiq_free_profile', JSON.stringify({
+			saveProfile({
 				businessName: values.business_name,
 				website: values.business_website,
 				email: values.email,
+				scanCompleted: false,
+				score: scanScoreFor(values.business_website),
 				createdAt: new Date().toISOString(),
 				dataMode: 'static-placeholder'
-			}));
+			});
 		} catch (error) {
 			// Local storage is only used by the standalone concept.
 		}
-		setTimeout(() => window.location.assign(apexHref('free-dashboard.html')), 500);
+		setTimeout(() => window.location.assign(apexHref('sign-in.html')), 500);
 	});
 }
 
 function applyFreeProfileSnapshot() {
-	if (route !== 'free-dashboard.html') return;
-	let profile = null;
-	try {
-		profile = JSON.parse(localStorage.getItem('apexoneiq_free_profile') || 'null');
-	} catch (error) {
-		profile = null;
-	}
-	if (!profile?.website && window.ApexOneIQ?.businessWebsite) {
-		profile = {
-			businessName: window.ApexOneIQ.businessName || 'Your Business',
-			website: window.ApexOneIQ.businessWebsite,
-			email: window.ApexOneIQ.businessEmail || '',
-			dataMode: 'wordpress-profile'
-		};
-	}
-	if (!profile?.website) return;
-
-	document.querySelectorAll('.site-card strong').forEach(item => item.textContent = profile.businessName || 'Submitted Business');
-	document.querySelectorAll('.site-card p').forEach(item => item.textContent = `${profile.website} / Snapshot pending`);
-	const main = document.querySelector('.main');
-	if (main && !main.querySelector('[data-intake-banner]')) {
-		const banner = document.createElement('section');
-		banner.className = 'demo-banner intake-banner';
-		banner.dataset.intakeBanner = '';
-		banner.innerHTML = `<strong>Intake Captured</strong><span>${escapeHtml(profile.website)} is stored as submitted profile data. Snapshot metrics on this concept page remain safe mock placeholders until live analysis is connected.</span>`;
-		main.prepend(banner);
-	}
+	return;
 }
 
-document.querySelectorAll('[data-oauth-provider]').forEach(button => {
-	button.addEventListener('click', () => {
-		const provider = button.dataset.oauthProvider === 'apple' ? 'Apple' : 'Google';
-		openDrawer(`${provider} OAuth Foundation`, `${provider} sign-in is intentionally not active until the owner creates production OAuth credentials, adds the approved redirect URI, and stores secrets in WordPress settings or environment variables.`, 'Secure Authentication');
+function dashboardEmptyState(main, pageHead) {
+	document.body.classList.add('dashboard-empty-state');
+	pageHead.querySelector('h1').textContent = 'Complete your Executive Scan before Apex builds the dashboard.';
+	const kicker = pageHead.querySelector('.page-kicker');
+	if (kicker) kicker.textContent = 'Executive Scan Required';
+	pageHead.querySelector('.ghost-button')?.setAttribute('href', apexHref('sign-in.html'));
+	if (pageHead.querySelector('.ghost-button')) pageHead.querySelector('.ghost-button').textContent = 'Start Executive Scan';
+	main.querySelectorAll(':scope > section:not(.page-head):not([data-dashboard-empty])').forEach(section => {
+		section.hidden = true;
 	});
-});
+	if (main.querySelector('[data-dashboard-empty]')) return;
+	pageHead.insertAdjacentHTML('afterend', `
+		<section class="dashboard-empty-panel" data-dashboard-empty>
+			<div>
+				<div class="page-kicker">No intelligence displayed yet</div>
+				<h2>Enter your business website to generate the first Executive Intelligence profile.</h2>
+				<p>ApexOneIQ will hold the Executive Score, summary, opportunities, and recommendations until the scan is complete.</p>
+				<a class="button" href="${escapeHtml(apexHref('sign-in.html'))}">Start Executive Scan</a>
+			</div>
+			<div class="empty-signal-stack">
+				<span>Website Health</span>
+				<span>Trust Signals</span>
+				<span>AI Visibility</span>
+				<span>Market Intelligence</span>
+				<span>Executive Snapshot</span>
+			</div>
+		</section>
+	`);
+}
+
+function trendPath(points) {
+	const coords = points.map((value, index) => {
+		const x = 16 + index * (268 / Math.max(points.length - 1, 1));
+		const y = 142 - value * 1.34;
+		return `${x},${Math.max(22, Math.min(138, y))}`;
+	});
+	return coords.join(' ');
+}
+
+function setupExecutiveDashboard() {
+	if (route !== 'dashboard.html' || apexDemoMode) return;
+	const main = document.querySelector('.main');
+	const pageHead = document.querySelector('.page-head');
+	if (!main || !pageHead) return;
+
+	renderAccountState();
+	const profile = getStoredProfile();
+	if (!profile?.scanCompleted) {
+		dashboardEmptyState(main, pageHead);
+		return;
+	}
+
+	document.body.classList.add('dashboard-scan-complete');
+	main.querySelectorAll(':scope > section:not(.page-head):not([data-executive-live-dashboard])').forEach(section => {
+		section.hidden = true;
+	});
+	const score = Number(profile.score || 61);
+	const trend = Array.isArray(profile.trend) && profile.trend.length ? profile.trend : [12, 28, 41, 55, score];
+	const businessName = profile.businessName || new URL(profile.website).hostname.replace(/^www\./, '');
+	const status = scoreLabel(score);
+	renderWorkspaceContext();
+	pageHead.querySelector('h1').textContent = `${businessName} Executive Intelligence profile is ready.`;
+	const kicker = pageHead.querySelector('.page-kicker');
+	if (kicker) kicker.textContent = 'Mission Control';
+
+	if (!main.querySelector('[data-executive-live-dashboard]')) {
+		pageHead.insertAdjacentHTML('afterend', `
+			<section class="executive-live-dashboard" data-executive-live-dashboard>
+				<article class="live-score-card" data-assemble-card style="--delay:0ms">
+					<div class="panel-label">Executive Score</div>
+					<div class="executive-score-ring" data-score-ring style="--score:0">
+						<div><strong data-executive-score data-final-score="${score}">0</strong><span>/100</span></div>
+					</div>
+					<h3 data-score-status>${escapeHtml(status)}</h3>
+					<p>Based on website health, business trust, AI visibility, and local search signals.</p>
+				</article>
+				<article class="live-snapshot-card" data-assemble-card style="--delay:420ms">
+					<div class="panel-label">Business Health Snapshot</div>
+					<h3>Trust is the current constraint; visibility has room to move.</h3>
+					<div class="animated-meter"><span data-meter style="--w:68%"></span></div>
+					<p>Apex detected enough business signal to build the first decision profile. The fastest confidence lift is strengthening proof signals.</p>
+				</article>
+				<article class="live-summary-card" data-assemble-card style="--delay:780ms">
+					<div class="panel-label">Executive Summary</div>
+					<h3>One decision matters before broader content or ads.</h3>
+					<p>Complete the local trust layer first. It improves buyer confidence, supports AI answer visibility, and makes every next action more durable.</p>
+				</article>
+				<article class="live-trend-card" data-assemble-card style="--delay:1120ms">
+					<div class="panel-label">Executive Score Trend</div>
+					<h3>First scan baseline created.</h3>
+					<svg viewBox="0 0 320 170" role="img" aria-label="Executive Score Trend">
+						<polyline points="${escapeHtml(trendPath(trend))}" fill="none" stroke="url(#apexTrend)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" class="live-trend-line"/>
+						<defs><linearGradient id="apexTrend" x1="0" x2="1"><stop stop-color="#22e7ff"/><stop offset="1" stop-color="#21f2a6"/></linearGradient></defs>
+					</svg>
+					<p>Future scans will populate historical movement over time.</p>
+				</article>
+				<article class="live-opportunity-card" data-assemble-card style="--delay:1460ms">
+					<div class="panel-label">Opportunity Cards</div>
+					<div class="live-opportunities">
+						<span><strong>Trust Layer</strong><small>Highest confidence</small></span>
+						<span><strong>AI Visibility</strong><small>Indexed baseline</small></span>
+						<span><strong>Local Search</strong><small>Ready for proof</small></span>
+					</div>
+				</article>
+				<article class="live-action-card" data-assemble-card style="--delay:1780ms">
+					<div class="panel-label">Recommended Action</div>
+					<h3>Complete Google Business Profile trust proof.</h3>
+					<p>This is the fastest next step because it supports search, AI recommendations, and buyer confidence at the same time.</p>
+					<button class="ghost-button" data-template="drawer-gbp">View Playbook</button>
+				</article>
+				<article class="live-feed-card" data-assemble-card style="--delay:2100ms">
+					<div class="panel-label">Activity Feed</div>
+					<div class="mini-timeline">
+						<button><span>Now</span><strong>Executive scan completed</strong><small>${escapeHtml(profile.website)}</small></button>
+						<button><span>Now</span><strong>Score baseline created</strong><small>${score}/100 ${escapeHtml(status)}</small></button>
+						<button><span>Next</span><strong>Trend history ready</strong><small>Future scans compound the chart</small></button>
+					</div>
+				</article>
+			</section>
+		`);
+	}
+
+	requestAnimationFrame(() => {
+		document.body.classList.add('dashboard-assembling');
+		const scoreEl = document.querySelector('[data-executive-score]');
+		const ring = document.querySelector('[data-score-ring]');
+		const duration = 2600;
+		const start = performance.now();
+		const animate = now => {
+			const progress = Math.min((now - start) / duration, 1);
+			const eased = 1 - Math.pow(1 - progress, 3);
+			const value = Math.round(score * eased);
+			if (scoreEl) scoreEl.textContent = value;
+			if (ring) ring.style.setProperty('--score', value);
+			if (progress < 1) requestAnimationFrame(animate);
+		};
+		requestAnimationFrame(animate);
+	});
+}
 
 document.querySelectorAll('.account').forEach(account => {
 	if (apexDemoMode) return;
@@ -665,9 +1092,12 @@ document.querySelectorAll('.account').forEach(account => {
 	}
 });
 
+renderAccountState();
 setupLandingCapture();
+setupExecutiveScan();
 setupRegistrationForm();
 applyFreeProfileSnapshot();
+setupExecutiveDashboard();
 
 document.querySelectorAll('[data-explain]').forEach(button => {
 	button.addEventListener('click', () => {
@@ -676,6 +1106,36 @@ document.querySelectorAll('[data-explain]').forEach(button => {
 });
 
 document.addEventListener('click', event => {
+	const accountToggle = event.target.closest('[data-account-toggle]');
+	if (accountToggle) {
+		const menu = accountToggle.closest('[data-account-menu]');
+		const open = !menu.classList.contains('open');
+		document.querySelectorAll('[data-account-menu]').forEach(item => item.classList.remove('open'));
+		menu.classList.toggle('open', open);
+		accountToggle.setAttribute('aria-expanded', String(open));
+		return;
+	}
+
+	if (!event.target.closest('[data-account-menu]')) {
+		document.querySelectorAll('[data-account-menu]').forEach(item => item.classList.remove('open'));
+	}
+
+	const logout = event.target.closest('[data-apex-logout]');
+	if (logout) {
+		try {
+			localStorage.removeItem(apexSessionKey);
+			localStorage.removeItem(apexProfileKey);
+		} catch (error) {
+			// Ignore local logout cleanup failures.
+		}
+		if (apexWordPressMode) {
+			window.location.assign(`${apexRoot}wp-login.php?action=logout`);
+			return;
+		}
+		window.location.assign(apexHref('sign-in.html'));
+		return;
+	}
+
 	const hashLink = event.target.closest('a[href="#"]');
 	if (hashLink) event.preventDefault();
 
@@ -720,7 +1180,7 @@ document.addEventListener('click', event => {
 		return;
 	}
 
-	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]):not([data-oauth-provider]), a[href="#"]');
+	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]), a[href="#"]');
 	if (genericControl && !genericControl.disabled && !genericControl.closest('[data-drawer-text]')) {
 		const text = genericControl.textContent.trim() || genericControl.getAttribute('aria-label') || routeAskDefaults[route] || 'What should I do next?';
 		openAsk(text);

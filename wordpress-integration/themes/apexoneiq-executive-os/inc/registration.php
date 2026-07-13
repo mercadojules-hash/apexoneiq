@@ -132,10 +132,10 @@ function apexoneiq_render_register_page() {
 				update_user_meta( $user_id, 'apexoneiq_business_name', $posted['business_name'] );
 				update_user_meta( $user_id, 'apexoneiq_business_website', $posted['business_website'] );
 				update_user_meta( $user_id, 'apexoneiq_registration_source', 'free_public_registration' );
-				update_user_meta( $user_id, 'apexoneiq_free_snapshot_status', 'pending_snapshot_generation' );
-				wp_set_current_user( $user_id );
-				wp_set_auth_cookie( $user_id, true );
-				wp_safe_redirect( home_url( '/free-dashboard.html' ) );
+			update_user_meta( $user_id, 'apexoneiq_free_snapshot_status', 'pending_executive_scan' );
+			wp_set_current_user( $user_id );
+			wp_set_auth_cookie( $user_id, true );
+			wp_safe_redirect( home_url( '/sign-in.html' ) );
 				exit;
 			}
 		}
@@ -157,8 +157,8 @@ function apexoneiq_render_register_page() {
 				<section class="auth-hero register-hero">
 					<div>
 						<div class="page-kicker"><?php esc_html_e( 'Start Free', 'apexoneiq' ); ?></div>
-						<h1><?php esc_html_e( 'Create your free ApexOneIQ business snapshot.', 'apexoneiq' ); ?></h1>
-						<p><?php esc_html_e( 'Register your business, review a controlled Free Dashboard, and upgrade only when you are ready for Cloud, Command, or managed Concierge support.', 'apexoneiq' ); ?></p>
+						<h1><?php esc_html_e( 'Create your free ApexOneIQ executive scan.', 'apexoneiq' ); ?></h1>
+						<p><?php esc_html_e( 'Register your business, complete the Executive Scan, and upgrade only when you are ready for Cloud, Command, or managed Concierge support.', 'apexoneiq' ); ?></p>
 					</div>
 					<div class="auth-panel register-card">
 						<?php if ( $errors ) : ?>
@@ -172,7 +172,7 @@ function apexoneiq_render_register_page() {
 							<label><span><?php esc_html_e( 'Password', 'apexoneiq' ); ?></span><input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
 							<label><span><?php esc_html_e( 'Confirm password', 'apexoneiq' ); ?></span><input name="confirm_password" type="password" autocomplete="new-password" minlength="8" required></label>
 							<button class="button" type="submit"><?php esc_html_e( 'Create Free Account', 'apexoneiq' ); ?></button>
-							<p class="form-status" data-register-status><?php esc_html_e( 'After registration, your account opens the Free Dashboard with safe snapshot data and upgrade options.', 'apexoneiq' ); ?></p>
+							<p class="form-status" data-register-status><?php esc_html_e( 'After registration, your account opens the Executive Scan before any dashboard intelligence is shown.', 'apexoneiq' ); ?></p>
 						</form>
 						<div class="oauth-options" aria-label="<?php esc_attr_e( 'Google sign-in', 'apexoneiq' ); ?>">
 							<a class="ghost-button" href="<?php echo esc_url( home_url( '/oauth/google/' ) ); ?>"><?php esc_html_e( 'Continue with Google', 'apexoneiq' ); ?><small><?php esc_html_e( 'Free account access', 'apexoneiq' ); ?></small></a>
@@ -208,7 +208,7 @@ function apexoneiq_start_oauth_flow( $provider ) {
 
 	$state = wp_generate_password( 40, false, false );
 	$nonce = wp_generate_password( 32, false, false );
-	$redirect_to = isset( $_GET['redirect_to'] ) ? apexoneiq_allowed_oauth_redirect( wp_unslash( $_GET['redirect_to'] ) ) : home_url( '/free-dashboard.html' );
+	$redirect_to = isset( $_GET['redirect_to'] ) ? apexoneiq_allowed_oauth_redirect( wp_unslash( $_GET['redirect_to'] ) ) : home_url( '/sign-in.html' );
 
 	set_transient(
 		'apexoneiq_google_oauth_' . hash( 'sha256', $state ),
@@ -300,7 +300,7 @@ function apexoneiq_handle_google_oauth_callback() {
 	wp_set_auth_cookie( $user_id, true );
 	do_action( 'wp_login', get_userdata( $user_id )->user_login, get_userdata( $user_id ) );
 
-	wp_safe_redirect( apexoneiq_allowed_oauth_redirect( $attempt['redirect_to'] ?? home_url( '/free-dashboard.html' ) ) );
+	wp_safe_redirect( apexoneiq_oauth_destination_for_user( $user_id, $attempt['redirect_to'] ?? home_url( '/sign-in.html' ) ) );
 	exit;
 }
 
@@ -453,7 +453,7 @@ function apexoneiq_google_resolve_user( $profile ) {
 			);
 
 			update_user_meta( $user_id, 'apexoneiq_registration_source', 'google_oauth_free_registration' );
-			update_user_meta( $user_id, 'apexoneiq_free_snapshot_status', 'pending_snapshot_generation' );
+			update_user_meta( $user_id, 'apexoneiq_free_snapshot_status', 'pending_executive_scan' );
 			update_user_meta( $user_id, 'apexoneiq_subscription_plan', 'free' );
 			update_user_meta( $user_id, 'apexoneiq_subscription_status', 'none' );
 			update_user_meta( $user_id, 'apexoneiq_subscription_capabilities', apexoneiq_capabilities_for_plan( 'free' ) );
@@ -503,18 +503,49 @@ function apexoneiq_allowed_oauth_redirect( $redirect_to ) {
 	$path        = wp_parse_url( $redirect_to, PHP_URL_PATH );
 
 	if ( ! $path ) {
-		return home_url( '/free-dashboard.html' );
+		return home_url( '/sign-in.html' );
 	}
 
 	$allowed = array(
-		'/free-dashboard.html',
 		'/dashboard.html',
+		'/sign-in.html',
 		'/account',
 		'/account.html',
 		'/subscription.html',
 	);
 
-	return in_array( $path, $allowed, true ) ? home_url( $path ) : home_url( '/free-dashboard.html' );
+	return in_array( $path, $allowed, true ) ? home_url( $path ) : home_url( '/sign-in.html' );
+}
+
+/**
+ * Choose the correct post-OAuth destination using completed onboarding state.
+ *
+ * @param int    $user_id      WordPress user ID.
+ * @param string $requested_to Requested redirect URL.
+ * @return string
+ */
+function apexoneiq_oauth_destination_for_user( $user_id, $requested_to ) {
+	$requested_path = wp_parse_url( (string) $requested_to, PHP_URL_PATH );
+
+	if ( apexoneiq_user_has_completed_onboarding( $user_id ) ) {
+		if ( in_array( $requested_path, array( '/account', '/account.html', '/subscription.html' ), true ) ) {
+			return home_url( $requested_path );
+		}
+
+		return home_url( '/dashboard.html' );
+	}
+
+	return home_url( '/sign-in.html' );
+}
+
+/**
+ * Whether a user has submitted and completed the Executive Scan onboarding.
+ *
+ * @param int $user_id WordPress user ID.
+ * @return bool
+ */
+function apexoneiq_user_has_completed_onboarding( $user_id ) {
+	return '1' === (string) get_user_meta( $user_id, 'apexoneiq_onboarding_completed', true );
 }
 
 /**
