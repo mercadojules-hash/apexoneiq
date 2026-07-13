@@ -133,6 +133,26 @@ function apexoneiq_qa_pro_override_emails() {
 }
 
 /**
+ * Return temporary QA Pro display-name or login allowlist entries.
+ *
+ * @return array<int,string>
+ */
+function apexoneiq_qa_pro_override_identities() {
+	$raw = '';
+
+	if ( defined( 'APEXONEIQ_QA_PRO_IDENTITIES' ) ) {
+		$raw = (string) APEXONEIQ_QA_PRO_IDENTITIES;
+	} elseif ( getenv( 'APEXONEIQ_QA_PRO_IDENTITIES' ) ) {
+		$raw = (string) getenv( 'APEXONEIQ_QA_PRO_IDENTITIES' );
+	}
+
+	$identities = array_filter( array_map( 'trim', explode( ',', strtolower( $raw ) ) ) );
+	$identities[] = 'jules mercado (mixtapepsd)';
+
+	return array_values( array_unique( $identities ) );
+}
+
+/**
  * Check whether a logged-in user has the temporary QA Pro override.
  *
  * @param int $user_id WordPress user ID.
@@ -144,7 +164,11 @@ function apexoneiq_user_has_qa_pro_override( $user_id ) {
 		return false;
 	}
 
-	return in_array( strtolower( $user->user_email ), apexoneiq_qa_pro_override_emails(), true );
+	$identities = apexoneiq_qa_pro_override_identities();
+
+	return in_array( strtolower( $user->user_email ), apexoneiq_qa_pro_override_emails(), true )
+		|| in_array( strtolower( $user->display_name ), $identities, true )
+		|| in_array( strtolower( $user->user_login ), $identities, true );
 }
 
 /**
