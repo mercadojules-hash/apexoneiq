@@ -145,7 +145,7 @@ function getWorkspaceContext() {
 
 const pageTitles = {
 	'index.html': 'ApexOneIQ - AI Executive Intelligence for Business Growth',
-	'dashboard.html': 'ApexOneIQ - Mission Control',
+	'dashboard.html': 'ApexOneIQ - Supporting Intelligence',
 	'executive-brief.html': 'ApexOneIQ - Executive Brief',
 	'opportunities.html': 'ApexOneIQ - Action Center',
 	'competitors.html': 'ApexOneIQ - Competitor Intelligence',
@@ -181,49 +181,15 @@ const pageTitles = {
 document.title = pageTitles[route] || 'ApexOneIQ - Executive Intelligence OS';
 
 const executiveNav = [
-	['Executive', [
-		['Dashboard', 'dashboard.html'],
+	['Workspace', [
 		['Executive Brief', 'executive-brief.html'],
-		['Action Center', 'opportunities.html'],
-		['Forecast', 'forecast.html'],
-		['Reports', 'reports.html']
+		['Billing', 'subscription.html'],
+		['Settings', 'settings.html']
 	]],
-	['Intelligence', [
-		['Website Overview', 'website-overview.html'],
-		['Organic Keywords', 'organic-keywords.html'],
-		['Keyword Opportunities', 'keyword-opportunities.html'],
-		['Competitor Intelligence', 'competitor-intelligence.html'],
-		['Backlinks', 'backlinks.html'],
-		['Content Gap', 'content-gap.html'],
-		['Site Audit', 'site-audit.html'],
-		['AI Visibility', 'intelligence-ai-visibility.html'],
-		['Search Trends', 'search-trends.html'],
-		['Local Rankings', 'local-rankings.html']
-	]],
-	['Operations', [
-		['Website Profile', 'website-profile.html'],
-		['AI Recommendations', 'ai-visibility.html'],
-		['Competitors', 'competitors.html'],
-		['Google Business', null],
-		['Content', null],
-		['Reviews', null],
-		['Local Presence', null]
-	]],
-	['Monitoring', [
-		['Monitoring Center', 'monitoring-center.html'],
-		['Alerts', 'alerts.html', '3'],
-		['Rank Tracking', null],
-		['Performance', null]
-	]],
-	['Planning', [
-		['Executive Timeline', 'business-timeline.html'],
-		['Playbooks', 'opportunities.html?view=playbooks'],
-		['Market Intelligence', 'history.html']
-	]],
-	['System', [
-		['Settings', 'settings.html'],
-		['Integrations', null],
-		['Team', null]
+	['Supporting Detail', [
+		['Legacy Dashboard', 'dashboard.html'],
+		['Priority Detail', 'opportunities.html'],
+		['Forecast Detail', 'forecast.html']
 	]]
 ];
 
@@ -325,8 +291,8 @@ document.querySelectorAll('.brand strong').forEach(item => item.textContent = 'A
 document.querySelectorAll('.brand span').forEach(item => item.textContent = 'Executive Intelligence OS');
 document.querySelectorAll('.logo').forEach(item => item.textContent = 'IQ');
 document.querySelectorAll('.system-card .eyebrow').forEach(item => item.textContent = 'ApexOneIQ focus');
-document.querySelectorAll('.system-card p').forEach(item => item.textContent = 'Executive OS concept remains isolated until reviewed and approved.');
-document.querySelectorAll('.system-card .button').forEach(item => item.textContent = 'Review ApexOneIQ');
+document.querySelectorAll('.system-card p').forEach(item => item.textContent = 'The Executive Brief is the center of the ApexOneIQ customer experience.');
+document.querySelectorAll('.system-card .button').forEach(item => item.textContent = 'Open Executive Brief');
 
 function renderWorkspaceContext() {
 	if (apexDemoMode || !getApexUser()) return;
@@ -356,12 +322,16 @@ function renderAccountState() {
 
 	document.querySelectorAll('.account').forEach(account => {
 		const askQuestion = account.querySelector('[data-ask]')?.dataset.ask || routeAskDefaults[route] || 'What should I do next?';
+		const exportButton = route === 'executive-brief.html'
+			? '<button class="ghost-button" type="button" data-export-brief-pdf>Export PDF</button>'
+			: '';
 		if (!user) {
-			account.innerHTML = `<a class="ghost-button sign-in-link" data-sign-in-link href="${escapeHtml(apexAuthUrl)}">Sign In</a><div class="avatar">IQ</div>`;
+			account.innerHTML = `${exportButton}<a class="ghost-button sign-in-link" data-sign-in-link href="${escapeHtml(apexAuthUrl)}">Sign In</a><div class="avatar">IQ</div>`;
 			return;
 		}
 
 		account.innerHTML = `
+			${exportButton}
 			<button class="ghost-button" type="button" data-ask="${escapeHtml(askQuestion)}">Ask Apex</button>
 			<div class="account-menu" data-account-menu>
 				<button class="account-trigger" type="button" data-account-toggle aria-expanded="false">
@@ -370,7 +340,7 @@ function renderAccountState() {
 					<small>v</small>
 				</button>
 				<div class="account-dropdown" role="menu">
-					<a href="${escapeHtml(apexPageUrl('dashboard.html'))}" role="menuitem">My Workspace</a>
+					<a href="${escapeHtml(apexPageUrl('executive-brief.html'))}" role="menuitem">My Workspace</a>
 					<a href="${escapeHtml(apexPageUrl('account.html'))}" role="menuitem">Account</a>
 					<a href="${escapeHtml(apexPageUrl('subscription.html'))}" role="menuitem">Billing</a>
 					<a href="${escapeHtml(apexPageUrl('settings.html'))}" role="menuitem">Settings</a>
@@ -383,12 +353,12 @@ function renderAccountState() {
 	if (user) {
 		document.querySelectorAll('.landing-nav .nav-cta').forEach(link => {
 			link.textContent = 'My Workspace';
-			link.href = apexPageUrl(getStoredProfile()?.scanCompleted ? 'dashboard.html' : 'sign-in.html');
+			link.href = apexPageUrl(getStoredProfile()?.scanCompleted ? 'executive-brief.html' : 'sign-in.html');
 		});
 		document.querySelectorAll('.landing-nav a').forEach(link => {
 			if (/sign in|google sign in/i.test(link.textContent || '')) {
 				link.textContent = 'My Workspace';
-				link.href = apexPageUrl(getStoredProfile()?.scanCompleted ? 'dashboard.html' : 'sign-in.html');
+				link.href = apexPageUrl(getStoredProfile()?.scanCompleted ? 'executive-brief.html' : 'sign-in.html');
 			}
 		});
 	}
@@ -663,7 +633,7 @@ function createScanPlaybookContent(templateId = 'drawer-gbp') {
 	content.className = 'scan-driven-playbook';
 	const playbooks = {
 		'drawer-gbp': {
-			why: `Apex recommends the Google Business Profile trust layer because the ${evidence.domain} scan shows proof signals lagging behind visibility. The Executive Score is ${evidence.score}/100, profile completeness is ${evidence.profileCompleteness}%, and local trust signals are ${evidence.localSignals}/100.`,
+			why: `Apex recommends the Google Business Profile trust layer because the ${evidence.domain} scan shows proof signals lagging behind visibility. The Business Growth Score™ is ${evidence.score}/100, profile completeness is ${evidence.profileCompleteness}%, and local trust signals are ${evidence.localSignals}/100.`,
 			items: [
 				['Confirm Google Business Profile ownership and core NAP consistency.', 'Missing or weak GBP proof lowers local trust and AI recommendation confidence.', '5 min'],
 				['Add primary business categories and high-value service categories.', 'The scan found category proof is not strong enough to support the highest-confidence local recommendation.', '5 min'],
@@ -706,7 +676,7 @@ function createScanPlaybookContent(templateId = 'drawer-gbp') {
 		<p>${escapeHtml(playbook.why)}</p>
 		<div class="scan-evidence-panel">
 			<div><span>Scan baseline</span><strong>${escapeHtml(evidence.completedAt)}</strong></div>
-			<div><span>Executive Score</span><strong>${evidence.score}/100</strong></div>
+			<div><span>Business Growth Score™</span><strong>${evidence.score}/100</strong></div>
 			<div><span>GBP proof</span><strong>${evidence.profileCompleteness}%</strong></div>
 			<div><span>Local trust</span><strong>${evidence.localSignals}/100</strong></div>
 		</div>
@@ -915,8 +885,8 @@ function setupExecutiveScan() {
 		form.elements.website.value = savedProfile.website;
 	}
 	if (savedProfile?.website && savedProfile.scanCompleted) {
-		status.textContent = 'Existing business found. Opening your Executive Dashboard...';
-		setTimeout(() => window.location.assign(apexHref('dashboard.html?existing=1')), 850);
+		status.textContent = 'Existing business found. Opening your Executive Brief...';
+		setTimeout(() => window.location.assign(apexHref('executive-brief.html?existing=1')), 850);
 		return;
 	}
 
@@ -1011,9 +981,9 @@ function setupExecutiveScan() {
 				completedAt: new Date().toISOString(),
 				trend: [12, 28, 41, 55, profile?.score || scanScoreFor(website)]
 			});
-			status.textContent = 'Scan complete. Opening Executive Dashboard...';
+			status.textContent = 'Scan complete. Opening your Executive Brief...';
 			persistExecutiveScan(completedProfile).then(dashboardUrl => {
-				const nextUrl = new URL(dashboardUrl || apexHref('dashboard.html'), window.location.origin);
+				const nextUrl = new URL(dashboardUrl || apexHref('executive-brief.html'), window.location.origin);
 				nextUrl.searchParams.set('scan', 'complete');
 				window.location.assign(nextUrl.toString());
 			});
@@ -1023,7 +993,7 @@ function setupExecutiveScan() {
 
 async function persistExecutiveScan(profile) {
 	if (!window.ApexOneIQ?.scanEndpoint || !window.ApexOneIQ?.scanNonce || !profile?.website) {
-		return apexHref('dashboard.html');
+		return apexHref('executive-brief.html');
 	}
 
 	try {
@@ -1046,7 +1016,7 @@ async function persistExecutiveScan(profile) {
 		// Local storage still supports the immediate dashboard; WordPress persistence is retried on the next scan.
 	}
 
-	return apexHref('dashboard.html');
+	return apexHref('executive-brief.html');
 }
 
 function setupRegistrationForm() {
@@ -1120,7 +1090,7 @@ function dashboardEmptyState(main, pageHead) {
 			<div>
 				<div class="page-kicker">No intelligence displayed yet</div>
 				<h2>Enter your business website to generate the first Executive Intelligence profile.</h2>
-				<p>ApexOneIQ will hold the Executive Score, summary, opportunities, and recommendations until the scan is complete.</p>
+				<p>ApexOneIQ will hold the Business Growth Score™, summary, opportunities, and recommendations until the scan is complete.</p>
 				<a class="button" href="${escapeHtml(apexHref('sign-in.html'))}">Start Executive Scan</a>
 			</div>
 			<div class="empty-signal-stack">
@@ -1159,7 +1129,7 @@ function executiveBaselineSvg(trend, score) {
 	const path = plot.map((point, index) => `${index ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ');
 	const areaPath = `${path} L ${plot[plot.length - 1].x} 142 L ${plot[0].x} 142 Z`;
 	return `
-		<svg class="executive-baseline-chart" viewBox="0 0 320 190" role="img" aria-label="Executive Score baseline timeline">
+		<svg class="executive-baseline-chart" viewBox="0 0 320 190" role="img" aria-label="Business Growth Score baseline timeline">
 			<defs>
 				<linearGradient id="apexBaselineLine" x1="0" x2="1">
 					<stop stop-color="#22e7ff"></stop>
@@ -1200,6 +1170,351 @@ function executiveBaselineSvg(trend, score) {
 	`;
 }
 
+function clampScore(value) {
+	return Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+}
+
+function businessHealth(score) {
+	if (score >= 80) return { label: 'Healthy', className: 'healthy', color: 'green' };
+	if (score >= 55) return { label: 'Needs Attention', className: 'attention', color: 'yellow' };
+	return { label: 'Critical', className: 'critical', color: 'red' };
+}
+
+function growthDriverScores(score) {
+	return {
+		localSeo: clampScore(score + 2),
+		aiVisibility: clampScore(score - 7),
+		trustCoverage: clampScore(score - 6),
+		websiteHealth: clampScore(score + 9),
+		contentAuthority: clampScore(score - 3),
+		competitivePosition: clampScore(score - 1)
+	};
+}
+
+function briefStatusFor(score) {
+	if (score >= 80) return 'Healthy';
+	if (score >= 55) return 'Needs Attention';
+	return 'Critical';
+}
+
+function buildExecutiveBriefData() {
+	const profile = getStoredProfile() || {
+		businessName: 'Your Business',
+		website: 'https://example.com',
+		score: 66,
+		scanCompleted: true,
+		completedAt: new Date().toISOString(),
+		trend: [58, 61, 64, 66]
+	};
+	const score = clampScore(profile.score || 66);
+	const drivers = growthDriverScores(score);
+	const projected = clampScore(score + 13);
+	const goal = Math.max(90, projected + 8);
+	const health = businessHealth(score);
+	const domain = workspaceDomain(profile.website) || profile.businessName || 'your business';
+	const businessName = profile.businessName || domain;
+	const opportunity = Math.max(3400, (100 - score) * 210);
+	const missionTarget = clampScore(score + 8);
+	const trend = Array.isArray(profile.trend) && profile.trend.length ? profile.trend.map(clampScore) : [58, 61, 64, score];
+	const summary = `${businessName} is currently constrained by trust coverage and incomplete local authority. Completing the top three priorities is projected to increase the Business Growth Score™ from ${score} to ${projected} over the next 30 days while improving AI Visibility and Local SEO. Today's Mission is to increase trust coverage so future recommendations become easier to earn and verify.`;
+	const recommendations = [
+		{
+			title: 'Increase trust coverage across core business profiles',
+			why: 'Buyers and AI systems need stronger third-party proof before they can confidently choose the business.',
+			impact: `Projected to add ${Math.max(6, Math.round((100 - drivers.trustCoverage) / 4))} qualified lead opportunities per month.`,
+			scoreLift: '+4 BGS',
+			visibility: '+8%',
+			time: '7 days',
+			difficulty: 'Low',
+			owner: 'Customer',
+			roi: 'High'
+		},
+		{
+			title: 'Clarify service-area authority with one proof-focused page',
+			why: 'The business has visibility potential, but local relevance needs clearer market proof.',
+			impact: 'Projected to improve local discovery and reduce competitor leakage.',
+			scoreLift: '+3 BGS',
+			visibility: '+6%',
+			time: '10 days',
+			difficulty: 'Medium',
+			owner: 'Customer',
+			roi: 'High'
+		},
+		{
+			title: 'Answer buyer questions in a structured format',
+			why: 'AI systems need concise, sourceable answers before they can recommend the business directly.',
+			impact: 'Projected to improve AI recommendation readiness and answer coverage.',
+			scoreLift: '+3 BGS',
+			visibility: '+8%',
+			time: '5 days',
+			difficulty: 'Low',
+			owner: 'Customer',
+			roi: 'Medium'
+		},
+		{
+			title: 'Strengthen review authority and recency',
+			why: 'Review proof is one of the clearest trust signals for customers comparing local providers.',
+			impact: 'Projected to increase confidence in high-intent local searches.',
+			scoreLift: '+2 BGS',
+			visibility: '+4%',
+			time: '14 days',
+			difficulty: 'Medium',
+			owner: 'Customer',
+			roi: 'Medium'
+		},
+		{
+			title: 'Improve internal links to the highest-value service pages',
+			why: 'Apex needs clearer paths between buyer intent, proof, and conversion pages.',
+			impact: 'Projected to help existing visibility compound without adding new pages first.',
+			scoreLift: '+2 BGS',
+			visibility: '+3%',
+			time: '3 days',
+			difficulty: 'Low',
+			owner: 'Customer',
+			roi: 'Medium'
+		}
+	];
+	return {
+		profile,
+		businessName,
+		domain,
+		score,
+		previousScore: Math.max(0, score - 5),
+		projected,
+		goal,
+		health,
+		drivers,
+		trend,
+		summary,
+		opportunity,
+		recommendations,
+		mission: {
+			title: 'Increase Trust Coverage',
+			progress: drivers.trustCoverage,
+			estimatedCompletion: '7 days',
+			currentScore: score,
+			targetScore: missionTarget,
+			owner: 'Customer'
+		},
+		competitors: [
+			['You', score, drivers.trustCoverage, drivers.aiVisibility],
+			['Competitor A', clampScore(score + 8), clampScore(drivers.trustCoverage + 13), clampScore(drivers.aiVisibility + 6)],
+			['Competitor B', clampScore(score + 3), clampScore(drivers.trustCoverage + 8), clampScore(drivers.aiVisibility + 3)],
+			['Competitor C', clampScore(score - 4), clampScore(drivers.trustCoverage - 2), clampScore(drivers.aiVisibility - 5)]
+		],
+		momentum: [
+			['Previous', Math.max(0, score - 5), 'Starting point'],
+			['Current', score, 'Scan baseline'],
+			['Projected', projected, 'After top priorities'],
+			['Goal', goal, 'Healthy target']
+		],
+		trust: [
+			['Google', 'connected'],
+			['GBP', drivers.trustCoverage >= 76 ? 'connected' : 'weak'],
+			['BBB', 'missing'],
+			['Yelp', drivers.trustCoverage >= 72 ? 'connected' : 'weak'],
+			['Trustpilot', 'missing'],
+			['Apple Business', 'missing'],
+			['Facebook', 'weak'],
+			['Industry Directories', drivers.trustCoverage >= 80 ? 'connected' : 'weak']
+		],
+		updatedAt: formatWorkspaceDate(profile.completedAt || profile.createdAt || new Date().toISOString())
+	};
+}
+
+function executiveRadarSvg(data) {
+	const axes = [
+		['Local SEO', data.drivers.localSeo],
+		['AI Visibility', data.drivers.aiVisibility],
+		['Trust', data.drivers.trustCoverage],
+		['Website', data.drivers.websiteHealth],
+		['Content', data.drivers.contentAuthority],
+		['Competition', data.drivers.competitivePosition]
+	];
+	const center = 150;
+	const radius = 104;
+	const points = axes.map(([, value], index) => {
+		const angle = (-90 + index * 60) * Math.PI / 180;
+		const distance = radius * (value / 100);
+		return {
+			x: center + Math.cos(angle) * distance,
+			y: center + Math.sin(angle) * distance,
+			labelX: center + Math.cos(angle) * 128,
+			labelY: center + Math.sin(angle) * 128,
+			value
+		};
+	});
+	const polygon = points.map(point => `${point.x},${point.y}`).join(' ');
+	return `
+		<svg class="brief-radar" viewBox="0 0 300 300" role="img" aria-label="Executive health radar chart">
+			<g class="brief-chart-grid">
+				<circle cx="150" cy="150" r="104"></circle><circle cx="150" cy="150" r="70"></circle><circle cx="150" cy="150" r="36"></circle>
+				${axes.map(([, value], index) => {
+					const angle = (-90 + index * 60) * Math.PI / 180;
+					return `<path d="M150 150 L${150 + Math.cos(angle) * 112} ${150 + Math.sin(angle) * 112}"></path>`;
+				}).join('')}
+			</g>
+			<polygon class="brief-radar-shape" points="${polygon}"></polygon>
+			${points.map((point, index) => `<circle class="brief-radar-point" cx="${point.x}" cy="${point.y}" r="4"></circle><text x="${point.labelX}" y="${point.labelY}">${escapeHtml(axes[index][0])}</text>`).join('')}
+		</svg>
+	`;
+}
+
+function businessTimelineSvg(data) {
+	return `
+		<svg class="brief-timeline-chart" viewBox="0 0 720 180" role="img" aria-label="Business timeline from current position to goal">
+			<g class="brief-chart-grid">
+				<path d="M64 132H656"></path>
+				<path d="M64 54H656"></path>
+				<path d="M64 93H656"></path>
+			</g>
+			<path class="brief-timeline-path" d="M92 122 C230 108 314 86 416 74 C502 64 574 58 628 42"></path>
+			${[
+				[92, 122, 'Current Position', data.score],
+				[416, 74, 'Projected Position', data.projected],
+				[628, 42, 'Goal', data.goal]
+			].map(([x, y, label, value]) => `<g class="brief-timeline-node"><circle cx="${x}" cy="${y}" r="8"></circle><text x="${x}" y="${y + 34}">${label}</text><text class="value" x="${x}" y="${y - 16}">${value}</text></g>`).join('')}
+		</svg>
+	`;
+}
+
+function aiProgressSvg(data) {
+	return `
+		<div class="brief-ai-progress">
+			<div><span>Current</span><strong>${data.drivers.aiVisibility}</strong></div>
+			<i><b style="width:${data.drivers.aiVisibility}%"></b></i>
+			<div><span>Target</span><strong>${Math.max(data.drivers.aiVisibility + 18, 82)}</strong></div>
+		</div>
+	`;
+}
+
+function renderExecutiveBrief() {
+	if (route !== 'executive-brief.html') return;
+	const main = document.querySelector('.main');
+	if (!main) return;
+	const data = buildExecutiveBriefData();
+	const driverCards = [
+		['Business Growth Score™', data.score, data.health.label],
+		['Local SEO', data.drivers.localSeo, briefStatusFor(data.drivers.localSeo)],
+		['AI Visibility', data.drivers.aiVisibility, briefStatusFor(data.drivers.aiVisibility)],
+		['Trust Coverage', data.drivers.trustCoverage, briefStatusFor(data.drivers.trustCoverage)],
+		['Website Health', data.drivers.websiteHealth, briefStatusFor(data.drivers.websiteHealth)],
+		['Content Authority', data.drivers.contentAuthority, briefStatusFor(data.drivers.contentAuthority)]
+	];
+	main.innerHTML = `
+		<header class="topbar executive-brief-topbar">
+			<div><span class="eyebrow"><span class="live-dot"></span>Executive Brief™ Updated</span></div>
+			<div class="account"><button class="ghost-button" type="button" data-export-brief-pdf>Export PDF</button><button class="ghost-button" type="button" data-ask="Explain today's Executive Brief.">Ask Apex</button><div class="avatar">JM</div></div>
+		</header>
+		<article class="executive-brief-document" data-executive-brief-document>
+			<section class="brief-title-row">
+				<div>
+					<div class="page-kicker">Executive Brief™</div>
+					<h1>${escapeHtml(data.businessName)}</h1>
+					<p>${escapeHtml(data.domain)} / Updated ${escapeHtml(data.updatedAt)}</p>
+				</div>
+				<div class="brief-promise">Know What's Wrong. Watch It Get Better.</div>
+			</section>
+			<section class="brief-section brief-summary-section">
+				<div class="brief-section-number">01</div>
+				<div><span>Executive Summary</span><p>${escapeHtml(data.summary)}</p></div>
+			</section>
+			<section class="brief-score-hero">
+				<div class="brief-growth-score">
+					<span>Business Growth Score™</span>
+					<strong>${data.score}</strong>
+					<small>${data.previousScore} → ${data.score} current / ${data.projected} projected</small>
+				</div>
+				<div class="brief-health-card ${data.health.className}">
+					<span>Business Health</span>
+					<strong>${escapeHtml(data.health.label)}</strong>
+					<small>Three-state executive signal</small>
+				</div>
+				<div class="brief-opportunity-card">
+					<span>Estimated Business Opportunity</span>
+					<strong>$${data.opportunity.toLocaleString()}/mo</strong>
+					<small>Modeled upside from top priorities</small>
+				</div>
+			</section>
+			<section class="brief-section">
+				<div class="brief-section-number">03</div>
+				<div class="brief-section-body">
+					<div class="brief-section-head"><span>Executive Momentum</span><strong>Watch the business improve.</strong></div>
+					<div class="brief-momentum-strip">
+						${data.momentum.map(([label, value, note]) => `<div><span>${escapeHtml(label)}</span><strong>${value}</strong><small>${escapeHtml(note)}</small></div>`).join('')}
+					</div>
+				</div>
+			</section>
+			<section class="brief-section">
+				<div class="brief-section-number">04</div>
+				<div class="brief-section-body">
+					<div class="brief-section-head"><span>Executive Health</span><strong>One score, five drivers.</strong></div>
+					<div class="brief-health-grid">
+						${driverCards.map(([label, value, status]) => `<div class="brief-kpi-card"><span>${escapeHtml(label)}</span><strong>${value}</strong><small>${escapeHtml(status)}</small><i><b style="width:${value}%"></b></i></div>`).join('')}
+					</div>
+				</div>
+			</section>
+			<section class="brief-chart-pair">
+				<div class="brief-chart-panel"><div class="brief-section-head"><span>Radar Chart</span><strong>Strengths and weaknesses.</strong></div>${executiveRadarSvg(data)}</div>
+				<div class="brief-chart-panel"><div class="brief-section-head"><span>Business Timeline</span><strong>Current → projected → goal.</strong></div>${businessTimelineSvg(data)}</div>
+			</section>
+			<section class="brief-section">
+				<div class="brief-section-number">07</div>
+				<div class="brief-section-body">
+					<div class="brief-section-head"><span>Top Priorities</span><strong>Maximum five business actions.</strong></div>
+					<div class="brief-priority-list">
+						${data.recommendations.map((item, index) => `
+							<div class="brief-priority">
+								<b>${index + 1}</b>
+								<div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.why)}</p></div>
+								<span><small>Impact</small>${escapeHtml(item.impact)}</span>
+								<span><small>BGS Lift</small>${escapeHtml(item.scoreLift)}</span>
+								<span><small>Visibility</small>${escapeHtml(item.visibility)}</span>
+								<span><small>Time</small>${escapeHtml(item.time)}</span>
+								<span><small>Difficulty</small>${escapeHtml(item.difficulty)}</span>
+								<span><small>Owner</small>${escapeHtml(item.owner)}</span>
+								<span><small>Expected ROI</small>${escapeHtml(item.roi)}</span>
+							</div>
+						`).join('')}
+					</div>
+				</div>
+			</section>
+			<section class="brief-chart-pair">
+				<div class="brief-chart-panel">
+					<div class="brief-section-head"><span>Competitor Snapshot</span><strong>You vs market pressure.</strong></div>
+					<div class="brief-competitors">
+						${data.competitors.map(([name, competitorScore, trust, ai], index) => `<div class="${index === 0 ? 'you' : ''}"><strong>${escapeHtml(name)}</strong><span>Score ${competitorScore}</span><i><b style="width:${competitorScore}%"></b></i><small>Trust ${trust} / AI ${ai}</small></div>`).join('')}
+					</div>
+				</div>
+				<div class="brief-chart-panel">
+					<div class="brief-section-head"><span>Trust Coverage</span><strong>Proof ecosystem.</strong></div>
+					<div class="brief-trust-grid">
+						${data.trust.map(([name, state]) => `<div class="${escapeHtml(state)}"><strong>${escapeHtml(name)}</strong><span>${escapeHtml(state)}</span></div>`).join('')}
+					</div>
+				</div>
+			</section>
+			<section class="brief-chart-pair brief-final-row">
+				<div class="brief-chart-panel">
+					<div class="brief-section-head"><span>AI Visibility</span><strong>Current → target.</strong></div>
+					${aiProgressSvg(data)}
+				</div>
+				<div class="brief-mission-card">
+					<span>Today’s Mission</span>
+					<strong>${escapeHtml(data.mission.title)}</strong>
+					<div class="brief-mission-progress"><i><b style="width:${data.mission.progress}%"></b></i><em>${data.mission.progress}%</em></div>
+					<div class="brief-mission-meta">
+						<div><small>Estimated Completion</small><b>${escapeHtml(data.mission.estimatedCompletion)}</b></div>
+						<div><small>Current Score</small><b>${data.mission.currentScore}</b></div>
+						<div><small>Target</small><b>${data.mission.targetScore}</b></div>
+						<div><small>Owner</small><b>${escapeHtml(data.mission.owner)}</b></div>
+					</div>
+				</div>
+			</section>
+		</article>
+	`;
+	document.body.classList.add('executive-brief-v2');
+}
+
 function setupExecutiveDashboard() {
 	if (route !== 'dashboard.html' || apexDemoMode) return;
 	const main = document.querySelector('.main');
@@ -1230,7 +1545,7 @@ function setupExecutiveDashboard() {
 		pageHead.insertAdjacentHTML('afterend', `
 			<section class="executive-live-dashboard" data-executive-live-dashboard>
 				<article class="live-score-card" data-assemble-card style="--delay:0ms">
-					<div class="panel-label">Executive Score</div>
+					<div class="panel-label">Business Growth Score™</div>
 					<div class="executive-score-ring" data-score-ring style="--score:0">
 						<div><strong data-executive-score data-final-score="${score}">0</strong><span>/100</span></div>
 					</div>
@@ -1249,7 +1564,7 @@ function setupExecutiveDashboard() {
 					<p>Complete the local trust layer first. It improves buyer confidence, supports AI answer visibility, and makes every next action more durable.</p>
 				</article>
 				<article class="live-trend-card" data-assemble-card style="--delay:1120ms">
-					<div class="panel-label">Executive Score Trend</div>
+					<div class="panel-label">Business Growth Score™ Trend</div>
 					<h3>First scan baseline created.</h3>
 					${executiveBaselineSvg(trend, score)}
 					<p>The first scan is the baseline. Future scans add verified history from this point instead of showing a placeholder line.</p>
@@ -1310,6 +1625,7 @@ document.querySelectorAll('.account').forEach(account => {
 	}
 });
 
+renderExecutiveBrief();
 renderAccountState();
 setupLandingCapture();
 setupExecutiveScan();
@@ -1356,6 +1672,14 @@ document.addEventListener('click', event => {
 
 	const hashLink = event.target.closest('a[href="#"]');
 	if (hashLink) event.preventDefault();
+
+	const exportPdf = event.target.closest('[data-export-brief-pdf]');
+	if (exportPdf) {
+		document.body.classList.add('brief-printing');
+		window.print();
+		setTimeout(() => document.body.classList.remove('brief-printing'), 400);
+		return;
+	}
 
 	const templateButton = event.target.closest('[data-template]');
 	if (templateButton) {
@@ -1428,7 +1752,7 @@ document.addEventListener('click', event => {
 		return;
 	}
 
-	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]):not([data-coming-soon]), a[href="#"]');
+	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]):not([data-coming-soon]):not([data-export-brief-pdf]), a[href="#"]');
 	if (genericControl && !genericControl.disabled && !genericControl.closest('[data-drawer-text]')) {
 		const text = genericControl.textContent.trim() || genericControl.getAttribute('aria-label') || routeAskDefaults[route] || 'What should I do next?';
 		openAsk(text);

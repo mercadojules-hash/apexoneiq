@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APEXONEIQ_THEME_VERSION', '0.2.2' );
+define( 'APEXONEIQ_THEME_VERSION', '0.3.0' );
 define( 'APEXONEIQ_THEME_DIR', trailingslashit( get_template_directory() ) );
 define( 'APEXONEIQ_THEME_URI', trailingslashit( get_template_directory_uri() ) );
 
@@ -239,7 +239,7 @@ function apexoneiq_handle_onboarding_scan() {
 
 	wp_send_json_success(
 		array(
-			'dashboardUrl' => home_url( '/dashboard.html?scan=complete' ),
+			'dashboardUrl' => home_url( '/executive-brief.html?scan=complete' ),
 			'score'        => $score,
 		)
 	);
@@ -284,7 +284,7 @@ function apexoneiq_render_account_page() {
 				<nav>
 					<div class="nav-section"><?php esc_html_e( 'Workspace', 'apexoneiq' ); ?></div>
 					<ul class="nav-list">
-						<li><a class="nav-link" href="<?php echo esc_url( home_url( '/dashboard.html' ) ); ?>"><?php esc_html_e( 'Cloud Dashboard', 'apexoneiq' ); ?><small>Cloud</small></a></li>
+						<li><a class="nav-link" href="<?php echo esc_url( home_url( '/executive-brief.html' ) ); ?>"><?php esc_html_e( 'Executive Brief', 'apexoneiq' ); ?><small>Brief</small></a></li>
 						<li><a class="nav-link" href="<?php echo esc_url( home_url( '/command-dashboard.html' ) ); ?>"><?php esc_html_e( 'Command Center', 'apexoneiq' ); ?><small>Command</small></a></li>
 						<li><a class="nav-link" href="<?php echo esc_url( home_url( '/subscription.html' ) ); ?>"><?php esc_html_e( 'Plans', 'apexoneiq' ); ?><small>Billing</small></a></li>
 						<li><a class="nav-link active" href="<?php echo esc_url( home_url( '/account' ) ); ?>"><?php esc_html_e( 'Account', 'apexoneiq' ); ?><small>Active</small></a></li>
@@ -351,7 +351,7 @@ function apexoneiq_render_account_page() {
 							<a class="ghost-button" href="<?php echo esc_url( 'mailto:billing@apexoneiq.com?subject=ApexOneIQ%20Billing%20Help' ); ?>"><?php esc_html_e( 'Billing Help', 'apexoneiq' ); ?></a>
 							<a class="ghost-button" href="<?php echo esc_url( 'mailto:billing@apexoneiq.com?subject=ApexOneIQ%20Subscription%20Change' ); ?>"><?php esc_html_e( 'Subscription Support', 'apexoneiq' ); ?></a>
 						</div>
-						<p class="muted" style="margin-top:18px;"><?php esc_html_e( 'The next production phase can connect these actions to Stripe Customer Portal and subscription-change routes without altering the Executive Dashboard UI.', 'apexoneiq' ); ?></p>
+						<p class="muted" style="margin-top:18px;"><?php esc_html_e( 'The next production phase can connect these actions to Stripe Customer Portal and subscription-change routes without altering the Executive Brief UI.', 'apexoneiq' ); ?></p>
 					</div>
 					<div class="chart-panel">
 						<div class="panel-label"><?php esc_html_e( 'Enabled Capabilities', 'apexoneiq' ); ?></div>

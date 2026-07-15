@@ -508,6 +508,7 @@ function apexoneiq_allowed_oauth_redirect( $redirect_to ) {
 
 	$allowed = array(
 		'/dashboard.html',
+		'/executive-brief.html',
 		'/sign-in.html',
 		'/account',
 		'/account.html',
@@ -532,7 +533,7 @@ function apexoneiq_oauth_destination_for_user( $user_id, $requested_to ) {
 			return home_url( $requested_path );
 		}
 
-		return home_url( '/dashboard.html' );
+		return home_url( '/executive-brief.html' );
 	}
 
 	return home_url( '/sign-in.html' );
