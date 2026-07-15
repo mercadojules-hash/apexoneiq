@@ -17,18 +17,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 function apexoneiq_render_static_page( $page ) {
 	$page = apexoneiq_normalize_static_page( $page );
 	$is_demo_request = apexoneiq_is_demo_request( $page );
+	$user_id = get_current_user_id();
+	$workspace_ready = $user_id ? apexoneiq_user_has_existing_workspace( $user_id ) : false;
 	if ( 'free-dashboard.html' === $page && ! $is_demo_request ) {
-		$destination = is_user_logged_in() && apexoneiq_user_has_completed_onboarding( get_current_user_id() )
+		$destination = is_user_logged_in() && $workspace_ready
 			? home_url( '/dashboard.html' )
 			: home_url( '/sign-in.html' );
 		wp_safe_redirect( $destination );
 		exit;
 	}
-	if ( ! $is_demo_request && is_user_logged_in() && 'sign-in.html' === $page && apexoneiq_user_has_completed_onboarding( get_current_user_id() ) ) {
+	if ( ! $is_demo_request && is_user_logged_in() && 'sign-in.html' === $page && $workspace_ready ) {
 		wp_safe_redirect( home_url( '/dashboard.html' ) );
 		exit;
 	}
-	if ( ! $is_demo_request && is_user_logged_in() && 'dashboard.html' === $page && ! apexoneiq_user_has_completed_onboarding( get_current_user_id() ) ) {
+	if ( ! $is_demo_request && is_user_logged_in() && 'dashboard.html' === $page && ! $workspace_ready ) {
 		wp_safe_redirect( home_url( '/sign-in.html' ) );
 		exit;
 	}
@@ -78,7 +80,7 @@ function apexoneiq_render_static_page( $page ) {
  */
 function apexoneiq_get_workspace_context( $user_id ) {
 	$website        = $user_id ? (string) get_user_meta( $user_id, 'apexoneiq_business_website', true ) : '';
-	$scan_completed = $user_id ? apexoneiq_user_has_completed_onboarding( $user_id ) : false;
+	$scan_completed = $user_id ? apexoneiq_user_has_existing_workspace( $user_id ) : false;
 	$scan_at        = $user_id ? (string) get_user_meta( $user_id, 'apexoneiq_scan_completed_at', true ) : '';
 	$business_name  = $user_id ? (string) get_user_meta( $user_id, 'apexoneiq_business_name', true ) : '';
 	$host           = $website ? wp_parse_url( $website, PHP_URL_HOST ) : '';
@@ -250,6 +252,7 @@ function apexoneiq_transform_static_html( $html ) {
 	$user_id = get_current_user_id();
 	$current_user = $user_id ? wp_get_current_user() : null;
 	$scan_completed = $user_id ? apexoneiq_user_has_completed_onboarding( $user_id ) : false;
+	$workspace_ready = $user_id ? apexoneiq_user_has_existing_workspace( $user_id ) : false;
 	$scan_score = $user_id ? absint( get_user_meta( $user_id, 'apexoneiq_executive_score', true ) ) : 0;
 	$scan_trend = $user_id ? json_decode( (string) get_user_meta( $user_id, 'apexoneiq_executive_trend', true ), true ) : array();
 	if ( ! is_array( $scan_trend ) ) {
@@ -303,7 +306,10 @@ function apexoneiq_transform_static_html( $html ) {
 				'businessName' => $user_id ? get_user_meta( $user_id, 'apexoneiq_business_name', true ) : '',
 				'businessWebsite' => $user_id ? get_user_meta( $user_id, 'apexoneiq_business_website', true ) : '',
 				'businessEmail' => $current_user ? $current_user->user_email : '',
-				'scanCompleted' => $scan_completed,
+				'scanCompleted' => $workspace_ready,
+				'workspaceReady' => $workspace_ready,
+				'hasWorkspace' => $user_id ? (bool) get_user_meta( $user_id, 'apexoneiq_business_website', true ) : false,
+				'isOwnerAdmin' => $user_id ? user_can( $user_id, 'manage_options' ) : false,
 				'scanScore' => $scan_score,
 				'scanTrend' => array_values( array_map( 'absint', $scan_trend ) ),
 				'scanCompletedAt' => $user_id ? get_user_meta( $user_id, 'apexoneiq_scan_completed_at', true ) : '',
@@ -316,7 +322,7 @@ function apexoneiq_transform_static_html( $html ) {
 	$html = str_replace( $app_script, $config . $app_script, $html );
 
 	if ( is_user_logged_in() ) {
-		$workspace_url = $scan_completed ? home_url( '/dashboard.html' ) : home_url( '/sign-in.html' );
+		$workspace_url = $workspace_ready ? home_url( '/dashboard.html' ) : home_url( '/sign-in.html' );
 		$workspace_domain = $workspace_context['domain'] ?? __( 'Business not selected', 'apexoneiq' );
 		$account_html = sprintf(
 			'<span class="status-pill status-ok">%6$s</span><button class="ghost-button" type="button" data-ask="What should I do next?">Ask Apex</button><div class="account-menu" data-account-menu><button class="account-trigger" type="button" data-account-toggle aria-expanded="false"><span class="avatar">%1$s</span><span>%1$s</span><small>v</small></button><div class="account-dropdown" role="menu"><a href="%2$s" role="menuitem">My Workspace</a><a href="%3$s" role="menuitem">Account</a><a href="%4$s" role="menuitem">Billing</a><a href="%5$s" role="menuitem">Settings</a><button type="button" data-apex-logout role="menuitem">Logout</button></div></div>',

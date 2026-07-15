@@ -527,7 +527,7 @@ function apexoneiq_allowed_oauth_redirect( $redirect_to ) {
 function apexoneiq_oauth_destination_for_user( $user_id, $requested_to ) {
 	$requested_path = wp_parse_url( (string) $requested_to, PHP_URL_PATH );
 
-	if ( apexoneiq_user_has_completed_onboarding( $user_id ) ) {
+	if ( apexoneiq_user_has_existing_workspace( $user_id ) ) {
 		if ( in_array( $requested_path, array( '/account', '/account.html', '/subscription.html' ), true ) ) {
 			return home_url( $requested_path );
 		}
@@ -546,6 +546,35 @@ function apexoneiq_oauth_destination_for_user( $user_id, $requested_to ) {
  */
 function apexoneiq_user_has_completed_onboarding( $user_id ) {
 	return '1' === (string) get_user_meta( $user_id, 'apexoneiq_onboarding_completed', true );
+}
+
+/**
+ * Whether a user should bypass first-run onboarding and open an existing workspace.
+ *
+ * @param int $user_id WordPress user ID.
+ * @return bool
+ */
+function apexoneiq_user_has_existing_workspace( $user_id ) {
+	$user_id = absint( $user_id );
+	if ( ! $user_id ) {
+		return false;
+	}
+
+	if ( apexoneiq_user_has_completed_onboarding( $user_id ) ) {
+		return true;
+	}
+
+	$website = (string) get_user_meta( $user_id, 'apexoneiq_business_website', true );
+	if ( ! $website ) {
+		return false;
+	}
+
+	if ( user_can( $user_id, 'manage_options' ) ) {
+		return true;
+	}
+
+	$state = function_exists( 'apexoneiq_get_user_subscription_state' ) ? apexoneiq_get_user_subscription_state( $user_id ) : array();
+	return ! empty( $state['active'] ) || ! empty( $state['grace_period'] );
 }
 
 /**

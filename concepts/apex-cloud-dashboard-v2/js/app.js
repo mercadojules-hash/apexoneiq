@@ -78,11 +78,12 @@ function getStoredProfile() {
 	if (stored?.website) return stored;
 	if (window.ApexOneIQ?.businessWebsite) {
 		const score = Number(window.ApexOneIQ.scanScore || 0) || scanScoreFor(window.ApexOneIQ.businessWebsite);
+		const scanCompleted = Boolean(window.ApexOneIQ.scanCompleted || window.ApexOneIQ.workspaceReady);
 		return {
 			businessName: window.ApexOneIQ.businessName || new URL(window.ApexOneIQ.businessWebsite).hostname.replace(/^www\./, ''),
 			website: window.ApexOneIQ.businessWebsite,
 			email: window.ApexOneIQ.businessEmail || '',
-			scanCompleted: Boolean(window.ApexOneIQ.scanCompleted),
+			scanCompleted,
 			score,
 			createdAt: new Date().toISOString(),
 			completedAt: window.ApexOneIQ.scanCompletedAt || '',
@@ -442,6 +443,7 @@ if (!drawer) {
 		<button class="ghost-button drawer-close" data-close-drawer>x</button>
 		<div class="panel-label" data-drawer-label>Executive Intelligence</div>
 		<h2 data-drawer-title>Finding</h2>
+		<div class="drawer-nav" data-drawer-nav hidden></div>
 		<div data-drawer-text></div>
 	`;
 	document.body.appendChild(drawer);
@@ -449,6 +451,9 @@ if (!drawer) {
 const drawerLabel = document.querySelector('[data-drawer-label]');
 const drawerTitle = document.querySelector('[data-drawer-title]');
 const drawerText = document.querySelector('[data-drawer-text]');
+if (drawer && !drawer.querySelector('[data-drawer-nav]')) {
+	drawerTitle.insertAdjacentHTML('afterend', '<div class="drawer-nav" data-drawer-nav hidden></div>');
+}
 
 const askResponses = {
 	'Why is my Business Trust only 68?': 'Business Trust is 68 because your relevance is improving faster than your local trust. Apex sees an incomplete Google Business Profile, thin service-area proof, and fewer trusted listings than the closest competitors. The fastest fix is completing the trust layer before publishing more broad content.',
@@ -584,6 +589,20 @@ const templateTitles = {
 	'opp-ai': 'Publish AI comparison page'
 };
 
+const playbookSequence = ['drawer-gbp', 'drawer-service-area', 'drawer-citations', 'drawer-comparison'];
+const scanDrivenPlaybookMap = {
+	'drawer-gbp': 'drawer-gbp',
+	'drawer-service-area': 'drawer-service-area',
+	'drawer-citations': 'drawer-citations',
+	'drawer-comparison': 'drawer-comparison',
+	'opp-gbp': 'drawer-gbp',
+	'opp-service': 'drawer-service-area',
+	'opp-citation': 'drawer-citations',
+	'opp-ai': 'drawer-comparison'
+};
+let currentDrawerTemplate = '';
+let drawerHistory = [];
+
 function updatePlaybookProgress(scope) {
 	const checks = [...scope.querySelectorAll('[data-play-check]')];
 	if (!checks.length) return;
@@ -608,8 +627,147 @@ function updatePageProgress() {
 	document.querySelectorAll('[data-progress-bar="position"]').forEach(item => item.style.width = '58%');
 }
 
-function openDrawer(title, content, label = 'Executive Intelligence') {
+function scanEvidence() {
+	const profile = getStoredProfile();
+	const score = Number(profile?.score || 61);
+	const domain = workspaceDomain(profile?.website) || 'the submitted website';
+	const trend = Array.isArray(profile?.trend) && profile.trend.length ? profile.trend : [12, 28, 41, 55, score];
+	const profileCompleteness = Math.max(38, Math.min(78, score + 7));
+	const reviewDepth = Math.max(22, Math.min(72, score - 4));
+	const localSignals = Math.max(30, Math.min(74, score + 1));
+	const faqReadiness = score >= 72 ? 'Partial FAQ coverage found' : 'FAQ schema not detected in the scan baseline';
+	return {
+		profile,
+		domain,
+		score,
+		trend,
+		profileCompleteness,
+		reviewDepth,
+		localSignals,
+		faqReadiness,
+		completedAt: formatWorkspaceDate(profile?.completedAt || profile?.createdAt),
+		gaps: [
+			profileCompleteness < 82 ? 'Google Business Profile trust proof is incomplete.' : '',
+			reviewDepth < 75 ? 'Review depth and recency are below the trust band.' : '',
+			'Primary business categories and service categories need stronger confirmation.',
+			faqReadiness,
+			localSignals < 80 ? 'Local trust signals and citations are weaker than the leader band.' : '',
+			'Trust entities should be reinforced with consistent business name, phone, service area, and third-party proof.'
+		].filter(Boolean)
+	};
+}
+
+function createScanPlaybookContent(templateId = 'drawer-gbp') {
+	const evidence = scanEvidence();
+	const content = document.createElement('div');
+	content.className = 'scan-driven-playbook';
+	const playbooks = {
+		'drawer-gbp': {
+			why: `Apex recommends the Google Business Profile trust layer because the ${evidence.domain} scan shows proof signals lagging behind visibility. The Executive Score is ${evidence.score}/100, profile completeness is ${evidence.profileCompleteness}%, and local trust signals are ${evidence.localSignals}/100.`,
+			items: [
+				['Confirm Google Business Profile ownership and core NAP consistency.', 'Missing or weak GBP proof lowers local trust and AI recommendation confidence.', '5 min'],
+				['Add primary business categories and high-value service categories.', 'The scan found category proof is not strong enough to support the highest-confidence local recommendation.', '5 min'],
+				['Add review proof and recent customer evidence.', 'Review depth is ' + evidence.reviewDepth + '%, which keeps trust below the leader band.', '4 min'],
+				['Add FAQ schema for buyer objections and local service questions.', evidence.faqReadiness + '.', '3 min'],
+				['Reinforce trust entities with citations and consistent service-area proof.', 'Apex found local signals at ' + evidence.localSignals + '/100, so third-party confirmation matters before broader content.', '4 min']
+			],
+			result: ['+6 AVI modeled lift', 'Higher Local Pack probability', '+9 estimated leads/month', '$1,300/month projected revenue lift', 'Confidence: 94%']
+		},
+		'drawer-service-area': {
+			why: `Apex recommends service-area proof after GBP because ${evidence.domain} has a valid baseline, but the scan does not show enough geographic evidence to defend local relevance across buyer searches.`,
+			items: [
+				['Publish one focused service-area page.', 'Competitors can win when their location proof is clearer than yours.', '25 min'],
+				['Add local examples, service terms, and trust proof.', 'Apex needs page-level evidence it can connect to the business entity.', '20 min'],
+				['Link the page from the profile and core service pages.', 'Internal proof helps search and AI systems understand market coverage.', '10 min']
+			],
+			result: ['+4 AVI modeled lift', 'Better local relevance', 'Improves Top 10 probability', 'Confidence: 88%']
+		},
+		'drawer-citations': {
+			why: `Apex recommends citations because ${evidence.domain} needs more third-party confirmation. The scan shows local trust at ${evidence.localSignals}/100, which is below the threshold for stable executive confidence.`,
+			items: [
+				['Add or correct five trusted listings.', 'Citation consistency strengthens the same business entity across the web.', '30 min'],
+				['Match business name, phone, URL, category, and service area.', 'Conflicting NAP data weakens local trust and AI answer confidence.', '15 min'],
+				['Record citation URLs for the next scan.', 'Future scans need evidence history to confirm progress.', '5 min']
+			],
+			result: ['+3 AVI modeled lift', 'Lower trust leakage', 'Stronger entity confidence', 'Confidence: 84%']
+		},
+		'drawer-comparison': {
+			why: `Apex recommends AI comparison content only after trust proof because ${evidence.domain} needs stronger evidence before answer engines can confidently recommend it as the safer choice.`,
+			items: [
+				['Publish one comparison-ready page.', 'AI systems need structured decision evidence, not generic marketing copy.', '45 min'],
+				['Add proof points, FAQs, service differences, and trust entities.', 'This supports direct recommendations instead of indirect category mentions.', '25 min'],
+				['Connect the page to GBP, reviews, and citations.', 'The content performs better after the trust layer is complete.', '10 min']
+			],
+			result: ['+18% AI discovery potential', 'More stable answer-engine recommendations', 'Dependency: complete trust proof first', 'Confidence: 81%']
+		}
+	};
+	const playbook = playbooks[templateId] || playbooks['drawer-gbp'];
+	content.innerHTML = `
+		<p>${escapeHtml(playbook.why)}</p>
+		<div class="scan-evidence-panel">
+			<div><span>Scan baseline</span><strong>${escapeHtml(evidence.completedAt)}</strong></div>
+			<div><span>Executive Score</span><strong>${evidence.score}/100</strong></div>
+			<div><span>GBP proof</span><strong>${evidence.profileCompleteness}%</strong></div>
+			<div><span>Local trust</span><strong>${evidence.localSignals}/100</strong></div>
+		</div>
+		<h3>Evidence From The Scan</h3>
+		<ul>${evidence.gaps.map(gap => `<li>${escapeHtml(gap)}</li>`).join('')}</ul>
+		<h3>Recommended Work</h3>
+		<div class="playbook-checklist">
+			${playbook.items.map(([step, reason, time]) => `
+				<label>
+					<input type="checkbox" data-play-check>
+					<span><strong>${escapeHtml(step)}</strong><em>${escapeHtml(reason)}</em></span>
+					<small>${escapeHtml(time)}</small>
+				</label>
+			`).join('')}
+		</div>
+		<div class="playbook-summary">
+			<span class="playbook-label">Completion progress</span>
+			<strong data-playbook-progress>0%</strong>
+			<div class="playbook-track"><i data-playbook-bar style="width:0%"></i></div>
+			<p><span data-playbook-count>0 of ${playbook.items.length} steps</span> complete. Historical improvement begins after the next scan validates these items.</p>
+		</div>
+		<h3>Expected Business Result</h3>
+		<div class="drawer-callout">${playbook.result.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>
+		<div class="playbook-actions">
+			<button class="button" data-complete-action="gbp">Mark Playbook Complete</button>
+			<button class="ghost-button" data-template="${escapeHtml(playbookSequence[Math.min(playbookSequence.indexOf(templateId) + 1, playbookSequence.length - 1)])}">Next Playbook</button>
+			<button class="ghost-button" type="button" disabled aria-disabled="true" title="Execution automation is intentionally deferred.">Coming Soon</button>
+		</div>
+		<p class="completion-message" data-completion-message>Completed. Apex updated today's progress and moved the forecast scenario to After #1.</p>
+	`;
+	return content;
+}
+
+function updateDrawerNavigation() {
+	const nav = drawer?.querySelector('[data-drawer-nav]');
+	if (!nav) return;
+	const currentIndex = playbookSequence.indexOf(currentDrawerTemplate);
+	const isPlaybook = currentIndex !== -1;
+	nav.hidden = !isPlaybook;
+	if (!isPlaybook) {
+		nav.innerHTML = '';
+		return;
+	}
+	nav.innerHTML = `
+		<button class="ghost-button" type="button" data-drawer-back ${drawerHistory.length ? '' : 'disabled'}>Back</button>
+		<button class="ghost-button" type="button" data-drawer-prev ${currentIndex > 0 ? '' : 'disabled'}>Previous</button>
+		<span>${currentIndex + 1} of ${playbookSequence.length}</span>
+		<button class="ghost-button" type="button" data-drawer-next ${currentIndex < playbookSequence.length - 1 ? '' : 'disabled'}>Next</button>
+	`;
+}
+
+function openDrawer(title, content, label = 'Executive Intelligence', options = {}) {
 	if (!drawer) return;
+	if (options.templateId) {
+		if (currentDrawerTemplate && currentDrawerTemplate !== options.templateId && options.trackHistory !== false) {
+			drawerHistory.push(currentDrawerTemplate);
+		}
+		currentDrawerTemplate = options.templateId;
+	} else {
+		currentDrawerTemplate = '';
+	}
 	if (drawerLabel) drawerLabel.textContent = label;
 	drawerTitle.textContent = title;
 	if (typeof content === 'string') {
@@ -618,7 +776,13 @@ function openDrawer(title, content, label = 'Executive Intelligence') {
 		drawerText.replaceChildren(content);
 	}
 	updatePlaybookProgress(drawerText);
+	updateDrawerNavigation();
 	drawer.classList.add('open');
+}
+
+function openPlaybook(templateId, trackHistory = true) {
+	const resolvedTemplate = scanDrivenPlaybookMap[templateId] || templateId;
+	openDrawer(templateTitles[templateId] || templateTitles[resolvedTemplate] || 'Executive Playbook', createScanPlaybookContent(resolvedTemplate), 'Scan-Driven Playbook', { templateId: resolvedTemplate, trackHistory });
 }
 
 function responseFor(question) {
@@ -979,6 +1143,63 @@ function trendPath(points) {
 	return coords.join(' ');
 }
 
+function executiveBaselineSvg(trend, score) {
+	const baseline = Number(score || trend[trend.length - 1] || 61);
+	const projection = [
+		baseline,
+		Math.min(100, baseline + 6),
+		Math.min(100, baseline + 13),
+		Math.min(100, baseline + 22)
+	];
+	const plot = projection.map((value, index) => {
+		const x = 58 + index * 76;
+		const y = 132 - value * 1.02;
+		return { x, y: Math.max(28, Math.min(132, y)), value };
+	});
+	const path = plot.map((point, index) => `${index ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ');
+	const areaPath = `${path} L ${plot[plot.length - 1].x} 142 L ${plot[0].x} 142 Z`;
+	return `
+		<svg class="executive-baseline-chart" viewBox="0 0 320 190" role="img" aria-label="Executive Score baseline timeline">
+			<defs>
+				<linearGradient id="apexBaselineLine" x1="0" x2="1">
+					<stop stop-color="#22e7ff"></stop>
+					<stop offset="1" stop-color="#21f2a6"></stop>
+				</linearGradient>
+				<linearGradient id="apexBaselineArea" x1="0" x2="0" y1="0" y2="1">
+					<stop stop-color="#21f2a6" stop-opacity=".24"></stop>
+					<stop offset="1" stop-color="#22e7ff" stop-opacity=".02"></stop>
+				</linearGradient>
+			</defs>
+			<g class="baseline-grid" aria-hidden="true">
+				<path d="M48 30H294 M48 68H294 M48 106H294 M48 144H294"></path>
+				<path d="M58 24V148 M134 24V148 M210 24V148 M286 24V148"></path>
+			</g>
+			<g class="baseline-axis" aria-hidden="true">
+				<path d="M48 22V148H298"></path>
+				<text x="18" y="34">100</text>
+				<text x="24" y="74">70</text>
+				<text x="24" y="112">40</text>
+				<text x="57" y="170">Scan</text>
+				<text x="126" y="170">+7d</text>
+				<text x="202" y="170">+30d</text>
+				<text x="272" y="170">+60d</text>
+			</g>
+			<path class="baseline-area" d="${areaPath}"></path>
+			<path class="baseline-progression" d="${path}"></path>
+			<path class="baseline-forecast" d="M ${plot[0].x} ${plot[0].y} ${plot.slice(1).map(point => `L ${point.x} ${point.y}`).join(' ')}"></path>
+			<g class="baseline-point">
+				<circle cx="${plot[0].x}" cy="${plot[0].y}" r="8"></circle>
+				<circle cx="${plot[0].x}" cy="${plot[0].y}" r="3"></circle>
+				<text x="${plot[0].x + 14}" y="${plot[0].y - 10}">Initial scan ${baseline}/100</text>
+			</g>
+			<g class="baseline-callout">
+				<path d="M58 148V28"></path>
+				<text x="70" y="44">Historical data begins here</text>
+			</g>
+		</svg>
+	`;
+}
+
 function setupExecutiveDashboard() {
 	if (route !== 'dashboard.html' || apexDemoMode) return;
 	const main = document.querySelector('.main');
@@ -1030,11 +1251,8 @@ function setupExecutiveDashboard() {
 				<article class="live-trend-card" data-assemble-card style="--delay:1120ms">
 					<div class="panel-label">Executive Score Trend</div>
 					<h3>First scan baseline created.</h3>
-					<svg viewBox="0 0 320 170" role="img" aria-label="Executive Score Trend">
-						<polyline points="${escapeHtml(trendPath(trend))}" fill="none" stroke="url(#apexTrend)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" class="live-trend-line"/>
-						<defs><linearGradient id="apexTrend" x1="0" x2="1"><stop stop-color="#22e7ff"/><stop offset="1" stop-color="#21f2a6"/></linearGradient></defs>
-					</svg>
-					<p>Future scans will populate historical movement over time.</p>
+					${executiveBaselineSvg(trend, score)}
+					<p>The first scan is the baseline. Future scans add verified history from this point instead of showing a placeholder line.</p>
 				</article>
 				<article class="live-opportunity-card" data-assemble-card style="--delay:1460ms">
 					<div class="panel-label">Opportunity Cards</div>
@@ -1141,6 +1359,10 @@ document.addEventListener('click', event => {
 
 	const templateButton = event.target.closest('[data-template]');
 	if (templateButton) {
+		if (scanDrivenPlaybookMap[templateButton.dataset.template]) {
+			openPlaybook(templateButton.dataset.template);
+			return;
+		}
 		const template = document.getElementById(templateButton.dataset.template);
 		if (!template) return;
 		const title = templateButton.textContent.trim() || templateButton.getAttribute('aria-label') || 'Executive Finding';
@@ -1152,6 +1374,12 @@ document.addEventListener('click', event => {
 	if (askButton) {
 		const question = askButton.dataset.ask;
 		openAsk(question);
+		return;
+	}
+
+	const comingSoon = event.target.closest('[data-coming-soon]');
+	if (comingSoon) {
+		openAsk(comingSoon.dataset.comingSoon || 'This production action is coming soon.');
 		return;
 	}
 
@@ -1168,6 +1396,26 @@ document.addEventListener('click', event => {
 		drawer?.querySelectorAll('[data-completion-message]').forEach(item => item.classList.add('show'));
 	}
 
+	const drawerBack = event.target.closest('[data-drawer-back]');
+	if (drawerBack && drawerHistory.length) {
+		openPlaybook(drawerHistory.pop(), false);
+		return;
+	}
+
+	const drawerPrev = event.target.closest('[data-drawer-prev]');
+	if (drawerPrev) {
+		const index = playbookSequence.indexOf(currentDrawerTemplate);
+		if (index > 0) openPlaybook(playbookSequence[index - 1]);
+		return;
+	}
+
+	const drawerNext = event.target.closest('[data-drawer-next]');
+	if (drawerNext) {
+		const index = playbookSequence.indexOf(currentDrawerTemplate);
+		if (index !== -1 && index < playbookSequence.length - 1) openPlaybook(playbookSequence[index + 1]);
+		return;
+	}
+
 	const memoryButton = event.target.closest('.memory-rail button');
 	if (memoryButton) {
 		openAsk(`Explain this Executive Memory item: ${memoryButton.textContent.trim().replace(/\\s+/g, ' ')}`);
@@ -1180,7 +1428,7 @@ document.addEventListener('click', event => {
 		return;
 	}
 
-	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]), a[href="#"]');
+	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]):not([data-coming-soon]), a[href="#"]');
 	if (genericControl && !genericControl.disabled && !genericControl.closest('[data-drawer-text]')) {
 		const text = genericControl.textContent.trim() || genericControl.getAttribute('aria-label') || routeAskDefaults[route] || 'What should I do next?';
 		openAsk(text);
@@ -1370,9 +1618,13 @@ document.addEventListener('keydown', event => {
 const params = new URLSearchParams(window.location.search);
 const initialTemplate = params.get('template');
 if (initialTemplate) {
-	const template = document.getElementById(initialTemplate);
-	if (template) {
+	if (scanDrivenPlaybookMap[initialTemplate]) {
+		openPlaybook(initialTemplate, false);
+	} else {
+		const template = document.getElementById(initialTemplate);
+		if (template) {
 		openDrawer(templateTitles[initialTemplate] || 'Executive Finding', template.content.cloneNode(true), 'Executive Intelligence');
+		}
 	}
 }
 
