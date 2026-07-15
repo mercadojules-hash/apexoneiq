@@ -21,13 +21,13 @@ function apexoneiq_render_static_page( $page ) {
 	$workspace_ready = $user_id ? apexoneiq_user_has_existing_workspace( $user_id ) : false;
 	if ( 'free-dashboard.html' === $page && ! $is_demo_request ) {
 		$destination = is_user_logged_in() && $workspace_ready
-			? home_url( '/dashboard.html' )
+			? home_url( '/executive-brief.html' )
 			: home_url( '/sign-in.html' );
 		wp_safe_redirect( $destination );
 		exit;
 	}
 	if ( ! $is_demo_request && is_user_logged_in() && 'sign-in.html' === $page && $workspace_ready ) {
-		wp_safe_redirect( home_url( '/dashboard.html' ) );
+		wp_safe_redirect( home_url( '/executive-brief.html' ) );
 		exit;
 	}
 	if ( ! $is_demo_request && is_user_logged_in() && 'dashboard.html' === $page && ! $workspace_ready ) {
@@ -112,7 +112,7 @@ function apexoneiq_get_workspace_context( $user_id ) {
  */
 function apexoneiq_render_action_center_upgrade( $page ) {
 	$subscription_url = esc_url( home_url( '/subscription.html' ) );
-	$dashboard_url    = esc_url( home_url( '/dashboard.html' ) );
+	$dashboard_url    = esc_url( home_url( '/executive-brief.html' ) );
 	$context          = apexoneiq_get_workspace_context( get_current_user_id() );
 
 	status_header( 403 );
@@ -136,7 +136,7 @@ function apexoneiq_render_action_center_upgrade( $page ) {
 				</div>
 				<div class="nav-section">Workspace</div>
 				<nav class="workspace-nav">
-					<a class="nav-link" href="<?php echo $dashboard_url; ?>"><span>Executive Dashboard</span></a>
+					<a class="nav-link" href="<?php echo $dashboard_url; ?>"><span>Executive Brief</span></a>
 					<a class="nav-link active" href="<?php echo esc_url( home_url( '/' . $page ) ); ?>"><span>Action Center</span><small>Pro</small></a>
 					<a class="nav-link" href="<?php echo $subscription_url; ?>"><span>Upgrade</span></a>
 				</nav>
@@ -322,7 +322,7 @@ function apexoneiq_transform_static_html( $html ) {
 	$html = str_replace( $app_script, $config . $app_script, $html );
 
 	if ( is_user_logged_in() ) {
-		$workspace_url = $workspace_ready ? home_url( '/dashboard.html' ) : home_url( '/sign-in.html' );
+		$workspace_url = $workspace_ready ? home_url( '/executive-brief.html' ) : home_url( '/sign-in.html' );
 		$workspace_domain = $workspace_context['domain'] ?? __( 'Business not selected', 'apexoneiq' );
 		$account_html = sprintf(
 			'<span class="status-pill status-ok">%6$s</span><button class="ghost-button" type="button" data-ask="What should I do next?">Ask Apex</button><div class="account-menu" data-account-menu><button class="account-trigger" type="button" data-account-toggle aria-expanded="false"><span class="avatar">%1$s</span><span>%1$s</span><small>v</small></button><div class="account-dropdown" role="menu"><a href="%2$s" role="menuitem">My Workspace</a><a href="%3$s" role="menuitem">Account</a><a href="%4$s" role="menuitem">Billing</a><a href="%5$s" role="menuitem">Settings</a><button type="button" data-apex-logout role="menuitem">Logout</button></div></div>',
