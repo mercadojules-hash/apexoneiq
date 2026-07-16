@@ -487,6 +487,258 @@
 		};
 	}
 
+	function executionLifecycleFor(mission) {
+		const requiresApproval = mission?.executionMode === ExecutionModes.APPROVAL_REQUIRED || mission?.executionMode === ExecutionModes.CUSTOMER_REQUIRED;
+		return [
+			['Opportunity Detected', 'Completed', 'Apex identified the business constraint and ranked it against the mission queue.', 'complete'],
+			['Research', 'Completed', 'Market, competitor, trust, and AI visibility evidence were assembled.', 'complete'],
+			['Content Prepared', 'Completed', 'Draft assets, structured data, and change instructions are ready for review.', 'complete'],
+			['Validation', 'Passed', 'Prepared work passed simulated quality, dependency, and rollback checks.', 'complete'],
+			['Waiting for Approval', requiresApproval ? 'Active' : 'Not Required', requiresApproval ? 'Human decision required before anything affects the live business.' : 'Automation policy allows preparation without owner approval.', requiresApproval ? 'active' : 'muted'],
+			['Executing', 'Not Started', 'Live execution is intentionally deferred until provider integrations are approved.', 'pending'],
+			['Verification', 'Prepared', 'Verification checks are defined and ready to run after execution.', 'pending'],
+			['Monitoring', 'Prepared', 'Apex will watch score, visibility, trust, and forecast movement after release.', 'pending'],
+			['Complete', 'Pending', 'Completion requires execution plus verification evidence.', 'pending']
+		];
+	}
+
+	function approvalPolicyFor(mission) {
+		const automatic = [
+			'Generate FAQ',
+			'Generate schema',
+			'Generate JSON-LD',
+			'Map internal links',
+			'Competitor research',
+			'Prepare comparison page',
+			'Prepare reports',
+			'Prepare citation package',
+			'Forecast calculations',
+			'Validation',
+			'Verification planning'
+		];
+		const requiresApproval = [
+			'Publish pages',
+			'Delete pages',
+			'Edit business information',
+			'Change pricing',
+			'Replace live copy',
+			'Change branding',
+			'Change navigation',
+			'Edit images',
+			'Install plugins',
+			'Anything affecting the live business'
+		];
+		return {
+			mode: mission?.executionMode || ExecutionModes.CUSTOMER_REQUIRED,
+			status: mission?.approvalStatus || 'Approval required before execution',
+			currentDecision: mission?.executionMode === ExecutionModes.APPROVAL_REQUIRED ? 'Approval package prepared' : mission?.executionMode === ExecutionModes.AUTOMATIC ? 'Eligible for future automatic execution' : 'Customer action required',
+			automatic,
+			requiresApproval,
+			visualActions: [
+				['Approve Prepared Work', 'Future action placeholder', 'primary'],
+				['Request Revision', 'Future action placeholder', 'secondary'],
+				['Hold Mission', 'Future action placeholder', 'secondary']
+			]
+		};
+	}
+
+	function preparedFilesFor(mission) {
+		const title = mission?.title || 'Mission';
+		return [
+			['Prepared content', `${title} executive draft`, 'Ready'],
+			['Schema', 'FAQPage + LocalBusiness JSON-LD', 'Validated'],
+			['JSON-LD', 'Structured data package', 'Ready'],
+			['FAQ', 'Six buyer-answer blocks', 'Ready'],
+			['Internal links', '18 contextual link opportunities', 'Mapped'],
+			['Assets', 'Proof image checklist and alt text', 'Prepared'],
+			['Structured data', 'Entity and service markup', 'Validated'],
+			['Reports', 'Approval brief and verification plan', 'Ready']
+		];
+	}
+
+	function preparedChangesFor(mission) {
+		const revenue = mission?.expectedRevenueImpact || 3200;
+		return [
+			['FAQ generated', 'Six AI-readable buyer questions prepared for review.', 'Ready'],
+			['Schema validated', 'JSON-LD package passed simulated structured-data checks.', 'Validated'],
+			['Comparison page prepared', 'Decision-support draft assembled but not published.', mission?.id === 'ai-comparison-page' ? 'Approval Needed' : 'Queued'],
+			['Internal links mapped', 'High-value service and proof pages mapped for future implementation.', 'Ready'],
+			['Citation package prepared', 'Source-of-truth business data and target directories queued.', 'Ready'],
+			['Content refresh complete', `Projected monthly revenue impact modeled at $${revenue.toLocaleString()}.`, 'Modeled']
+		];
+	}
+
+	function dependencyStatusFor(mission) {
+		const blockers = asArray(mission?.blockedBy).length ? mission.blockedBy : asArray(mission?.dependencies);
+		if (!blockers.length) {
+			return [
+				['Execution dependency', 'Clear', 'No blocking prerequisite is preventing preparation.'],
+				['Approval dependency', mission?.executionMode === ExecutionModes.APPROVAL_REQUIRED ? 'Waiting for approval' : 'No approval needed', mission?.approvalStatus || 'Policy evaluated.'],
+				['Provider dependency', 'Deferred', 'Provider connection is intentionally not active in Phase 4.']
+			];
+		}
+		return blockers.map(id => [
+			id.replace(/-/g, ' '),
+			'Waiting',
+			'This prerequisite must be completed before Apex can execute the mission safely.'
+		]);
+	}
+
+	function rollbackPlanFor(mission) {
+		return {
+			available: true,
+			status: 'Rollback package prepared',
+			riskAssessment: mission?.risk >= 20 ? 'Medium' : 'Low',
+			steps: [
+				'Archive current live state before execution',
+				'Store prepared files and original values',
+				'Record provider response and deployment timestamp',
+				'Restore archived files or previous values if verification fails',
+				'Re-run scan and mark mission for review'
+			]
+		};
+	}
+
+	function verificationPlanFor(mission) {
+		return [
+			['Schema verified', 'Prepared validator will confirm structured data after publish.', 'Prepared'],
+			['Pages indexed', 'Indexing check will run after publishing window.', 'Prepared'],
+			['Business Profile updated', 'GBP verification checkpoint defined.', mission?.type === MissionTypes.GBP ? 'Ready' : 'N/A'],
+			['Page speed improved', 'Performance snapshot planned for technical missions.', mission?.type === MissionTypes.PERFORMANCE ? 'Ready' : 'Prepared'],
+			['Ranking monitored', 'Local and AI visibility movement will be measured after execution.', 'Prepared'],
+			['Citation verified', 'Provider confirmation and URL evidence will be stored.', 'Prepared']
+		];
+	}
+
+	function evidencePackageFor(mission) {
+		return [
+			['Before / After', 'Baseline score, trust, visibility, and forecast snapshots reserved.', 'Prepared'],
+			['Validation logs', 'Simulated validation log attached to approval package.', 'Ready'],
+			['Structured data validation', 'JSON-LD lint checks passed in preparation mode.', 'Passed'],
+			['Screenshots', 'Pre-execution screenshot slots reserved.', 'Prepared'],
+			['Performance snapshots', 'Core performance measurement plan prepared.', 'Prepared'],
+			['Provider confirmations', 'Future provider response records will attach here.', 'Deferred'],
+			['Execution history', 'Mission timeline and owner decisions will be retained.', 'Active']
+		];
+	}
+
+	function providerArchitectureFor() {
+		return {
+			status: 'Provider-agnostic architecture prepared',
+			rule: 'No provider-specific UI or live website modification in Phase 4.',
+			providers: ['WordPress', 'Shopify', 'Wix', 'Squarespace', 'Cloudflare', 'GitHub', 'Render', 'Google Business Profile', 'OpenAI', 'Anthropic', 'Future MCP Servers'],
+			interface: [
+				['prepare', 'Create execution package without touching production'],
+				['validate', 'Confirm package, dependency, approval, and rollback requirements'],
+				['requestApproval', 'Create human decision packet when required'],
+				['execute', 'Future provider adapter executes approved work'],
+				['verify', 'Collect post-execution proof and measurement'],
+				['rollback', 'Restore archived state if validation fails after execution']
+			]
+		};
+	}
+
+	function missionTemplatesFor() {
+		return ['Google Business Profile', 'FAQ Generation', 'Schema', 'Internal Links', 'Comparison Pages', 'Citation Building', 'Directory Updates', 'Page Speed', 'Content Refresh', 'AI Optimization', 'Review Management', 'Knowledge Graph', 'Local SEO', 'Future AI Plugins'];
+	}
+
+	function operationsLogFor(mission) {
+		return [
+			['08:02', 'Website scanned', '8 pages analyzed and latest business health baseline refreshed.', 'complete'],
+			['08:03', 'Trust decline detected', 'Trust remains the largest constraint against competitor proof.', 'warning'],
+			['08:05', 'Compared four competitors', 'Northstar-style competitor proof advantage recalculated.', 'complete'],
+			['08:07', 'Generated FAQ', 'Six sourceable buyer-answer blocks prepared.', 'complete'],
+			['08:09', 'Prepared schema', 'FAQPage and LocalBusiness JSON-LD package assembled.', 'complete'],
+			['08:12', 'Validated JSON-LD', 'Structured data package passed preparation checks.', 'complete'],
+			['08:15', 'Calculated projected lift', `Modeled +${mission?.expectedBusinessGrowthScore || 4} Business Growth Score™ and +${mission?.expectedVisibility || 6}% visibility.`, 'growth'],
+			['08:18', 'Prepared approval package', 'Mission evidence, rollback, and verification plan attached.', 'complete'],
+			['08:20', 'Waiting for customer approval', mission?.approvalStatus || 'Customer decision checkpoint active.', 'active']
+		];
+	}
+
+	function dailyOperationsFor(mission, metrics) {
+		return {
+			todayMission: mission?.title || 'No mission selected',
+			completedYesterday: 'Initial baseline, mission queue reorder, trust evidence package, and forecast recalculation.',
+			pendingApprovals: mission?.executionMode === ExecutionModes.APPROVAL_REQUIRED ? [mission.title] : [],
+			businessGrowthScoreMovement: `${metrics.businessGrowthScore} → ${clampScore(metrics.businessGrowthScore + (mission?.expectedBusinessGrowthScore || 0))}`,
+			competitorChanges: '2 competitors gained trust proof; no critical ranking shock detected.',
+			visibilityChanges: `+${mission?.expectedVisibility || 0}% projected after prepared mission execution.`,
+			aiVisibility: `${metrics.aiVisibility} current / ${clampScore(metrics.aiVisibility + (mission?.expectedVisibility || 0))} target`,
+			trustCoverage: `${metrics.trustCoverage} current / ${clampScore(metrics.trustCoverage + (mission?.expectedTrust || 0))} target`,
+			forecast: `${metrics.forecast} current / ${mission?.forecastModel?.afterMission || metrics.forecast} after mission`,
+			businessRisks: mission?.executionMode === ExecutionModes.CUSTOMER_REQUIRED ? 'Customer action can delay trust improvement.' : 'Approval delay can slow forecast movement.',
+			executiveRecommendation: 'Review the prepared mission package and approve only the work that affects the live business.'
+		};
+	}
+
+	function dailyEmailFor(mission, metrics) {
+		const lift = mission?.expectedBusinessGrowthScore || 3;
+		return {
+			subject: `Apex Daily Executive Brief — +${lift} Business Growth Score Today`,
+			sections: [
+				['Business Growth', `${metrics.businessGrowthScore} current / ${clampScore(metrics.businessGrowthScore + lift)} after today’s mission`],
+				['Completed Missions', 'Research, content preparation, validation, rollback planning, and forecast modeling completed.'],
+				['Pending Approvals', mission?.executionMode === ExecutionModes.APPROVAL_REQUIRED ? mission.title : 'No strategic approval needed today.'],
+				['Projected Revenue Lift', `$${(mission?.expectedRevenueImpact || 3200).toLocaleString()}/mo modeled opportunity`],
+				['Forecast', `${mission?.forecastModel?.afterMission || metrics.forecast}% after mission if dependency path stays clear`],
+				['Today’s Mission', mission?.title || 'No mission selected'],
+				['Risks', mission?.executionMode === ExecutionModes.CUSTOMER_REQUIRED ? 'Customer-required task can block downstream missions.' : 'Execution remains preparation-only until provider adapters are connected.'],
+				['Competitor Changes', 'Competitor trust movement detected; Apex recommends not delaying trust work.'],
+				['One-click Approval Actions', 'Approve / Request revision / Hold mission visual placeholders only.']
+			]
+		};
+	}
+
+	function buildExecutionLayer(primary, secondary, blocked, metrics, planName) {
+		const mission = primary || secondary[0] || blocked[0] || null;
+		const lifecycle = executionLifecycleFor(mission);
+		return {
+			version: '0.1.0',
+			architectureStatus: 'Preparation-only execution layer',
+			missionWorkspace: {
+				missionId: mission?.id || 'mission-pending',
+				created: new Date().toISOString(),
+				priority: mission?.priorityScore || 0,
+				estimatedImpact: {
+					businessGrowthScore: mission?.expectedBusinessGrowthScore || 0,
+					visibility: mission?.expectedVisibility || 0,
+					traffic: mission?.expectedLeads || 0,
+					revenue: mission?.expectedRevenueImpact || 0,
+					timeSaved: mission?.estimatedMinutes ? Math.max(1, Math.round(mission.estimatedMinutes / 3)) : 0
+				},
+				confidenceScore: mission?.confidence || 0,
+				dependencies: dependencyStatusFor(mission),
+				executionStatus: 'Prepared, not executed',
+				approvalStatus: mission?.approvalStatus || 'Not evaluated',
+				rollbackAvailable: true,
+				verificationStatus: 'Verification architecture prepared',
+				evidence: evidencePackageFor(mission),
+				result: 'Pending execution and verification',
+				lifecycle,
+				filesPrepared: preparedFilesFor(mission),
+				changesReady: preparedChangesFor(mission),
+				rollbackPlan: rollbackPlanFor(mission),
+				verificationPlan: verificationPlanFor(mission),
+				completion: {
+					status: 'Not complete',
+					timeSaved: mission?.estimatedMinutes ? `${Math.max(1, Math.round(mission.estimatedMinutes / 3))} minutes prepared` : 'Pending',
+					estimatedLift: `+${mission?.expectedBusinessGrowthScore || 0} Business Growth Score™`,
+					businessGrowthImpact: `$${(mission?.expectedRevenueImpact || 0).toLocaleString()}/mo modeled`,
+					missionOwner: mission?.owner || 'Apex',
+					approvalHistory: mission?.executionMode === ExecutionModes.APPROVAL_REQUIRED ? 'Approval package created; customer decision pending.' : 'No approval event recorded.',
+					verificationResult: 'Pending future execution'
+				}
+			},
+			approvalIntelligence: approvalPolicyFor(mission),
+			providerArchitecture: providerArchitectureFor(planName),
+			missionTemplates: missionTemplatesFor(),
+			operationsLog: operationsLogFor(mission),
+			dailyOperations: dailyOperationsFor(mission, metrics),
+			dailyEmail: dailyEmailFor(mission, metrics)
+		};
+	}
+
 	function generateDailyMission(input = {}) {
 		const metrics = defaultMetrics(input);
 		const completedIds = asArray(input.completedWork).concat(asArray(input.completedMissionIds));
@@ -510,9 +762,10 @@
 		const primaryMission = ready[0] || missions[0] || null;
 		const secondaryMissions = missions.filter(item => item.id !== primaryMission?.id).slice(0, 5);
 		const recommendations = [primaryMission].concat(secondaryMissions).filter(Boolean).map(mission => missionToRecommendation(mission)).slice(0, 5);
+		const executionLayer = buildExecutionLayer(primaryMission, secondaryMissions, blocked, metrics, planName);
 
 		return {
-			version: '0.1.0',
+			version: '0.2.0',
 			generatedAt: new Date().toISOString(),
 			subscriptionLevel: planName,
 			metrics,
@@ -529,18 +782,20 @@
 				[ExecutionModes.CUSTOMER_REQUIRED]: 'Customer action required',
 				[ExecutionModes.MANUAL_ONLY]: 'Manual execution only'
 			},
-			dailyBrief: buildDailyBrief(primaryMission, secondaryMissions, blocked, metrics, history)
+			dailyBrief: buildDailyBrief(primaryMission, secondaryMissions, blocked, metrics, history),
+			executionLayer
 		};
 	}
 
 	window.ApexMissionEngine = {
-		version: '0.1.0',
+		version: '0.2.0',
 		MissionStates,
 		MissionTypes,
 		ExecutionModes,
 		dependencyGraph,
 		candidateMissions,
 		scoreMission,
-		generateDailyMission
+		generateDailyMission,
+		buildExecutionLayer
 	};
 })();

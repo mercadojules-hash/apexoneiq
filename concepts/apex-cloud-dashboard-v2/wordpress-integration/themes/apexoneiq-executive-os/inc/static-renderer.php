@@ -365,6 +365,7 @@ function apexoneiq_is_demo_request( $page ) {
 			'free-dashboard.html',
 			'dashboard.html',
 			'command-dashboard.html',
+			'mission-workspace.html',
 			'concierge-essentials-dashboard.html',
 			'executive-brief.html',
 			'opportunities.html',
