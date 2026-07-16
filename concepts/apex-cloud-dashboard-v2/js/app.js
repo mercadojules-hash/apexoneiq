@@ -1260,6 +1260,119 @@ function briefStatusFor(score) {
 	return 'Critical';
 }
 
+function fallbackMissionPlan(context) {
+	const score = clampScore(context.businessGrowthScore || 66);
+	const drivers = context.executiveHealth || growthDriverScores(score);
+	const mission = {
+		id: 'fallback-trust-coverage',
+		title: 'Increase trust coverage',
+		type: 'Trust',
+		state: 'Ready',
+		reason: 'Trust is currently the largest constraint preventing customers and AI systems from confidently choosing the business.',
+		businessImpact: 'Completes the business proof layer and makes future growth recommendations easier to validate.',
+		expectedBusinessGrowthScore: 4,
+		expectedVisibility: 6,
+		expectedLeads: 9,
+		expectedRevenueImpact: 2600,
+		expectedTrust: 8,
+		expectedForecast: 5,
+		estimatedTime: '18 minutes',
+		confidence: 92,
+		difficulty: 'Low',
+		owner: 'Customer',
+		executionMode: 'Customer Required',
+		approvalStatus: 'No approval needed',
+		dependencies: [],
+		blockedBy: [],
+		priorityScore: 88,
+		status: 'Ready to Execute',
+		forecastModel: { current: clampScore(score + 6), afterMission: clampScore(score + 11), thirtyDayTarget: clampScore(score + 19) }
+	};
+	const recommendation = {
+		title: mission.title,
+		why: mission.reason,
+		impact: `${mission.businessImpact} Expected outcome: +${mission.expectedBusinessGrowthScore} Business Growth Score™ points, +${mission.expectedVisibility}% visibility, and ${mission.expectedLeads} estimated new leads per month.`,
+		scoreLift: `+${mission.expectedBusinessGrowthScore} BGS`,
+		visibility: `+${mission.expectedVisibility}%`,
+		effort: mission.difficulty,
+		time: mission.estimatedTime,
+		owner: mission.owner,
+		roi: 'High',
+		approvalStatus: mission.approvalStatus,
+		dependencies: 'None',
+		status: mission.state,
+		expectedRevenueImpact: mission.expectedRevenueImpact,
+		priorityScore: mission.priorityScore,
+		executionMode: mission.executionMode
+	};
+	return {
+		version: 'fallback',
+		generatedAt: new Date().toISOString(),
+		metrics: {
+			businessGrowthScore: score,
+			localSeo: drivers.localSeo,
+			aiVisibility: drivers.aiVisibility,
+			trustCoverage: drivers.trustCoverage,
+			websiteHealth: drivers.websiteHealth,
+			contentAuthority: drivers.contentAuthority,
+			forecast: clampScore(score + 6)
+		},
+		primaryMission: mission,
+		secondaryMissions: [],
+		blockedMissions: [],
+		missionQueue: [mission],
+		recommendations: [recommendation],
+		history: [],
+		automationPermissions: {
+			Automatic: 'Simulated only until automation launch',
+			'Approval Required': 'Approval workflow ready',
+			'Customer Required': 'Customer action required',
+			'Manual Only': 'Manual execution only'
+		},
+		dailyBrief: {
+			yesterday: 'Apex created the initial business baseline.',
+			today: `Current mission: ${mission.title}. ${mission.reason}`,
+			tomorrow: 'Tomorrow depends on today’s completion signal.',
+			businessGrowthScore: { current: score, change: '+4 projected' },
+			trust: { current: drivers.trustCoverage, change: '+8 projected' },
+			aiVisibility: { current: drivers.aiVisibility, change: '+6% projected' },
+			forecast: { current: clampScore(score + 6), change: '+5 projected' },
+			risksDetected: 'No critical planning risks detected.',
+			competitorMovement: 'Competitor pressure is stable today.',
+			blockedItems: [],
+			approvalsNeeded: []
+		}
+	};
+}
+
+function getMissionPlan() {
+	const profile = getStoredProfile() || {};
+	const score = clampScore(profile.score || 66);
+	const drivers = growthDriverScores(score);
+	const context = {
+		profile,
+		businessGrowthScore: score,
+		executiveHealth: drivers,
+		localSeo: drivers.localSeo,
+		aiVisibility: drivers.aiVisibility,
+		trustCoverage: drivers.trustCoverage,
+		websiteHealth: drivers.websiteHealth,
+		contentAuthority: drivers.contentAuthority,
+		forecast: clampScore(score + 6),
+		subscription: window.ApexOneIQ?.subscription || readStorage('apexoneiq_subscription', { plan: 'free' }),
+		approvals: readStorage('apexoneiq_customer_approvals', []),
+		completedWork: readStorage('apexoneiq_completed_work', []),
+		completedMissionIds: readStorage('apexoneiq_completed_mission_ids', []),
+		missionHistory: readStorage('apexoneiq_mission_history', [])
+	};
+
+	if (window.ApexMissionEngine?.generateDailyMission) {
+		return window.ApexMissionEngine.generateDailyMission(context);
+	}
+
+	return fallbackMissionPlan(context);
+}
+
 function buildExecutiveBriefData() {
 	const profile = getStoredProfile() || {
 		businessName: 'Your Business',
@@ -1274,9 +1387,11 @@ function buildExecutiveBriefData() {
 	const projected = clampScore(score + 13);
 	const goal = Math.max(90, projected + 8);
 	const health = businessHealth(score);
+	const missionPlan = getMissionPlan();
+	const primaryMission = missionPlan.primaryMission || fallbackMissionPlan({ businessGrowthScore: score, executiveHealth: drivers }).primaryMission;
 	const domain = workspaceDomain(profile.website) || profile.businessName || 'your business';
 	const businessName = profile.businessName || domain;
-	const missionTarget = clampScore(score + 8);
+	const missionTarget = clampScore(score + (primaryMission.expectedBusinessGrowthScore || 8));
 	const trend = Array.isArray(profile.trend) && profile.trend.length ? profile.trend.map(clampScore) : [58, 61, 64, score];
 	const previousScore = trend.length > 1 ? trend[trend.length - 2] : Math.max(0, score - 5);
 	const scoreDelta = score - previousScore;
@@ -1289,8 +1404,8 @@ function buildExecutiveBriefData() {
 		scoreIncrease: projected - score,
 		confidence
 	};
-	const summary = `${businessName} is showing demand potential, but weak trust coverage is limiting how confidently customers and AI systems can choose it. If nothing changes, competitors with stronger proof can keep capturing the highest-intent opportunities; the single highest-value move is to strengthen trust coverage first. Complete today’s mission to move the Business Growth Score™ from ${score} toward ${projected} and make every future recommendation easier to validate.`;
-	const recommendations = [
+	const summary = `${businessName} is showing demand potential, but ${primaryMission.reason.charAt(0).toLowerCase()}${primaryMission.reason.slice(1)} If nothing changes, competitors with stronger proof can keep capturing the highest-intent opportunities. Today’s highest-value mission is ${primaryMission.title.toLowerCase()}, projected to move the Business Growth Score™ from ${score} toward ${projected}.`;
+	const recommendations = missionPlan.recommendations?.length ? missionPlan.recommendations : [
 		{
 			title: 'Increase trust coverage across core business profiles',
 			why: 'Buyers and AI systems need stronger third-party proof before they can confidently choose the business.',
@@ -1379,14 +1494,23 @@ function buildExecutiveBriefData() {
 		opportunity,
 		recommendations,
 		mission: {
-			title: 'Increase Trust Coverage',
+			id: primaryMission.id,
+			title: primaryMission.title,
+			type: primaryMission.type,
 			progress: drivers.trustCoverage,
-			estimatedCompletion: '7 days',
-			impact: `Expected to create ${opportunity.leads} new monthly lead opportunities and lift the Business Growth Score™ by 4 points.`,
+			estimatedCompletion: primaryMission.estimatedTime || '7 days',
+			impact: `${primaryMission.businessImpact} Expected to create ${primaryMission.expectedLeads || opportunity.leads} new monthly lead opportunities and lift the Business Growth Score™ by ${primaryMission.expectedBusinessGrowthScore || 4} points.`,
 			currentScore: score,
 			targetScore: missionTarget,
-			owner: 'Customer'
+			owner: primaryMission.owner || 'Customer',
+			state: primaryMission.state,
+			executionMode: primaryMission.executionMode,
+			confidence: primaryMission.confidence,
+			priorityScore: primaryMission.priorityScore,
+			reason: primaryMission.reason,
+			dependencies: primaryMission.dependencies || []
 		},
+		missionPlan,
 		competitors: [
 			['You', score, drivers.trustCoverage, drivers.aiVisibility],
 			['Competitor A', clampScore(score + 8), clampScore(drivers.trustCoverage + 13), clampScore(drivers.aiVisibility + 6)],
@@ -1638,6 +1762,8 @@ function setupExecutiveDashboard() {
 	const trend = Array.isArray(profile.trend) && profile.trend.length ? profile.trend : [12, 28, 41, 55, score];
 	const businessName = profile.businessName || new URL(profile.website).hostname.replace(/^www\./, '');
 	const status = scoreLabel(score);
+	const briefData = buildExecutiveBriefData();
+	const mission = briefData.mission;
 	renderWorkspaceContext();
 	pageHead.querySelector('h1').textContent = `${businessName} Executive Intelligence profile is ready.`;
 	const kicker = pageHead.querySelector('.page-kicker');
@@ -1680,9 +1806,14 @@ function setupExecutiveDashboard() {
 					</div>
 				</article>
 				<article class="live-action-card" data-assemble-card style="--delay:1780ms">
-					<div class="panel-label">Recommended Action</div>
-					<h3>Complete Google Business Profile trust proof.</h3>
-					<p>This is the fastest next step because it supports search, AI recommendations, and buyer confidence at the same time.</p>
+					<div class="panel-label">Today’s Mission</div>
+					<h3>${escapeHtml(mission.title)}</h3>
+					<p>${escapeHtml(mission.reason || mission.impact)}</p>
+					<div class="mission-mini-meta">
+						<span>${escapeHtml(mission.executionMode || 'Customer Required')}</span>
+						<span>${escapeHtml(mission.state || 'Ready')}</span>
+						<span>${mission.confidence || briefData.confidence}% confidence</span>
+					</div>
 					<button class="ghost-button" data-template="drawer-gbp">View Playbook</button>
 				</article>
 				<article class="live-feed-card" data-assemble-card style="--delay:2100ms">
@@ -1690,7 +1821,7 @@ function setupExecutiveDashboard() {
 					<div class="mini-timeline">
 						<button><span>Now</span><strong>Executive scan completed</strong><small>${escapeHtml(profile.website)}</small></button>
 						<button><span>Now</span><strong>Score baseline created</strong><small>${score}/100 ${escapeHtml(status)}</small></button>
-						<button><span>Next</span><strong>Trend history ready</strong><small>Future scans compound the chart</small></button>
+						<button><span>Next</span><strong>${escapeHtml(mission.title)}</strong><small>${escapeHtml(mission.owner)} owns the next step</small></button>
 					</div>
 				</article>
 			</section>
@@ -1715,6 +1846,94 @@ function setupExecutiveDashboard() {
 	});
 }
 
+function renderMissionQueuePanel() {
+	if (route !== 'opportunities.html') return;
+	const main = document.querySelector('.main');
+	const pageHead = document.querySelector('.page-head');
+	if (!main || !pageHead || main.querySelector('[data-mission-queue-panel]')) return;
+	const data = buildExecutiveBriefData();
+	const queue = data.missionPlan.missionQueue.slice(0, 6);
+	pageHead.insertAdjacentHTML('afterend', `
+		<section class="mission-queue-panel" data-mission-queue-panel>
+			<div class="panel-head">
+				<div><div class="panel-label">Mission Engine Queue</div><h3>Ranked by business impact, confidence, dependencies, customer effort, and competitive pressure.</h3></div>
+				<span class="status-pill status-ok">Primary mission selected</span>
+			</div>
+			<div class="mission-queue-list">
+				${queue.map((mission, index) => `
+					<article class="mission-queue-item ${index === 0 ? 'primary' : ''}">
+						<div class="mission-rank">${index + 1}</div>
+						<div class="mission-queue-main">
+							<span>${escapeHtml(mission.type)} / ${escapeHtml(mission.executionMode)}</span>
+							<strong>${escapeHtml(mission.title)}</strong>
+							<p>${escapeHtml(mission.reason)}</p>
+						</div>
+						<div class="mission-score-block"><small>Priority</small><b>${mission.priorityScore}</b></div>
+						<div class="mission-score-block"><small>BGS</small><b>+${mission.expectedBusinessGrowthScore}</b></div>
+						<div class="mission-score-block"><small>Visibility</small><b>+${mission.expectedVisibility}%</b></div>
+						<div class="mission-score-block"><small>Leads</small><b>+${mission.expectedLeads}/mo</b></div>
+						<div class="mission-score-block"><small>Time</small><b>${escapeHtml(mission.estimatedTime)}</b></div>
+						<div class="mission-state-pill">${escapeHtml(mission.state)}</div>
+					</article>
+				`).join('')}
+			</div>
+		</section>
+	`);
+}
+
+function renderMissionForecastPanel() {
+	if (route !== 'forecast.html') return;
+	const main = document.querySelector('.main');
+	const pageHead = document.querySelector('.page-head');
+	if (!main || !pageHead || main.querySelector('[data-mission-forecast-panel]')) return;
+	const data = buildExecutiveBriefData();
+	const mission = data.missionPlan.primaryMission;
+	const forecast = mission.forecastModel || { current: data.score + 6, afterMission: data.projected, thirtyDayTarget: data.goal };
+	pageHead.insertAdjacentHTML('afterend', `
+		<section class="mission-forecast-panel" data-mission-forecast-panel>
+			<div class="panel-head">
+				<div><div class="panel-label">Mission-Driven Forecast</div><h3>Forecast movement is now tied to the daily mission engine.</h3></div>
+				<span class="status-pill">Planning engine only</span>
+			</div>
+			<div class="mission-forecast-grid">
+				<div><span>Current Forecast</span><strong>${forecast.current}%</strong><p>Baseline after the latest Executive Growth Scan.</p></div>
+				<div><span>After Today’s Mission</span><strong>${forecast.afterMission}%</strong><p>${escapeHtml(mission.title)} is projected to add +${mission.expectedForecast} forecast points.</p></div>
+				<div><span>30-Day Target</span><strong>${forecast.thirtyDayTarget}%</strong><p>Assumes the dependency path stays unblocked.</p></div>
+			</div>
+		</section>
+	`);
+}
+
+function renderMissionSettingsPanel() {
+	if (route !== 'settings.html') return;
+	const main = document.querySelector('.main');
+	const pageHead = document.querySelector('.page-head');
+	if (!main || !pageHead || main.querySelector('[data-automation-permissions]')) return;
+	const data = buildExecutiveBriefData();
+	const permissions = data.missionPlan.automationPermissions;
+	pageHead.insertAdjacentHTML('afterend', `
+		<section class="setting-group automation-permissions-panel" data-automation-permissions>
+			<div class="panel-head">
+				<div><div class="panel-label">Automation Permissions</div><h3>Controls the execution mode each future mission is allowed to use.</h3></div>
+				<span class="status-pill">Foundation ready</span>
+			</div>
+			${Object.entries(permissions).map(([mode, status]) => `
+				<div class="setting-row">
+					<div><strong>${escapeHtml(mode)}</strong><p>${escapeHtml(status)}</p></div>
+					<span class="status-pill ${/Allowed|ready|Customer/.test(status) ? 'status-ok' : ''}">${escapeHtml(mode === 'Automatic' ? 'Future' : 'Configured')}</span>
+					<button class="row-action" data-coming-soon="Automation permission editing is intentionally deferred until Executive Autopilot.">Coming Soon</button>
+				</div>
+			`).join('')}
+		</section>
+	`);
+}
+
+function renderMissionEngineIntegrations() {
+	renderMissionQueuePanel();
+	renderMissionForecastPanel();
+	renderMissionSettingsPanel();
+}
+
 document.querySelectorAll('.account').forEach(account => {
 	if (apexDemoMode) return;
 	if (!account.querySelector('[data-ask]')) {
@@ -1734,6 +1953,7 @@ setupExecutiveScan();
 setupRegistrationForm();
 applyFreeProfileSnapshot();
 setupExecutiveDashboard();
+renderMissionEngineIntegrations();
 
 document.querySelectorAll('[data-explain]').forEach(button => {
 	button.addEventListener('click', () => {
