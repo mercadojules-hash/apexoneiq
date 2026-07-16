@@ -1933,7 +1933,7 @@ button[disabled],
 .brief-confidence-intel {
 	align-items: center;
 	display: grid;
-	grid-template-columns: 126px minmax(340px, 1fr) 116px;
+	grid-template-columns: 138px minmax(340px, 1fr) 116px;
 	gap: 16px;
 	padding: 16px;
 	border: 1px solid rgba(22, 32, 51, .1);
@@ -1949,33 +1949,37 @@ button[disabled],
 	border-right-color: #2563eb;
 	border-radius: 999px;
 	display: flex;
-	flex: 0 0 112px;
-	height: 112px;
+	flex: 0 0 124px;
+	height: 124px;
 	justify-content: center;
 	justify-self: center;
 	padding: 0;
-	width: 112px;
+	position: relative;
+	width: 124px;
 }
 
-.brief-confidence-gauge div {
+.confidence-ring__content {
 	align-items: center;
 	display: flex;
 	flex-direction: column;
-	gap: 3px;
+	gap: 6px;
+	inset: 0;
 	justify-content: center;
 	line-height: 1;
+	position: absolute;
 	text-align: center;
+	transform: translateY(-2px);
 }
 
-.brief-confidence-gauge strong {
-	display: block;
-	font-size: 26px;
+.confidence-ring__value {
+	font-size: 27px;
+	font-weight: 950;
 	line-height: 1;
 }
 
-.brief-confidence-gauge span {
+.confidence-ring__label {
 	color: #687386;
-	font-size: 9px;
+	font-size: 8px;
 	font-weight: 950;
 	line-height: 1;
 	text-transform: uppercase;
@@ -2525,17 +2529,22 @@ button[disabled],
 
 	.brief-confidence-gauge {
 		border-width: 5px;
-		flex-basis: 74px;
-		height: 74px;
-		width: 74px;
+		flex-basis: 82px;
+		height: 82px;
+		width: 82px;
 	}
 
-	.brief-confidence-gauge strong {
-		font-size: 17px;
+	.confidence-ring__content {
+		gap: 4px;
+		transform: translateY(-2px);
 	}
 
-	.brief-confidence-gauge span {
-		font-size: 6.5px;
+	.confidence-ring__value {
+		font-size: 18px;
+	}
+
+	.confidence-ring__label {
+		font-size: 6px;
 	}
 
 	.brief-confidence-intel small {
