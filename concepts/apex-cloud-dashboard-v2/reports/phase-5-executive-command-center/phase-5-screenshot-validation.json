@@ -1,0 +1,50 @@
+[
+  {
+    "name": "desktop-command-center",
+    "width": 1440,
+    "height": 1100,
+    "commandTop": 169,
+    "commandHeight": 940,
+    "commandBottom": 1109,
+    "viewportHeight": 1100,
+    "commandAboveFold": true,
+    "disclosureCount": 10,
+    "openDisclosures": [
+      "Mission Summary"
+    ],
+    "bodyHeight": 2763,
+    "firstDisclosureTop": 1583
+  },
+  {
+    "name": "tablet-command-center",
+    "width": 900,
+    "height": 1100,
+    "commandTop": 135,
+    "commandHeight": 700,
+    "commandBottom": 835,
+    "viewportHeight": 1100,
+    "commandAboveFold": true,
+    "disclosureCount": 10,
+    "openDisclosures": [
+      "Mission Summary"
+    ],
+    "bodyHeight": 3772,
+    "firstDisclosureTop": 2149
+  },
+  {
+    "name": "mobile-command-center",
+    "width": 390,
+    "height": 1200,
+    "commandTop": 169,
+    "commandHeight": 817,
+    "commandBottom": 986,
+    "viewportHeight": 1200,
+    "commandAboveFold": true,
+    "disclosureCount": 10,
+    "openDisclosures": [
+      "Mission Summary"
+    ],
+    "bodyHeight": 4079,
+    "firstDisclosureTop": 2370
+  }
+]

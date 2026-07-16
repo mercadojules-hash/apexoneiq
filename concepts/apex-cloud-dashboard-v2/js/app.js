@@ -2181,6 +2181,10 @@ function statusClassForState(state = '') {
 	return '';
 }
 
+function missionStatement(value, fallback = 'Prepared') {
+	return escapeHtml(value || fallback);
+}
+
 function missionWorkspaceList(items, className = 'mission-workspace-list') {
 	return `
 		<div class="${className}">
@@ -2193,6 +2197,40 @@ function missionWorkspaceList(items, className = 'mission-workspace-list') {
 				</div>
 			`).join('')}
 		</div>
+	`;
+}
+
+function missionCompactGrid(items, className = 'mission-compact-grid') {
+	return `
+		<div class="${className}">
+			${items.map(([label, value, state]) => `
+				<div class="${state ? escapeHtml(state) : ''}">
+					<span>${escapeHtml(label)}</span>
+					<strong>${escapeHtml(value)}</strong>
+				</div>
+			`).join('')}
+		</div>
+	`;
+}
+
+function missionWorkflow(title, steps, state = '') {
+	return `
+		<div class="mission-workflow ${state ? escapeHtml(state) : ''}">
+			<span>${escapeHtml(title)}</span>
+			<div>${steps.map(step => `<strong>${escapeHtml(step)}</strong>`).join('<i></i>')}</div>
+		</div>
+	`;
+}
+
+function missionWorkspacePanel(title, subtitle, body, open = false, extraClass = '') {
+	return `
+		<details class="mission-disclosure ${extraClass}" ${open ? 'open' : ''}>
+			<summary>
+				<div><span>${escapeHtml(title)}</span><strong>${escapeHtml(subtitle)}</strong></div>
+				<i></i>
+			</summary>
+			<div class="mission-disclosure-body">${body}</div>
+		</details>
 	`;
 }
 
@@ -2210,9 +2248,52 @@ function renderMissionWorkspace() {
 	const provider = layer.providerArchitecture || {};
 	const daily = layer.dailyOperations || {};
 	const email = layer.dailyEmail || { sections: [] };
+	const bgsLift = workspace.estimatedImpact?.businessGrowthScore || mission?.expectedBusinessGrowthScore || 0;
+	const confidence = workspace.confidenceScore || mission?.confidence || 0;
+	const revenue = workspace.estimatedImpact?.revenue || mission?.expectedRevenueImpact || 0;
+	const timeSaved = workspace.estimatedImpact?.timeSaved || 0;
+	const approvalWaiting = Array.isArray(daily.pendingApprovals) ? daily.pendingApprovals.length : 0;
+	const lifecycle = workspace.lifecycle || [];
+	const activeStage = lifecycle.find(item => item[3] === 'active') || lifecycle.find(item => item[3] === 'pending') || lifecycle[0] || [];
+	const completedStages = lifecycle.filter(item => item[3] === 'complete').length;
+	const summaryItems = [
+		['Mission', mission?.title || 'Mission prepared', 'priority'],
+		['Business Growth', `+${bgsLift} BGS`, 'growth'],
+		['Confidence', `${confidence}%`, 'confidence'],
+		['Expected Lift', `$${revenue.toLocaleString()}/mo`, 'growth'],
+		['Approval', approval.currentDecision || workspace.approvalStatus || 'Prepared', approvalWaiting ? 'approval' : 'clear'],
+		['Status', workspace.executionStatus || 'Prepared, not executed', 'status']
+	];
+	const commandMetrics = [
+		['Business Growth Score', daily.businessGrowthScoreMovement || `+${bgsLift} projected`, 'growth'],
+		["Today's Mission", mission?.title || 'Mission prepared', 'priority'],
+		['Completed Yesterday', daily.completedYesterday || 'Baseline, mission queue, forecast.', 'complete'],
+		['Approvals Waiting', `${approvalWaiting}`, approvalWaiting ? 'approval' : 'clear'],
+		['Forecast', daily.forecast || 'Prepared', 'forecast'],
+		['Business Risk', daily.businessRisks || 'Approval delay can slow forecast movement.', 'risk'],
+		['Competitor Changes', daily.competitorChanges || 'No critical ranking shock detected.', 'competitor'],
+		['Current Status', workspace.executionStatus || 'Prepared', 'status'],
+		['Time Saved', `${timeSaved} min`, 'time'],
+		['Projected Revenue', `$${revenue.toLocaleString()}/mo`, 'revenue']
+	];
+	const workflowBody = [
+		missionWorkflow('Rollback', ['Archive', 'Deploy', 'Validate', 'Restore if needed'], 'stable'),
+		missionWorkflow('Evidence', ['Before', 'Execute', 'After', 'Verification', 'Stored'], 'growth'),
+		missionWorkflow('Provider Flow', ['Mission', 'Execution Engine', 'Provider Adapter', 'Verification', 'Evidence'], 'deferred')
+	].join('');
+	const evidenceTiles = [
+		['Before Screenshot', 'Ready'],
+		['After Screenshot', 'Reserved'],
+		['JSON-LD', 'Passed'],
+		['Validation Log', 'Ready'],
+		['Performance Snapshot', 'Prepared'],
+		['Provider Confirmation', 'Deferred'],
+		['Rollback Archive', 'Ready'],
+		['Execution Timeline', 'Active']
+	];
 	document.body.classList.add('mission-workspace-page');
 	pageHead.querySelector('.page-kicker').textContent = 'Mission Workspace';
-	pageHead.querySelector('h1').textContent = 'Apex prepared the work. Human judgment decides what ships.';
+	pageHead.querySelector('h1').textContent = 'Executive Command Center';
 	const action = pageHead.querySelector('.ghost-button');
 	if (action) action.remove();
 	main.querySelectorAll(':scope > section:not(.page-head)').forEach(section => {
@@ -2220,32 +2301,39 @@ function renderMissionWorkspace() {
 	});
 	pageHead.insertAdjacentHTML('afterend', `
 		<section class="mission-workspace" data-mission-workspace>
-			<section class="mission-workspace-hero">
-				<div>
-					<div class="panel-label">Execution Layer</div>
+			<section class="mission-command-center">
+				<div class="command-greeting">
+					<span class="panel-label">Good Morning</span>
 					<h2>${escapeHtml(mission?.title || 'Mission prepared')}</h2>
-					<p>${escapeHtml(mission?.reason || 'Apex selected the highest-value mission and prepared the execution package without touching the live business.')}</p>
-					<div class="mission-workspace-meta">
-						<div><span>Mission ID</span><strong>${escapeHtml(workspace.missionId || mission?.id || 'mission-pending')}</strong></div>
-						<div><span>Execution Status</span><strong>${escapeHtml(workspace.executionStatus || 'Prepared')}</strong></div>
-						<div><span>Approval</span><strong>${escapeHtml(workspace.approvalStatus || mission?.approvalStatus || 'Pending')}</strong></div>
-						<div><span>Rollback</span><strong>${workspace.rollbackAvailable ? 'Available' : 'Not Available'}</strong></div>
-					</div>
+					<p>${missionStatement(daily.executiveRecommendation, 'Apex prepared the highest-value work. Human judgment is only needed for live-business approval.')}</p>
 				</div>
-				<div class="mission-impact-card">
-					<span>Expected Impact</span>
-					<strong>+${workspace.estimatedImpact?.businessGrowthScore || mission?.expectedBusinessGrowthScore || 0} BGS</strong>
-					<p>+${workspace.estimatedImpact?.visibility || mission?.expectedVisibility || 0}% visibility / +${workspace.estimatedImpact?.traffic || mission?.expectedLeads || 0} leads / $${(workspace.estimatedImpact?.revenue || mission?.expectedRevenueImpact || 0).toLocaleString()}/mo</p>
-					<div class="mission-confidence-line"><i style="width:${workspace.confidenceScore || mission?.confidence || 0}%"></i></div>
-					<small>${workspace.confidenceScore || mission?.confidence || 0}% confidence</small>
+				<div class="command-score">
+					<span>Business Growth Score</span>
+					<strong>${escapeHtml(String(daily.businessGrowthScoreMovement || `+${bgsLift} projected`))}</strong>
+					<div class="mission-confidence-line"><i style="width:${confidence}%"></i></div>
+					<small>${confidence}% confidence / ${escapeHtml(activeStage[0] || 'Prepared')} active</small>
+				</div>
+				<div class="command-recommendation">
+					<span>Executive Recommendation</span>
+					<strong>${missionStatement(daily.executiveRecommendation, 'Approve the prepared package when ready.')}</strong>
+				</div>
+				${missionCompactGrid(commandMetrics, 'command-metric-grid')}
+			</section>
+
+			<section class="mission-ops-preview" id="activity">
+				<div class="panel-head"><div><div class="panel-label">Executive Operations Log</div><h3>Apex already handled everything it could.</h3></div><span class="status-pill status-ok">Waiting for approval</span></div>
+				<div class="operations-log executive">
+					${(layer.operationsLog || []).map(([time, title, note, state]) => `
+						<div class="${escapeHtml(state)}"><span>${escapeHtml(time)}</span><strong>${escapeHtml(title)}</strong><p>${escapeHtml(note)}</p></div>
+					`).join('')}
 				</div>
 			</section>
 
-			<section class="mission-workspace-grid">
-				<article class="mission-workspace-panel wide">
-					<div class="panel-head"><div><div class="panel-label">Mission Lifecycle</div><h3>Every mission follows the same execution architecture.</h3></div><span class="status-pill status-ok">Reusable component</span></div>
-					<div class="mission-lifecycle">
-						${(workspace.lifecycle || []).map(([stage, status, note, state]) => `
+			<section class="mission-disclosure-stack">
+				${missionWorkspacePanel('Mission Summary', `${completedStages} stages complete / ${escapeHtml(activeStage[0] || 'Prepared')} active`, `
+					${missionCompactGrid(summaryItems, 'mission-priority-grid')}
+					<div class="mission-lifecycle signature">
+						${lifecycle.map(([stage, status, note, state]) => `
 							<div class="${escapeHtml(state)}">
 								<span>${escapeHtml(stage)}</span>
 								<strong>${escapeHtml(status)}</strong>
@@ -2253,112 +2341,67 @@ function renderMissionWorkspace() {
 							</div>
 						`).join('')}
 					</div>
-				</article>
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Business Objective</div><h3>Why this mission exists.</h3></div></div>
-					<p>${escapeHtml(mission?.businessImpact || 'This mission removes the highest-value constraint and prepares measurable business improvement.')}</p>
-					${missionWorkspaceList([
-						['Priority', workspace.priority || mission?.priorityScore || 0, 'Calculated by business impact, confidence, difficulty, dependencies, and competitive pressure.'],
-						['Estimated Revenue', `$${(workspace.estimatedImpact?.revenue || mission?.expectedRevenueImpact || 0).toLocaleString()}/mo`, 'Modeled opportunity after verification.'],
-						['Time Saved', `${workspace.estimatedImpact?.timeSaved || 0} minutes`, 'Preparation time Apex already absorbed.']
+				`, true, 'mission-summary-disclosure')}
+
+				${missionWorkspacePanel('Execution', 'Prepared only / no production changes', `
+					${missionCompactGrid([
+						['Research', 'Complete', 'complete'],
+						['Content', 'Ready', 'complete'],
+						['Validation', 'Passed', 'complete'],
+						['Dependencies', workspace.dependencies?.some(item => item[1] === 'Waiting') ? 'Waiting' : 'Clear', workspace.dependencies?.some(item => item[1] === 'Waiting') ? 'risk' : 'clear'],
+						['Execution', 'Deferred', 'deferred'],
+						['Monitoring', 'Prepared', 'status']
 					])}
-				</article>
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Execution Checklist</div><h3>Prepared before anything ships.</h3></div></div>
-					${missionWorkspaceList([
-						['Research complete', 'Yes', 'Competitor, trust, local, AI, and forecast context assembled.', 'complete'],
-						['Content generated', 'Yes', 'Draft assets prepared for approval or future execution.', 'complete'],
-						['Validation passed', 'Yes', 'Quality, structured data, and dependency checks passed.', 'passed'],
-						['Dependencies satisfied', workspace.dependencies?.some(item => item[1] === 'Waiting') ? 'No' : 'Yes', 'Apex will not recommend execution if prerequisites are blocked.', workspace.dependencies?.some(item => item[1] === 'Waiting') ? 'blocked' : 'clear'],
-						['Approval status', approval.currentDecision || workspace.approvalStatus || 'Prepared', 'Only live-business changes require human approval.', approval.status || 'pending'],
-						['Execution ready', 'Prepared only', 'Live provider execution is deferred.', 'deferred'],
-						['Verification pending', 'Prepared', 'Verification checks are ready for future execution.', 'prepared'],
-						['Monitoring enabled', 'Prepared', 'Score, trust, visibility, and forecast monitoring are defined.', 'prepared']
-					])}
-				</article>
-			</section>
+					<div class="mission-workflow-grid">${workflowBody}</div>
+				`)}
 
-			<section class="mission-workspace-grid">
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Files Prepared</div><h3>Execution-ready assets.</h3></div></div>
-					${missionWorkspaceList(workspace.filesPrepared || [])}
-				</article>
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Changes Ready</div><h3>Prepared, validated, not published.</h3></div></div>
-					${missionWorkspaceList(workspace.changesReady || [])}
-				</article>
-			</section>
+				${missionWorkspacePanel('Prepared Assets', `${(workspace.filesPrepared || []).length} files / ${(workspace.changesReady || []).length} changes`, `
+					<div class="mission-two-column">
+						${missionWorkspaceList((workspace.filesPrepared || []).map(([title, value, state]) => [title, state || value, '', state]), 'mission-workspace-list compact')}
+						${missionWorkspaceList((workspace.changesReady || []).map(([title, value, state]) => [title, state || value, '', state]), 'mission-workspace-list compact')}
+					</div>
+				`)}
 
-			<section class="mission-workspace-grid">
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Dependencies</div><h3>What prevents execution.</h3></div></div>
-					${missionWorkspaceList(workspace.dependencies || [])}
-				</article>
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Rollback Plan</div><h3>${escapeHtml(workspace.rollbackPlan?.status || 'Rollback prepared')}.</h3></div><span class="status-pill status-ok">${escapeHtml(workspace.rollbackPlan?.riskAssessment || 'Low')} risk</span></div>
-					<div class="mission-step-list">${(workspace.rollbackPlan?.steps || []).map((step, index) => `<div><span>${index + 1}</span><strong>${escapeHtml(step)}</strong></div>`).join('')}</div>
-				</article>
-			</section>
+				${missionWorkspacePanel('Evidence', 'Proof package reserved', `
+					${missionCompactGrid(evidenceTiles, 'evidence-tile-grid')}
+				`)}
 
-			<section class="mission-workspace-grid">
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Verification</div><h3>Prepared proof after future execution.</h3></div></div>
-					${missionWorkspaceList(workspace.verificationPlan || [])}
-				</article>
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Evidence Package</div><h3>What Apex will attach to results.</h3></div></div>
-					${missionWorkspaceList(workspace.evidence || [])}
-				</article>
-			</section>
-
-			<section class="mission-workspace-grid">
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Approval Intelligence</div><h3>${escapeHtml(approval.currentDecision || 'Approval package prepared')}.</h3></div><span class="status-pill ${statusClassForState(approval.status)}">${escapeHtml(approval.mode || 'Approval Required')}</span></div>
+				${missionWorkspacePanel('Approval', approval.currentDecision || 'Approval package prepared', `
 					<div class="approval-rules">
 						<div><span>Automatic Preparation</span>${(approval.automatic || []).map(item => `<b>${escapeHtml(item)}</b>`).join('')}</div>
 						<div><span>Requires Approval</span>${(approval.requiresApproval || []).map(item => `<b>${escapeHtml(item)}</b>`).join('')}</div>
 					</div>
 					<div class="approval-actions">${(approval.visualActions || []).map(([label, note, kind]) => `<button class="${kind === 'primary' ? 'button' : 'ghost-button'}" type="button" data-coming-soon="Approval execution is visually prepared but intentionally deferred."><strong>${escapeHtml(label)}</strong><span>${escapeHtml(note)}</span></button>`).join('')}</div>
-				</article>
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Provider Abstraction</div><h3>${escapeHtml(provider.status || 'Architecture prepared')}.</h3></div></div>
-					<p>${escapeHtml(provider.rule || 'No provider-specific execution is connected yet.')}</p>
-					<div class="provider-grid">${(provider.providers || []).map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>
-					${missionWorkspaceList(provider.interface || [], 'mission-provider-interface')}
-				</article>
-			</section>
+				`)}
 
-			<section class="mission-workspace-grid">
-				<article class="mission-workspace-panel wide" id="activity">
-					<div class="panel-head"><div><div class="panel-label">Executive Operations Log</div><h3>What Apex already did this morning.</h3></div><span class="status-pill status-ok">Preparation active</span></div>
+				${missionWorkspacePanel('Verification', workspace.verificationStatus || 'Verification architecture prepared', `
+					${missionWorkspaceList((workspace.verificationPlan || []).map(([title, value, state]) => [title, state || value, '', state]), 'mission-workspace-list compact')}
+				`)}
+
+				${missionWorkspacePanel('Operations Log', `${(layer.operationsLog || []).length} events this morning`, `
 					<div class="operations-log">
 						${(layer.operationsLog || []).map(([time, title, note, state]) => `
 							<div class="${escapeHtml(state)}"><span>${escapeHtml(time)}</span><strong>${escapeHtml(title)}</strong><p>${escapeHtml(note)}</p></div>
 						`).join('')}
 					</div>
-				</article>
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Completion</div><h3>${escapeHtml(workspace.completion?.status || 'Pending')}.</h3></div></div>
-					${missionWorkspaceList(Object.entries(workspace.completion || {}).map(([key, value]) => [key.replace(/([A-Z])/g, ' $1'), String(value), '']))}
-				</article>
-			</section>
+				`)}
 
-			<section class="mission-workspace-grid">
-				<article class="mission-workspace-panel">
-					<div class="panel-head"><div><div class="panel-label">Daily Intelligence Architecture</div><h3>Ready for morning autonomous operations.</h3></div></div>
-					${missionWorkspaceList(Object.entries(daily).map(([key, value]) => [key.replace(/([A-Z])/g, ' $1'), Array.isArray(value) ? value.join(', ') || 'None' : String(value), '']))}
-				</article>
-				<article class="mission-workspace-panel email-preview">
-					<div class="panel-head"><div><div class="panel-label">Daily Executive Email</div><h3>${escapeHtml(email.subject || 'Apex Daily Executive Brief')}.</h3></div><span class="status-pill">No delivery</span></div>
+				${missionWorkspacePanel('Daily Intelligence', 'Morning brief architecture', `
+					${missionCompactGrid(Object.entries(daily).map(([key, value]) => [key.replace(/([A-Z])/g, ' $1'), Array.isArray(value) ? value.join(', ') || 'None' : String(value), 'status']), 'daily-intel-grid')}
+				`)}
+
+				${missionWorkspacePanel('Email Preview', email.subject || 'Apex Daily Executive Brief', `
 					<div class="email-preview-card">
 						${(email.sections || []).map(([title, value]) => `<div><span>${escapeHtml(title)}</span><strong>${escapeHtml(value)}</strong></div>`).join('')}
 					</div>
-				</article>
-			</section>
+				`)}
 
-			<section class="mission-workspace-panel">
-				<div class="panel-head"><div><div class="panel-label">Reusable Mission Templates</div><h3>Future mission types plug into the same lifecycle.</h3></div><span class="status-pill status-ok">${(layer.missionTemplates || []).length} templates</span></div>
-				<div class="mission-template-grid">${(layer.missionTemplates || []).map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>
+				${missionWorkspacePanel('Architecture', `${(layer.missionTemplates || []).length} reusable mission templates`, `
+					<p>${escapeHtml(provider.rule || 'No provider-specific execution is connected yet.')}</p>
+					<div class="provider-grid">${(provider.providers || []).map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>
+					${missionWorkspaceList(provider.interface || [], 'mission-provider-interface compact')}
+					<div class="mission-template-grid">${(layer.missionTemplates || []).map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>
+				`)}
 			</section>
 		</section>
 	`);
