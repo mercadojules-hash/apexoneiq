@@ -34,6 +34,8 @@ const server = http.createServer(async (req, res) => {
 		if (req.method === 'POST' && (url.pathname === '/api/billing/webhook' || url.pathname === '/api/stripe/webhook')) return handleStripeWebhook(req, res);
 		if (req.method === 'POST' && url.pathname === '/api/entitlements/check') return handleEntitlementCheck(req, res);
 		if (req.method === 'POST' && url.pathname === '/api/enterprise/inquiry') return handleEnterpriseInquiry(req, res);
+		if (req.method === 'GET' && normalizeRoutePath(url.pathname) === '/oauth/google') return handleGoogleOAuthStart(req, res, url);
+		if (req.method === 'GET' && normalizeRoutePath(url.pathname) === '/oauth/google/callback') return handleGoogleOAuthCallback(req, res, url);
 		if (req.method !== 'GET' && req.method !== 'HEAD') {
 			sendJson(res, 405, { error: 'method_not_allowed' });
 			return;
@@ -210,6 +212,54 @@ async function handleEnterpriseInquiry(req, res) {
 	});
 }
 
+function handleGoogleOAuthStart(req, res, url) {
+	const clientId = process.env.APEXONEIQ_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+	if (!clientId) {
+		sendJson(res, 503, { error: 'google_oauth_not_configured', message: 'Google OAuth client ID is required.' });
+		return;
+	}
+	const origin = publicOrigin(req, url);
+	const redirectUri = process.env.APEXONEIQ_GOOGLE_CALLBACK_URL || process.env.GOOGLE_CALLBACK_URL || `${origin}/oauth/google/callback/`;
+	const redirectTo = safeRedirectPath(url.searchParams.get('redirect_to') || '/sign-in.html');
+	const state = crypto.randomBytes(24).toString('hex');
+	const statePayload = Buffer.from(JSON.stringify({ state, redirectTo })).toString('base64url');
+	const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+	authUrl.searchParams.set('client_id', clientId);
+	authUrl.searchParams.set('redirect_uri', redirectUri);
+	authUrl.searchParams.set('response_type', 'code');
+	authUrl.searchParams.set('scope', 'openid email profile');
+	authUrl.searchParams.set('state', statePayload);
+	authUrl.searchParams.set('prompt', 'select_account');
+	res.writeHead(302, {
+		Location: authUrl.toString(),
+		'Set-Cookie': cookieHeader('apex_oauth_state', state, 600)
+	});
+	res.end();
+}
+
+function handleGoogleOAuthCallback(req, res, url) {
+	const cookies = parseCookies(req.headers.cookie || '');
+	let payload = {};
+	try {
+		payload = JSON.parse(Buffer.from(url.searchParams.get('state') || '', 'base64url').toString('utf8'));
+	} catch (error) {
+		payload = {};
+	}
+	if (!payload.state || payload.state !== cookies.apex_oauth_state) {
+		sendJson(res, 400, { error: 'google_oauth_state_invalid' });
+		return;
+	}
+	const redirectTo = safeRedirectPath(payload.redirectTo || '/sign-in.html');
+	const target = new URL(redirectTo, publicOrigin(req, url));
+	if (url.searchParams.get('error')) target.searchParams.set('oauth_error', url.searchParams.get('error'));
+	else target.searchParams.set('oauth', 'google');
+	res.writeHead(302, {
+		Location: `${target.pathname}${target.search}`,
+		'Set-Cookie': cookieHeader('apex_oauth_state', '', 0)
+	});
+	res.end();
+}
+
 function sendBillingConfig(res) {
 	const publicPlans = Object.fromEntries(Object.entries(plans).filter(([, plan]) => !plan.internalOnly).map(([id, plan]) => [id, {
 		id: plan.id,
@@ -232,6 +282,35 @@ function sendBillingConfig(res) {
 
 function sendBillingStatus(req, res, url) {
 	sendJson(res, 200, subscriptionStatusFor(url.searchParams.get('user_id'), url.searchParams.get('account_id')));
+}
+
+function normalizeRoutePath(pathname) {
+	return String(pathname || '').replace(/\/+$/, '') || '/';
+}
+
+function publicOrigin(req, url) {
+	const configured = process.env.APP_URL || process.env.APEXONEIQ_APP_URL;
+	if (configured) return configured.replace(/\/+$/, '');
+	const proto = req.headers['x-forwarded-proto'] || url.protocol.replace(':', '') || 'https';
+	return `${proto}://${req.headers.host}`;
+}
+
+function safeRedirectPath(value) {
+	const path = String(value || '/sign-in.html');
+	if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return '/sign-in.html';
+	return path;
+}
+
+function parseCookies(header) {
+	return Object.fromEntries(String(header).split(';').map(part => {
+		const [key, ...value] = part.trim().split('=');
+		return [key, decodeURIComponent(value.join('=') || '')];
+	}).filter(([key]) => key));
+}
+
+function cookieHeader(name, value, maxAge) {
+	const encoded = encodeURIComponent(value);
+	return `${name}=${encoded}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax`;
 }
 
 function applyStripeEvent(store, event) {
