@@ -2,6 +2,8 @@
 
 Status: Phase 6 architecture only. No UI, provider integration, API, execution engine, or production behavior is implemented by this document.
 
+Companion document: `MISSION-LIBRARY-SPECIFICATION.md` defines the reusable Mission Library, subscription capability matrix, responsibility matrices, and mission scheduling architecture that plug into this engine.
+
 ## Interface Freeze
 
 The following surfaces are considered permanent foundation for the current product direction:

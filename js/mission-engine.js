@@ -690,6 +690,902 @@
 		};
 	}
 
+	const missionDefinitionCatalog = Object.freeze([
+		['google-business-profile-verification', 'Google Business Profile Verification', MissionTypes.GBP, 'Complete the local trust proof layer.', true, ['Business profile', 'GBP status', 'Website scan'], ['GBP status snapshot', 'Missing field list', 'Trust score baseline'], ['Profile state improved', 'Owner action isolated']],
+		['faq-generation', 'FAQ Generation', MissionTypes.CONTENT, 'Prepare buyer-answer content that improves trust and AI clarity.', true, ['Website scan', 'Service list', 'Customer questions'], ['FAQ draft', 'Source rationale', 'Validation log'], ['FAQ package approval-ready', 'Schema-ready questions']],
+		['schema-generation', 'Schema Generation', MissionTypes.SCHEMA, 'Prepare valid structured data for priority pages.', true, ['Business profile', 'Page inventory', 'Service data'], ['Schema plan', 'Validation result', 'Rollback package'], ['Schema validates', 'Entity scope is correct']],
+		['json-ld', 'JSON-LD', MissionTypes.SCHEMA, 'Generate clean JSON-LD packages from approved schema plans.', true, ['Schema plan', 'Entity facts', 'URL map'], ['JSON-LD file', 'Lint log', 'Validator output'], ['JSON-LD parses cleanly', 'Target pages mapped']],
+		['internal-link-optimization', 'Internal Link Optimization', MissionTypes.TECHNICAL_SEO, 'Improve authority flow and customer discovery paths.', true, ['Crawl map', 'Priority pages', 'Anchor policy'], ['Link map', 'Anchor list', 'Crawl snapshot'], ['Relevant links mapped', 'No duplicate anchors']],
+		['citation-package', 'Citation Package', MissionTypes.AUTHORITY, 'Prepare consistent third-party business proof.', true, ['NAP data', 'Directory targets', 'Citation scan'], ['Citation targets', 'NAP validation', 'Submission plan'], ['NAP is consistent', 'Targets are approval-ready']],
+		['local-seo-improvements', 'Local SEO Improvements', MissionTypes.LOCAL_SEO, 'Prepare local relevance improvements around services and locations.', true, ['Location data', 'Service areas', 'Local rankings'], ['Local gap report', 'Competitor comparison', 'Prepared updates'], ['Local blockers ranked', 'Changes approval-ready']],
+		['ai-visibility-optimization', 'AI Visibility Optimization', MissionTypes.AI_VISIBILITY, 'Improve AI-readable trust and recommendation confidence.', true, ['AI visibility score', 'Entity facts', 'Trust evidence'], ['AI baseline', 'Entity gaps', 'Prepared content'], ['Evidence-backed AI recommendations ready', 'Score forecast updated']],
+		['content-refresh', 'Content Refresh', MissionTypes.CONTENT, 'Update stale or weak content with clearer proof and outcomes.', true, ['Content inventory', 'Freshness scan', 'Business facts'], ['Before content snapshot', 'Refresh draft', 'Validation log'], ['Refresh package approval-ready', 'Claims validated']],
+		['competitor-analysis', 'Competitor Analysis', MissionTypes.COMPETITORS, 'Explain competitor movement and the correct response.', false, ['Competitor list', 'Market scan', 'Rankings'], ['Competitor snapshots', 'Risk score', 'Response memo'], ['Act/wait/monitor recommendation is clear', 'Confidence stated']],
+		['service-page-optimization', 'Service Page Optimization', MissionTypes.LOCAL_SEO, 'Strengthen high-intent service pages for trust and conversion.', true, ['Service pages', 'Intent data', 'Competitor pages'], ['Page baseline', 'Update draft', 'Validation checklist'], ['Optimization package ready', 'Outcome tied to score']],
+		['landing-page-generation', 'Landing Page Generation', MissionTypes.CONVERSION, 'Prepare focused landing pages for high-value campaigns.', true, ['Offer', 'Audience', 'Brand rules'], ['Landing page draft', 'CTA map', 'Proof checklist'], ['Page ready for approval', 'Conversion path validated']],
+		['review-strategy', 'Review Strategy', MissionTypes.REVIEWS, 'Improve review depth, recency, and response quality ethically.', true, ['Review profile', 'Customer touchpoints', 'Policy constraints'], ['Review baseline', 'Message drafts', 'Policy validation'], ['Strategy is compliant', 'Trust impact is measurable']],
+		['business-information-validation', 'Business Information Validation', MissionTypes.TRUST, 'Confirm core business facts across public surfaces.', true, ['Business profile', 'Website crawl', 'Citation data'], ['Source comparison', 'Discrepancy list', 'Truth record'], ['Facts confirmed', 'Conflicts isolated']],
+		['knowledge-graph-improvements', 'Knowledge Graph Improvements', MissionTypes.AUTHORITY, 'Strengthen entity relationships across business proof.', true, ['Entity inventory', 'Schema scan', 'Citation data'], ['Entity map', 'Missing proof list', 'Schema recommendations'], ['Entity relationships are clear', 'Evidence is attached']],
+		['forecast-update', 'Forecast Update', MissionTypes.AUTOMATION, 'Refresh expected outcomes based on mission state.', false, ['Current metrics', 'Mission queue', 'Competitor movement'], ['Forecast baseline', 'Assumption changes', 'Confidence score'], ['Forecast reflects current state', 'Uncertainty explained']],
+		['technical-seo-scan', 'Technical SEO Scan', MissionTypes.TECHNICAL_SEO, 'Identify technical blockers reducing crawl and search confidence.', false, ['Crawl', 'Page speed', 'Indexability checks'], ['Issue list', 'Severity score', 'Affected URLs'], ['Blockers ranked', 'Fixes prepared for approval']],
+		['website-health-scan', 'Website Health Scan', MissionTypes.WEBSITE_HEALTH, 'Summarize website health into owner-readable signals.', false, ['Website crawl', 'Performance data', 'Metadata scan'], ['Health score', 'Issue clusters', 'Scan timestamp'], ['Health status is clear', 'Next mission recommended']],
+		['metadata-optimization', 'Metadata Optimization', MissionTypes.TECHNICAL_SEO, 'Improve titles and descriptions for relevance and conversion.', true, ['Page inventory', 'Intent data', 'Brand rules'], ['Metadata diff', 'Duplicate check', 'Validation log'], ['Metadata package complete', 'No duplicates']],
+		['broken-link-detection', 'Broken Link Detection', MissionTypes.TECHNICAL_SEO, 'Find broken paths that hurt experience and crawl confidence.', false, ['Crawl results', 'Sitemap', 'Navigation links'], ['Broken URL list', 'Source page map', 'Fix plan'], ['Broken links ranked', 'Remediation ready']],
+		['authority-improvement', 'Authority Improvement', MissionTypes.AUTHORITY, 'Increase proof, citations, internal authority, and trust signals.', true, ['Authority data', 'Content inventory', 'Competitor authority'], ['Authority baseline', 'Opportunity list', 'Forecast'], ['Opportunities prioritized', 'Risk understood']],
+		['comparison-pages', 'Comparison Pages', MissionTypes.AI_VISIBILITY, 'Prepare evidence-based comparison pages for buyer decisions.', true, ['Competitors', 'Differentiators', 'Proof assets'], ['Comparison draft', 'Claim evidence', 'Risk review'], ['Claims defensible', 'Draft approval-ready']],
+		['monitoring-mission', 'Monitoring Mission', MissionTypes.AUTOMATION, 'Watch business signals and trigger future missions.', false, ['Score history', 'Competitor changes', 'Rankings'], ['Signal delta', 'Confidence score', 'Recommended action'], ['Meaningful change detected', 'Noise suppressed']],
+		['executive-reporting', 'Executive Reporting', MissionTypes.AUTOMATION, 'Turn mission data into concise executive briefings.', false, ['Mission history', 'Evidence', 'Forecast'], ['Brief sections', 'Metric deltas', 'Recommendation'], ['CEO understands state fast', 'Next decision is clear']]
+	].map(([id, name, category, objective, approvalRequired, inputsRequired, expectedEvidence, successCriteria]) => ({
+		id,
+		name,
+		category,
+		objective,
+		inputsRequired,
+		approvalRequired,
+		expectedEvidence,
+		successCriteria,
+		lifecycleStages: ['Opportunity Detected', 'Research Complete', 'Content Prepared', 'Validation Passed', 'Awaiting Approval', 'Executing', 'Verification', 'Monitoring', 'Completed'],
+		automatedTasks: {
+			opportunity: ['Score gaps', 'Estimate impact', 'Rank mission'],
+			research: ['Website crawl', 'Competitor analysis', 'AI visibility review'],
+			generate: ['Prepare assets', 'Prepare recommendations', 'Prepare evidence'],
+			validate: ['Dependency checks', 'Rollback preparation', 'Execution readiness'],
+			execute: ['Provider adapter placeholder only'],
+			verify: ['Evidence comparison', 'Success validation', 'Confidence update'],
+			monitor: ['Daily scan', 'Competitor monitoring', 'Score movement'],
+			report: ['Executive Brief', 'Executive Email', 'Next mission recommendation']
+		}
+	})));
+
+	const missionLibraryLifecycleStages = Object.freeze([
+		'Opportunity Detected',
+		'Research',
+		'Generate',
+		'Validate',
+		'Approval',
+		'Execute',
+		'Verify',
+		'Monitor',
+		'Executive Report'
+	]);
+
+	const missionLibraryTaskDefaults = Object.freeze({
+		Foundation: ['Scan current state', 'Score business signal', 'Rank constraints', 'Prepare executive finding'],
+		Optimization: ['Generate improvement package', 'Validate claims and dependencies', 'Prepare approval packet', 'Attach evidence'],
+		Authority: ['Compare public proof', 'Prepare trust improvements', 'Validate business facts', 'Attach verification plan'],
+		Growth: ['Identify revenue constraint', 'Generate growth asset', 'Validate expected lift', 'Prepare forecast update'],
+		Monitoring: ['Detect meaningful change', 'Refresh score movement', 'Suppress noise', 'Prepare executive report']
+	});
+
+	const missionLibraryRows = Object.freeze([
+		['website-scan', 'Website Scan', 'Foundation', 100, 'Establish the website health baseline that powers the first Business Growth Score.', ['Website URL', 'crawl permission'], false, ['Website crawl snapshot', 'health score', 'issue clusters'], ['Crawl completes', 'health baseline created'], 4, '4 min', '0 min', [], ['Baseline exists', 'next mission recommended']],
+		['technical-seo-audit', 'Technical SEO Audit', 'Foundation', 92, 'Find crawl, indexability, speed, metadata, and structural blockers.', ['Website crawl', 'sitemap', 'performance signals'], false, ['technical issue list', 'severity map', 'affected URLs'], ['Issues ranked', 'critical blockers isolated'], 5, '8 min', '0 min', ['website-scan'], ['Audit complete', 'fix package ready']],
+		['google-business-profile-audit', 'Google Business Profile Audit', 'Foundation', 96, 'Measure local trust proof and profile completeness before recommending local work.', ['Business profile', 'GBP status', 'business facts'], false, ['GBP status snapshot', 'missing field list', 'trust baseline'], ['Profile state known', 'owner action isolated'], 6, '6 min', '2 min', ['website-scan'], ['GBP gaps ranked', 'verification path clear']],
+		['ai-visibility-scan', 'AI Visibility Scan', 'Foundation', 90, 'Measure whether AI systems can understand and recommend the business.', ['Website crawl', 'entity facts', 'service list'], false, ['AI visibility baseline', 'citation gap list', 'answer coverage'], ['AI score calculated', 'gaps ranked'], 5, '7 min', '0 min', ['website-scan'], ['AI baseline exists', 'next AI mission queued']],
+		['competitor-scan', 'Competitor Scan', 'Foundation', 88, 'Identify competitor proof, visibility, review, and content movement.', ['Competitor set', 'market query set', 'trust signals'], false, ['competitor snapshots', 'movement summary', 'risk score'], ['Competitor deltas detected', 'response priority clear'], 4, '8 min', '0 min', ['website-scan'], ['Competitor risk scored', 'response mission queued']],
+		['faq-generation', 'FAQ Generation', 'Optimization', 84, 'Prepare buyer-answer content that improves trust and AI clarity.', ['Website scan', 'service list', 'customer questions'], true, ['FAQ draft', 'source rationale', 'validation log'], ['Claims validated', 'FAQ package approval-ready'], 3, '10 min', '3 min', ['ai-visibility-scan'], ['FAQ prepared', 'schema fit validated']],
+		['schema-generation', 'Schema Generation', 'Optimization', 82, 'Prepare valid structured-data plans for priority pages.', ['Business facts', 'page inventory', 'existing schema scan'], true, ['schema plan', 'validation result', 'rollback package'], ['Schema maps to correct entities', 'conflicts resolved'], 4, '9 min', '4 min', ['website-scan', 'business-information-validation'], ['Schema package validates', 'approval packet ready']],
+		['json-ld-package', 'JSON-LD Package', 'Optimization', 80, 'Generate clean JSON-LD from approved schema plans.', ['Schema plan', 'entity facts', 'URL map'], true, ['JSON-LD file', 'lint log', 'validator output'], ['JSON-LD parses cleanly', 'target pages mapped'], 4, '7 min', '3 min', ['schema-generation'], ['JSON-LD valid', 'rollback package prepared']],
+		['metadata-optimization', 'Metadata Optimization', 'Optimization', 78, 'Improve titles and descriptions for relevance and conversion.', ['Page inventory', 'intent data', 'brand rules'], true, ['metadata diff', 'duplicate check', 'validation log'], ['No duplicate titles', 'intent alignment confirmed'], 3, '8 min', '5 min', ['technical-seo-audit'], ['Metadata package ready', 'approval decision clear']],
+		['internal-link-optimization', 'Internal Link Optimization', 'Optimization', 76, 'Improve authority flow and customer discovery paths.', ['Crawl map', 'priority pages', 'anchor policy'], true, ['link map', 'anchor list', 'crawl snapshot'], ['Relevant links mapped', 'no duplicate anchors'], 3, '9 min', '5 min', ['service-page-optimization'], ['Internal link plan ready', 'risk checked']],
+		['citation-package', 'Citation Package', 'Authority', 74, 'Prepare consistent third-party business proof.', ['NAP data', 'directory targets', 'citation scan'], true, ['citation targets', 'NAP validation', 'submission plan'], ['NAP consistent', 'targets approval-ready'], 4, '12 min', '6 min', ['business-information-validation'], ['Citation package prepared', 'source data validated']],
+		['business-information-validation', 'Business Information Validation', 'Authority', 86, 'Confirm core business facts across website, profiles, and public sources.', ['Business profile', 'website crawl', 'citation data'], true, ['source comparison', 'discrepancy list', 'truth record'], ['Facts confirmed', 'conflicts isolated'], 5, '6 min', '6 min', ['website-scan'], ['Truth record prepared', 'owner conflicts isolated']],
+		['review-strategy', 'Review Strategy', 'Authority', 72, 'Improve review depth, recency, and response quality ethically.', ['Review profile', 'customer touchpoints', 'policy constraints'], true, ['review baseline', 'message drafts', 'policy validation'], ['Strategy compliant', 'trust impact measurable'], 3, '9 min', '8 min', ['google-business-profile-audit'], ['Review plan prepared', 'policy risk checked']],
+		['knowledge-graph-preparation', 'Knowledge Graph Preparation', 'Authority', 70, 'Strengthen entity relationships across business proof.', ['Entity inventory', 'schema scan', 'citation data'], true, ['entity map', 'missing proof list', 'schema recommendations'], ['Relationships clear', 'evidence attached'], 5, '12 min', '5 min', ['schema-generation', 'business-information-validation'], ['Entity map prepared', 'proof gaps ranked']],
+		['comparison-content', 'Comparison Content', 'Authority', 66, 'Prepare evidence-based comparison content for buyer decisions and AI visibility.', ['Competitors', 'differentiators', 'proof assets'], true, ['comparison draft', 'claim evidence', 'risk review'], ['Claims defensible', 'approval-ready draft'], 4, '18 min', '8 min', ['competitor-scan', 'service-page-optimization'], ['Comparison package prepared', 'claim risk reviewed']],
+		['content-refresh', 'Content Refresh', 'Growth', 68, 'Refresh stale or weak content with clearer proof and outcomes.', ['Content inventory', 'freshness scan', 'business facts'], true, ['before content snapshot', 'refresh draft', 'validation log'], ['Claims validated', 'refresh approval-ready'], 3, '14 min', '7 min', ['website-scan'], ['Refresh package prepared', 'expected lift modeled']],
+		['service-page-optimization', 'Service Page Optimization', 'Growth', 88, 'Strengthen high-intent service pages for trust, clarity, and conversion.', ['Service pages', 'intent data', 'competitor pages'], true, ['page baseline', 'update draft', 'validation checklist'], ['Optimization package ready', 'outcome tied to score'], 5, '16 min', '8 min', ['business-information-validation'], ['Service page plan ready', 'approval package prepared']],
+		['local-landing-pages', 'Local Landing Pages', 'Growth', 64, 'Prepare focused local pages for high-value services or service areas.', ['Offer', 'audience', 'service area data', 'brand rules'], true, ['landing page draft', 'CTA map', 'proof checklist'], ['Conversion path validated', 'claims approved'], 4, '22 min', '10 min', ['service-page-optimization'], ['Landing page package ready', 'proof path validated']],
+		['forecast-update', 'Forecast Update', 'Growth', 62, 'Refresh projected outcomes based on mission state, evidence, and blockers.', ['Current metrics', 'mission queue', 'competitor movement'], false, ['forecast baseline', 'assumption changes', 'confidence score'], ['Forecast reflects current state', 'uncertainty explained'], 2, '5 min', '0 min', [], ['Forecast updated', 'next mission confidence recalculated']],
+		['executive-weekly-report', 'Executive Weekly Report', 'Growth', 58, 'Turn mission outcomes into weekly executive operating context.', ['Mission history', 'evidence', 'forecast', 'score movement'], false, ['weekly summary', 'metric deltas', 'recommendation'], ['Owner understands progress', 'next decision clear'], 2, '8 min', '0 min', ['forecast-update'], ['Weekly report prepared', 'decision path clear']],
+		['ranking-monitor', 'Ranking Monitor', 'Monitoring', 56, 'Monitor ranking movement and surface meaningful business changes.', ['Rankings', 'priority keywords', 'location set'], false, ['ranking delta', 'volatility note', 'impact score'], ['Meaningful movement detected', 'noise suppressed'], 2, '4 min', '0 min', ['website-scan'], ['Ranking monitor refreshed', 'mission trigger evaluated']],
+		['competitor-change-detection', 'Competitor Change Detection', 'Monitoring', 54, 'Detect competitor movement that changes mission priority.', ['Competitor set', 'market signals', 'proof signals'], false, ['change event', 'competitor snapshot', 'response recommendation'], ['Change classified', 'response priority clear'], 2, '5 min', '0 min', ['competitor-scan'], ['Competitor deltas logged', 'response mission queued if needed']],
+		['ai-visibility-refresh', 'AI Visibility Refresh', 'Monitoring', 52, 'Refresh answer-engine visibility and citation coverage after mission movement.', ['AI visibility baseline', 'entity facts', 'mission history'], false, ['AI score delta', 'citation coverage', 'answer gaps'], ['Score refreshed', 'visibility changes explained'], 2, '5 min', '0 min', ['ai-visibility-scan'], ['AI visibility refreshed', 'next AI gap ranked']],
+		['website-health-monitoring', 'Website Health Monitoring', 'Monitoring', 50, 'Watch website health for regressions, drift, and new blockers.', ['Website crawl', 'performance baseline', 'technical audit'], false, ['health delta', 'regression list', 'risk note'], ['Regressions detected', 'severity ranked'], 2, '4 min', '0 min', ['technical-seo-audit'], ['Health monitor refreshed', 'regressions queued']]
+	]);
+
+	function missionLibraryDefinitionFor(row) {
+		const [id, name, category, priority, businessObjective, requiredInputs, approvalRequired, evidenceProduced, verificationRequirements, businessGrowthScoreImpact, estimatedAiTime, estimatedHumanTime, dependencies, completionCriteria] = row;
+		return {
+			missionId: id,
+			missionName: name,
+			category,
+			priority,
+			businessObjective,
+			requiredInputs,
+			automatedTasks: missionLibraryLifecycleStages.reduce((tasks, stage) => {
+				tasks[stage] = stage === 'Execute'
+					? ['Provider adapter placeholder only; no production execution in this phase.']
+					: missionLibraryTaskDefaults[category] || ['Use unified mission state', 'Prepare evidence', 'Report outcome'];
+				return tasks;
+			}, {}),
+			approvalRequired,
+			evidenceProduced,
+			verificationRequirements,
+			businessGrowthScoreImpact,
+			estimatedAiTime,
+			estimatedHumanTime,
+			dependencies,
+			completionCriteria,
+			reusableLifecycleStages: Array.from(missionLibraryLifecycleStages)
+		};
+	}
+
+	const missionLibraryCatalog = Object.freeze(missionLibraryRows.map(missionLibraryDefinitionFor));
+
+	function subscriptionCapabilityMatrix() {
+		const allMissionIds = missionLibraryCatalog.map(mission => mission.missionId);
+		return {
+			free: {
+				label: 'FREE',
+				missions: ['website-scan'],
+				capabilities: ['Website Scan', 'Business Growth Score', 'AI Visibility Score', 'Limited Executive Brief', 'Animated score', 'Upgrade CTA'],
+				locked: allMissionIds.filter(id => id !== 'website-scan'),
+				execution: 'No execution'
+			},
+			intelligence: {
+				label: '$199 DIY',
+				missions: allMissionIds,
+				capabilities: ['Full reports', 'Checklists', 'Recommendations', 'Mission instructions'],
+				execution: 'Customer performs every action; Apex does not modify production'
+			},
+			autopilot: {
+				label: '$499 AI Automated',
+				missions: allMissionIds,
+				capabilities: ['Research', 'Generate', 'Validate', 'Prepare Execution', 'Verify', 'Monitor', 'Daily Executive Brief'],
+				execution: 'Execution placeholder only until provider adapters exist'
+			},
+			'growth-partner': {
+				label: '$999 Concierge',
+				missions: allMissionIds,
+				capabilities: ['Same Mission Engine', 'Approved missions assigned to Apex Team', 'AI preparation', 'Validation', 'Monitoring', 'Reporting'],
+				execution: 'Assigned to Apex Team after approval'
+			},
+			enterprise: {
+				label: '$2,500 Enterprise',
+				missions: allMissionIds,
+				capabilities: ['Request Information', 'Enterprise consulting scope', 'Custom governance', 'Multi-location planning'],
+				execution: 'Request Information only; No purchase flow or implementation'
+			}
+		};
+	}
+
+	function aiResponsibilityMatrix() {
+		return {
+			Research: ['Website crawl', 'Competitor analysis', 'AI visibility review', 'Technical SEO review', 'GBP audit'],
+			Generation: ['FAQ', 'schema', 'JSON-LD', 'metadata', 'internal links', 'comparison content', 'citations'],
+			Validation: ['Dependency checks', 'schema validation', 'business-rule checks', 'rollback readiness', 'execution readiness'],
+			Forecasting: ['Business Growth Score impact', 'projected revenue lift', 'confidence updates', 'blocked-work modeling'],
+			Monitoring: ['Ranking movement', 'competitor changes', 'AI visibility refresh', 'website health drift'],
+			Reporting: ['Executive Brief', 'weekly report', 'timeline update', 'next mission recommendation'],
+			Evidence: ['Before/after snapshots', 'validation logs', 'provider confirmation placeholder', 'score movement'],
+			'Scheduling': ['Opportunity detection', 'priority ranking', 'dependency respect', 'conflict blocking', 'queue updates']
+		};
+	}
+
+	function humanResponsibilityMatrix() {
+		return {
+			'Business decisions': ['Approve strategic changes', 'hold missions', 'request revisions'],
+			'Enterprise consulting': ['Custom business rules', 'multi-location governance', 'contracted advisory scope'],
+			'High-impact approvals': ['Pricing changes', 'brand changes', 'business information changes', 'customer-facing publication'],
+			'Customer support': ['Resolve account issues', 'clarify business inputs', 'handle exceptions'],
+			'New mission creation': ['Define new mission templates', 'set risk policy', 'approve reusable business rules'],
+			'Future integrations': ['Grant provider permissions', 'review integration risk', 'approve production adapters']
+		};
+	}
+
+	function buildMissionSchedulingArchitecture(input = {}) {
+		const unified = buildUnifiedMissionState(input);
+		const planName = normalizePlanName(input.subscription);
+		const capabilities = subscriptionCapabilityMatrix()[planName] || subscriptionCapabilityMatrix().free;
+		const missionState = input.missionState || {};
+		const completed = completedMissionSet(missionState);
+		const activeIds = new Set((unified.missionRecords || []).filter(record => /executing|awaiting approval|verification/i.test(record.currentExecutionStage)).map(record => record.id));
+		const availableMissions = new Set(capabilities.missions || []);
+		const scheduled = missionLibraryCatalog
+			.map(mission => {
+				const unmet = mission.dependencies.filter(id => !completed.has(id));
+				const locked = !availableMissions.has(mission.missionId) && planName === 'free';
+				const conflicting = activeIds.size && !activeIds.has(mission.missionId) && mission.approvalRequired;
+				const state = locked ? 'Locked' : completed.has(mission.missionId) ? 'Completed' : unmet.length ? 'Blocked' : conflicting ? 'Queued Behind Approval Work' : 'Queued';
+				return {
+					missionId: mission.missionId,
+					missionName: mission.missionName,
+					category: mission.category,
+					priority: mission.priority,
+					state,
+					blockedBy: unmet,
+					approvalRequired: mission.approvalRequired,
+					businessGrowthScoreImpact: mission.businessGrowthScoreImpact,
+					executionMode: planName === 'growth-partner' ? 'Assigned to Apex Team after approval' : planName === 'autopilot' ? 'Prepared for future provider placeholder' : planName === 'intelligence' ? 'Customer instructions only' : planName === 'enterprise' ? 'Request information' : 'Locked or score-only'
+				};
+			})
+			.sort((a, b) => {
+				const stateWeight = state => state === 'Queued' ? 0 : state === 'Queued Behind Approval Work' ? 1 : state === 'Blocked' ? 2 : state === 'Locked' ? 3 : 4;
+				return stateWeight(a.state) - stateWeight(b.state) || b.priority - a.priority;
+			});
+		return {
+			version: '0.1.0',
+			principle: 'Detect opportunities, prioritize automatically, respect dependencies, block conflicting work, and queue intelligently without fixed calendar days.',
+			subscriptionLevel: planName,
+			capabilities,
+			activeMissionId: unified.primaryMission?.id || null,
+			readiness: unified.executiveReadiness,
+			scheduledMissions: scheduled,
+			nextScheduledMission: scheduled.find(mission => mission.state === 'Queued') || null,
+			blockedMissions: scheduled.filter(mission => mission.state === 'Blocked'),
+			lockedMissions: scheduled.filter(mission => mission.state === 'Locked')
+		};
+	}
+
+	const missionIntelligenceModel = Object.freeze({
+		version: '0.1.0',
+		boundary: 'Business intelligence only. No UI, provider adapter, API, scheduler, notification, or production execution.',
+		sharedLifecycle: Array.from(missionLibraryLifecycleStages),
+		requiredSections: [
+			'missionIdentity',
+			'inputs',
+			'aiAnalysis',
+			'deliverables',
+			'humanResponsibilities',
+			'aiResponsibilities',
+			'dependencies',
+			'successConditions',
+			'failureConditions',
+			'businessGrowthLogic',
+			'futureExecutionPlaceholder'
+		]
+	});
+
+	const categoryIntelligenceDefaults = Object.freeze({
+		Foundation: {
+			analyzes: ['website baseline', 'business identity', 'technical readiness', 'trust profile', 'AI visibility baseline'],
+			compares: ['current state against healthy baseline', 'business proof against category expectations', 'technical health against known blockers'],
+			validates: ['crawl completion', 'score inputs', 'required business facts', 'evidence freshness'],
+			deliverables: ['Executive Summary', 'Evidence package', 'Baseline score', 'Opportunity ranking', 'Next mission recommendation'],
+			futureProviders: ['Future Browser Automation', 'Future API', 'Future Human Team']
+		},
+		Optimization: {
+			analyzes: ['page intent', 'content gaps', 'schema fit', 'internal authority paths', 'approval risk'],
+			compares: ['current page against buyer intent', 'structured data against entity facts', 'content against competitor clarity'],
+			validates: ['claim accuracy', 'duplicate risk', 'schema rules', 'rollback readiness', 'approval readiness'],
+			deliverables: ['Approval package', 'Validation report', 'Rollback plan', 'Forecast', 'Prepared content or schema'],
+			futureProviders: ['WordPress', 'Shopify', 'Future API', 'Future Browser Automation', 'Future Human Team']
+		},
+		Authority: {
+			analyzes: ['business proof', 'public facts', 'review profile', 'citation consistency', 'entity relationships'],
+			compares: ['business facts across public sources', 'trust signals against competitors', 'review velocity against market'],
+			validates: ['NAP consistency', 'policy compliance', 'source reliability', 'claim defensibility'],
+			deliverables: ['Evidence package', 'Comparison report', 'Citation package', 'Approval package', 'Validation report'],
+			futureProviders: ['Google Business Profile', 'Future API', 'Future Browser Automation', 'Future Human Team']
+		},
+		Growth: {
+			analyzes: ['revenue pages', 'conversion path', 'forecast assumptions', 'content freshness', 'local opportunity'],
+			compares: ['service pages against competitor pages', 'current forecast against mission queue', 'content freshness against market'],
+			validates: ['business claims', 'conversion path', 'dependency completion', 'forecast confidence', 'approval readiness'],
+			deliverables: ['Executive Summary', 'Forecast', 'Approval package', 'Content package', 'Validation report'],
+			futureProviders: ['WordPress', 'Shopify', 'Future API', 'Future Browser Automation', 'Future Human Team']
+		},
+		Monitoring: {
+			analyzes: ['ranking movement', 'competitor changes', 'AI visibility drift', 'website health drift', 'score movement'],
+			compares: ['latest scan against previous baseline', 'competitor movement against business movement', 'signal against noise threshold'],
+			validates: ['change significance', 'measurement freshness', 'mission trigger threshold', 'regression severity'],
+			deliverables: ['Executive Summary', 'Monitoring report', 'Evidence package', 'Forecast update', 'Next mission recommendation'],
+			futureProviders: ['Future API', 'Future Browser Automation', 'Future Human Team']
+		}
+	});
+
+	function minutesFromLabel(value) {
+		const match = String(value || '').match(/\d+/);
+		return match ? Number(match[0]) : 0;
+	}
+
+	function subscriptionAvailabilityForMission(missionId) {
+		const matrix = subscriptionCapabilityMatrix();
+		return Object.fromEntries(Object.entries(matrix).map(([key, plan]) => [key, {
+			label: plan.label,
+			available: (plan.missions || []).includes(missionId),
+			behavior: plan.execution
+		}]));
+	}
+
+	function riskForMission(mission) {
+		if (mission.approvalRequired && mission.dependencies.length > 1) return 'Medium';
+		if (mission.approvalRequired) return 'Controlled';
+		if (mission.category === 'Monitoring' || mission.category === 'Foundation') return 'Low';
+		return 'Low to controlled';
+	}
+
+	function approvalActionsForMission(mission) {
+		if (!mission.approvalRequired) {
+			return ['No customer approval required for analysis or preparation', 'Customer approval required only if a future production action is created'];
+		}
+		const categoryActions = {
+			Foundation: ['Approve business information changes', 'Upload or approve profile assets', 'Confirm source of truth'],
+			Optimization: ['Approve content', 'Approve schema or JSON-LD package', 'Approve navigation or internal link changes'],
+			Authority: ['Approve business information', 'Approve citation submissions', 'Approve review or customer-facing language'],
+			Growth: ['Approve page publication', 'Approve content and claims', 'Approve pricing, offer, or service-area details'],
+			Monitoring: ['Approve response mission only if monitoring detects a meaningful change']
+		};
+		return categoryActions[mission.category] || ['Approve live-business change'];
+	}
+
+	function futureExecutionPlaceholdersFor(mission) {
+		const defaults = categoryIntelligenceDefaults[mission.category] || categoryIntelligenceDefaults.Foundation;
+		return defaults.futureProviders.map(provider => ({
+			provider,
+			status: 'Future placeholder only',
+			implementation: 'Not implemented in Phase 7'
+		}));
+	}
+
+	function buildMissionIntelligenceSpec(mission) {
+		const defaults = categoryIntelligenceDefaults[mission.category] || categoryIntelligenceDefaults.Foundation;
+		const aiMinutes = minutesFromLabel(mission.estimatedAiTime);
+		const humanMinutes = minutesFromLabel(mission.estimatedHumanTime);
+		const confidence = clampScore(mission.priority - mission.dependencies.length * 2 - (mission.approvalRequired ? 3 : 0));
+		const visibilityGain = Math.max(1, Math.round(mission.businessGrowthScoreImpact * (mission.category === 'Monitoring' ? .5 : .9)));
+		const trustGain = Math.max(1, Math.round(mission.businessGrowthScoreImpact * (['Authority', 'Foundation'].includes(mission.category) ? 1 : .55)));
+		const blockedMissions = missionLibraryCatalog
+			.filter(candidate => candidate.dependencies.includes(mission.missionId))
+			.map(candidate => candidate.missionId);
+		const parallelMissions = missionLibraryCatalog
+			.filter(candidate => candidate.category === mission.category && candidate.missionId !== mission.missionId && !candidate.approvalRequired === !mission.approvalRequired)
+			.slice(0, 4)
+			.map(candidate => candidate.missionId);
+		const optionalMissions = missionLibraryCatalog
+			.filter(candidate => candidate.category !== mission.category && !candidate.dependencies.includes(mission.missionId))
+			.slice(0, 3)
+			.map(candidate => candidate.missionId);
+		return {
+			missionIdentity: {
+				missionId: mission.missionId,
+				name: mission.missionName,
+				category: mission.category,
+				description: mission.businessObjective,
+				subscriptionAvailability: subscriptionAvailabilityForMission(mission.missionId),
+				estimatedCompletionDays: Math.max(1, Math.ceil((aiMinutes + humanMinutes + (mission.approvalRequired ? 12 : 0)) / 16)),
+				businessGrowthScoreValue: mission.businessGrowthScoreImpact
+			},
+			inputs: Array.from(new Set(['Website', 'Business name', 'Competitors', 'Existing schema', 'Existing citations', 'Trust profile', 'Review profile', 'Search readiness'].concat(mission.requiredInputs))),
+			aiAnalysis: {
+				analyzes: defaults.analyzes,
+				compares: defaults.compares,
+				calculates: ['Business Growth Score value', 'confidence', 'risk', 'visibility gain', 'trust gain', 'estimated business impact', 'dependency readiness'],
+				validates: defaults.validates,
+				scores: ['priority', 'confidence', 'risk', 'approval need', 'dependency state', 'mission readiness'],
+				predicts: ['score movement', 'visibility gain', 'trust gain', 'business impact', 'next best mission']
+			},
+			deliverables: Array.from(new Set(defaults.deliverables.concat(mission.evidenceProduced).concat(['Rollback plan', 'Executive Report']))),
+			humanResponsibilities: approvalActionsForMission(mission),
+			aiResponsibilities: Array.from(new Set(Object.values(aiResponsibilityMatrix()).flat().concat(mission.automatedTasks.Research || []).concat(mission.automatedTasks.Generate || []).concat(mission.automatedTasks.Validate || []))),
+			dependencies: {
+				requiredPreviousMissions: mission.dependencies,
+				blockedMissions,
+				optionalMissions,
+				parallelMissions
+			},
+			successConditions: Array.from(new Set(mission.completionCriteria.concat(mission.verificationRequirements).concat(['Evidence package attached', 'Executive Report prepared', 'Unified Mission State updated']))),
+			failureConditions: {
+				Blocked: ['Required previous mission incomplete', 'required input missing', 'dependency validation failed'],
+				Waiting: ['Customer information needed', 'approval queue is occupied', 'mission is queued behind higher-priority work'],
+				'Needs approval': mission.approvalRequired ? approvalActionsForMission(mission) : ['Future live-business action is introduced'],
+				'Needs revision': ['AI confidence below threshold', 'claim cannot be validated', 'customer rejects approval package'],
+				Cancelled: ['Customer cancels mission', 'business rule excludes mission', 'future provider permission is revoked']
+			},
+			businessGrowthLogic: {
+				expectedScoreIncrease: mission.businessGrowthScoreImpact,
+				confidence,
+				risk: riskForMission(mission),
+				visibilityGain,
+				trustGain,
+				estimatedBusinessImpact: `$${(mission.businessGrowthScoreImpact * 900).toLocaleString()}/mo modeled opportunity`
+			},
+			futureExecutionPlaceholder: {
+				executeStagePolicy: 'Never execute in Phase 7. Identify future execution route only.',
+				providers: futureExecutionPlaceholdersFor(mission)
+			}
+		};
+	}
+
+	const missionIntelligenceCatalog = Object.freeze(missionLibraryCatalog.map(buildMissionIntelligenceSpec));
+
+	function buildMissionIntelligenceCatalog() {
+		return JSON.parse(JSON.stringify(missionIntelligenceCatalog));
+	}
+
+	function getMissionIntelligenceById(missionId) {
+		const spec = missionIntelligenceCatalog.find(mission => mission.missionIdentity.missionId === missionId);
+		return spec ? JSON.parse(JSON.stringify(spec)) : null;
+	}
+
+	const aiWorkforceSpecialists = Object.freeze({
+		website_analyst: {
+			name: 'Website Analyst',
+			missionCategories: ['Foundation', 'Optimization', 'Monitoring'],
+			missionIds: ['website-scan', 'technical-seo-audit', 'metadata-optimization', 'internal-link-optimization', 'website-health-monitoring'],
+			responsibilities: ['Website scan', 'Technical SEO audit', 'Metadata analysis', 'Heading and content structure', 'Internal links', 'Broken links', 'Sitemap and robots analysis', 'Schema detection', 'Website health findings']
+		},
+		local_visibility_specialist: {
+			name: 'Local Visibility Specialist',
+			missionCategories: ['Foundation', 'Growth', 'Authority'],
+			missionIds: ['google-business-profile-audit', 'business-information-validation', 'citation-package', 'local-landing-pages', 'ranking-monitor'],
+			responsibilities: ['Google Business Profile analysis', 'Local SEO readiness', 'Business-information consistency', 'Citation opportunities', 'Local landing-page opportunities', 'Geographic visibility findings']
+		},
+		trust_specialist: {
+			name: 'Trust Specialist',
+			missionCategories: ['Authority', 'Foundation'],
+			missionIds: ['review-strategy', 'citation-package', 'business-information-validation', 'google-business-profile-audit', 'knowledge-graph-preparation'],
+			responsibilities: ['Review readiness', 'Review coverage', 'Trust signals', 'Social proof', 'Citation consistency', 'Business legitimacy indicators', 'Reputation risks']
+		},
+		content_ai_visibility_strategist: {
+			name: 'Content and AI Visibility Strategist',
+			missionCategories: ['Optimization', 'Authority', 'Growth', 'Monitoring'],
+			missionIds: ['faq-generation', 'schema-generation', 'json-ld-package', 'ai-visibility-scan', 'ai-visibility-refresh', 'comparison-content', 'service-page-optimization', 'content-refresh'],
+			responsibilities: ['FAQ opportunities', 'Schema and JSON-LD preparation', 'AI visibility analysis', 'Comparison content', 'Service-page opportunities', 'Content refresh opportunities', 'Search and answer-engine optimization']
+		},
+		executive_analyst: {
+			name: 'Executive Analyst',
+			missionCategories: ['Foundation', 'Growth', 'Monitoring'],
+			missionIds: ['forecast-update', 'executive-weekly-report', 'competitor-scan', 'competitor-change-detection'],
+			responsibilities: ['Business Growth Score', 'Mission prioritization', 'Dependencies', 'Forecasting', 'Estimated impact', 'Executive recommendation', 'Daily and weekly reports', 'Mission scheduling']
+		}
+	});
+
+	function specialistForMission(missionId) {
+		return Object.values(aiWorkforceSpecialists).find(specialist => specialist.missionIds.includes(missionId))
+			|| Object.values(aiWorkforceSpecialists).find(specialist => {
+				const spec = getMissionIntelligenceById(missionId);
+				return spec && specialist.missionCategories.includes(spec.missionIdentity.category);
+			})
+			|| aiWorkforceSpecialists.executive_analyst;
+	}
+
+	function runtimeModeFor(context = {}) {
+		if (context.realAnalysis === true) return 'real';
+		if (context.placeholderOnly === true) return 'placeholder';
+		return 'simulated';
+	}
+
+	function workforceResultFor(context = {}, missionId) {
+		const spec = getMissionIntelligenceById(missionId);
+		if (!spec) return null;
+		const specialist = specialistForMission(missionId);
+		const mode = runtimeModeFor(context);
+		const dependencies = spec.dependencies.requiredPreviousMissions || [];
+		const completed = completedMissionSet(context.missionState || {});
+		const blockedBy = dependencies.filter(id => !completed.has(id));
+		const approvalRequired = spec.humanResponsibilities.some(item => !/No customer approval required/i.test(item));
+		const readiness = blockedBy.length ? 'Blocked' : approvalRequired ? 'Approval package prepared' : 'Execution-ready package prepared';
+		return {
+			specialist: specialist.name,
+			missionId,
+			resultMode: mode,
+			analysisCompleted: mode === 'placeholder' ? false : true,
+			findings: spec.aiAnalysis.analyzes.slice(0, 4).map(item => `${item} reviewed for ${spec.missionIdentity.name}.`),
+			evidence: spec.deliverables.slice(0, 5),
+			recommendedAction: blockedBy.length
+				? `Complete ${blockedBy.map(id => id.replace(/-/g, ' ')).join(', ')} before ${spec.missionIdentity.name}.`
+				: spec.humanResponsibilities[0],
+			confidence: spec.businessGrowthLogic.confidence,
+			risk: spec.businessGrowthLogic.risk,
+			expectedBusinessGrowthScoreImpact: spec.businessGrowthLogic.expectedScoreIncrease,
+			approvalRequirement: approvalRequired ? 'Required before live-business change' : 'Not required for analysis or preparation',
+			dependencies: {
+				required: dependencies,
+				blockedBy,
+				optional: spec.dependencies.optionalMissions,
+				parallel: spec.dependencies.parallelMissions
+			},
+			suggestedNextMission: spec.dependencies.blockedMissions[0] || spec.dependencies.optionalMissions[0] || 'forecast-update',
+			executionReadiness: readiness,
+			productionExecution: 'Not executed. Future provider route only.',
+			createdAt: new Date().toISOString()
+		};
+	}
+
+	function runAIWorkforceMission(context = {}, missionId) {
+		const result = workforceResultFor(context, missionId);
+		if (!result) return null;
+		const nextStage = result.dependencies.blockedBy.length
+			? 'Blocked'
+			: result.approvalRequirement.startsWith('Required') ? 'Awaiting Approval' : 'Validation Passed';
+		const missionState = {
+			...(context.missionState || {}),
+			[missionId]: nextStage
+		};
+		const timelineEvent = [
+			new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+			result.specialist,
+			`${result.missionId}: ${result.executionReadiness}`,
+			result.resultMode === 'real' ? 'complete' : result.resultMode === 'placeholder' ? 'pending' : 'stable'
+		];
+		const unifiedState = buildUnifiedMissionState({ ...context, missionState });
+		return {
+			...result,
+			updatedMissionState: missionState,
+			unifiedState,
+			executiveBriefUpdate: unifiedState.insights?.[0] || result.recommendedAction,
+			missionWorkspaceUpdate: result.executionReadiness,
+			commandCenterUpdate: unifiedState.summary,
+			operationsTimelineEvent: timelineEvent
+		};
+	}
+
+	function orchestrateAIWorkforce(context = {}) {
+		const schedule = buildMissionSchedulingArchitecture(context);
+		const missionId = context.missionId || schedule.nextScheduledMission?.missionId || 'website-scan';
+		const result = runAIWorkforceMission(context, missionId);
+		return {
+			version: '0.1.0',
+			resultMode: runtimeModeFor(context),
+			selectedMissionId: missionId,
+			specialist: result?.specialist || null,
+			result,
+			schedule,
+			note: 'AI workforce runtime uses existing Mission Intelligence definitions and Unified Mission State. It does not execute production changes.'
+		};
+	}
+
+	function providerPermissionFramework() {
+		const providers = ['WordPress', 'Shopify', 'Google Business Profile', 'Cloudflare', 'GitHub', 'Render', 'Vercel', 'Custom APIs', 'MCP providers'];
+		const permissionDefaults = {
+			Read: 'Prepared',
+			Prepare: 'Prepared',
+			Write: 'Deferred',
+			Publish: 'Deferred',
+			Delete: 'Blocked',
+			Rollback: 'Prepared',
+			'Approve Required': 'Yes'
+		};
+		return providers.map(provider => ({
+			provider,
+			permissions: { ...permissionDefaults },
+			status: 'Provider adapter placeholder'
+		}));
+	}
+
+	function executionPipelineFor(mission, index = 0) {
+		const approvalRequired = mission?.approvalRequired || mission?.executionMode === ExecutionModes.APPROVAL_REQUIRED || mission?.executionMode === ExecutionModes.CUSTOMER_REQUIRED;
+		const activeIndex = approvalRequired ? 4 : Math.min(6, 5 + (index % 2));
+		return ['Opportunity Detected', 'Research Complete', 'Content Prepared', 'Validation Passed', 'Awaiting Approval', 'Executing', 'Verification', 'Monitoring', 'Completed'].map((stage, stageIndex) => {
+			const skippedApproval = stage === 'Awaiting Approval' && !approvalRequired;
+			const state = skippedApproval ? 'muted' : stageIndex < activeIndex ? 'complete' : stageIndex === activeIndex ? 'active' : 'pending';
+			return {
+				stage,
+				status: skippedApproval ? 'Not Required' : state === 'complete' ? 'Complete' : state === 'active' ? 'Current' : 'Prepared',
+				timestamp: skippedApproval ? '--' : `08:${String(2 + index + stageIndex * 2).padStart(2, '0')}`,
+				state
+			};
+		});
+	}
+
+	function executionRecordFor(definition, planMission, index, metrics) {
+		const mission = planMission || {};
+		const bgsLift = mission.expectedBusinessGrowthScore || Math.max(1, 4 - (index % 3));
+		const revenue = mission.expectedRevenueImpact || (900 + index * 180);
+		const confidence = mission.confidence || Math.max(68, 94 - index);
+		const approvalRequired = definition.approvalRequired || mission.executionMode === ExecutionModes.APPROVAL_REQUIRED || mission.executionMode === ExecutionModes.CUSTOMER_REQUIRED;
+		const stage = approvalRequired ? 'Awaiting Approval' : index % 4 === 0 ? 'Monitoring' : 'Validation Passed';
+		return {
+			id: definition.id,
+			title: mission.title || definition.name,
+			category: definition.category,
+			objective: definition.objective,
+			priority: mission.priorityScore || Math.max(42, 96 - index * 2),
+			confidence,
+			estimatedBusinessGrowthScoreLift: bgsLift,
+			estimatedTime: mission.estimatedTime || (definition.approvalRequired ? '45 minutes' : '12 minutes'),
+			owner: approvalRequired ? 'Owner + Apex' : 'Apex',
+			currentExecutionStage: stage,
+			approvalRequirement: approvalRequired ? 'Required' : 'Not Required',
+			dependencies: asArray(mission.blockedBy).length ? mission.blockedBy : asArray(mission.dependencies),
+			rollbackAvailable: true,
+			reason: mission.reason || definition.objective,
+			businessEvidence: `${metrics.businessGrowthScore}/100 Business Growth Score with trust, visibility, and forecast movement tracked.`,
+			competitorEvidence: metrics.competitorPressure >= 75 ? 'Competitor proof pressure is elevated.' : 'Competitor movement is stable but monitored.',
+			aiEvidence: `${metrics.aiVisibility}/100 AI Visibility baseline; prepared work is structured for answer-engine clarity.`,
+			expectedOutcome: `+${bgsLift} Business Growth Score and +${mission.expectedVisibility || Math.max(2, 8 - (index % 5))}% visibility.`,
+			projectedScoreLift: `+${bgsLift} BGS`,
+			projectedRevenueLift: `$${revenue.toLocaleString()}/mo`,
+			filesGenerated: definition.expectedEvidence.slice(0, 3).concat(['Approval brief']),
+			contentGenerated: ['Executive summary', 'Implementation notes', 'Customer-facing copy draft'],
+			schemaPrepared: definition.category === MissionTypes.SCHEMA || /schema|json/i.test(definition.name) ? 'Prepared' : 'Not required',
+			internalLinksPrepared: /link|service|content|page/i.test(definition.name) ? 'Prepared' : 'Mapped if needed',
+			reviewResponsesPrepared: definition.category === MissionTypes.REVIEWS ? 'Prepared' : 'Not required',
+			verificationChecklist: definition.successCriteria,
+			executionHistory: executionPipelineFor({ ...mission, approvalRequired }, index),
+			evidenceCollected: definition.expectedEvidence,
+			completionCriteria: definition.successCriteria,
+			permissionMode: mission.executionMode || (approvalRequired ? ExecutionModes.APPROVAL_REQUIRED : ExecutionModes.AUTOMATIC)
+		};
+	}
+
+	function approvalQueueFor(records) {
+		const examples = ['Publish page', 'Update business information', 'Change pricing', 'Replace content', 'Delete content', 'Modify branding'];
+		return records.filter(record => record.approvalRequirement === 'Required').map((record, index) => ({
+			id: record.id,
+			title: examples[index] || record.title,
+			summary: record.title,
+			risk: index === 2 || index === 4 ? 'High' : record.rollbackAvailable ? 'Medium' : 'Elevated',
+			expectedGain: record.projectedScoreLift,
+			rollbackAvailable: record.rollbackAvailable,
+			status: 'Waiting for approval'
+		}));
+	}
+
+	function verificationEngineFor(records) {
+		return records.slice(0, 8).map((record, index) => ({
+			mission: record.title,
+			expectedVerification: record.verificationChecklist[0] || 'Expected outcome confirmed',
+			actualVerification: index < 2 ? 'Prepared evidence baseline' : 'Pending execution',
+			retryStatus: index === 3 ? 'Retry prepared' : 'Not required',
+			failureReason: 'None recorded',
+			confidenceAfterExecution: `${Math.max(70, record.confidence - 3)}%`,
+			missionScore: record.priority
+		}));
+	}
+
+	function dailyOperationsEngineFor(records, metrics) {
+		return {
+			businessScan: 'Prepared at 08:02',
+			missionQueue: `${records.length} missions ranked`,
+			completedWork: 'Research, preparation, validation, evidence package, forecast update',
+			pendingApprovals: `${records.filter(record => record.approvalRequirement === 'Required').length} approval decisions`,
+			forecastUpdates: `${metrics.forecast} current / ${clampScore(metrics.forecast + 7)} after approved work`,
+			competitorChanges: metrics.competitorPressure >= 75 ? 'Competitor proof pressure elevated' : 'Competitor pressure stable',
+			aiVisibilityChanges: `${metrics.aiVisibility} current / ${clampScore(metrics.aiVisibility + 6)} target`,
+			businessGrowthScoreMovement: `${metrics.businessGrowthScore} current / ${clampScore(metrics.businessGrowthScore + 4)} prepared`,
+			executiveBrief: 'Ready',
+			executiveEmail: 'Prepared, delivery deferred'
+		};
+	}
+
+	const missionDependencyRules = Object.freeze({
+		'service-page-optimization': ['google-business-profile-verification'],
+		'local-seo-improvements': ['google-business-profile-verification'],
+		'citation-package': ['google-business-profile-verification'],
+		'ai-visibility-optimization': ['schema-generation'],
+		'comparison-pages': ['service-page-optimization'],
+		'landing-page-generation': ['service-page-optimization'],
+		'authority-improvement': ['citation-package'],
+		'knowledge-graph-improvements': ['schema-generation', 'business-information-validation'],
+		'executive-reporting': ['verification-complete'],
+		'forecast-update': ['verification-complete']
+	});
+
+	function stageIndexFor(stage) {
+		const stages = ['Opportunity Detected', 'Research Complete', 'Content Prepared', 'Validation Passed', 'Prepared', 'Awaiting Approval', 'Executing', 'Verified', 'Monitoring', 'Completed'];
+		const index = stages.findIndex(item => item.toLowerCase() === String(stage || '').toLowerCase());
+		return index === -1 ? 4 : index;
+	}
+
+	function pipelineForStage(stage, approvalRequired, index = 0, blockedReason = '') {
+		const stages = ['Opportunity Detected', 'Research Complete', 'Content Prepared', 'Validation Passed', 'Awaiting Approval', 'Executing', 'Verification', 'Monitoring', 'Completed'];
+		const normalized = stage === 'Prepared' ? 'Validation Passed' : stage === 'Verified' ? 'Verification' : stage;
+		const activeIndex = stages.findIndex(item => item === normalized);
+		return stages.map((item, stageIndex) => {
+			const skippedApproval = item === 'Awaiting Approval' && !approvalRequired;
+			const blocked = stage === 'Blocked' && stageIndex === 0;
+			const state = blocked ? 'blocked' : skippedApproval ? 'muted' : stageIndex < activeIndex ? 'complete' : stageIndex === activeIndex ? 'active' : 'pending';
+			return {
+				stage: item,
+				status: blocked ? blockedReason : skippedApproval ? 'Not Required' : state === 'complete' ? 'Complete' : state === 'active' ? 'Current' : 'Prepared',
+				timestamp: skippedApproval || blocked ? '--' : `08:${String(2 + index + stageIndex * 2).padStart(2, '0')}`,
+				state
+			};
+		});
+	}
+
+	function completedMissionSet(missionState = {}) {
+		return new Set(Object.entries(missionState)
+			.filter(([, stage]) => /completed|verified|monitoring/i.test(String(stage)))
+			.map(([id]) => id));
+	}
+
+	function dynamicBusinessScore(metrics, records) {
+		const components = {
+			base: metrics.businessGrowthScore,
+			trust: metrics.trustCoverage,
+			visibility: metrics.localSeo,
+			authority: metrics.contentAuthority,
+			website: metrics.websiteHealth,
+			aiVisibility: metrics.aiVisibility
+		};
+		const weightedBase = (
+			components.trust * .24 +
+			components.visibility * .2 +
+			components.authority * .18 +
+			components.website * .18 +
+			components.aiVisibility * .2
+		);
+		const completedLift = records
+			.filter(record => /completed|verified|monitoring/i.test(record.currentExecutionStage))
+			.reduce((total, record) => total + Math.max(1, record.estimatedBusinessGrowthScoreLift || 0), 0);
+		const preparedLift = records
+			.filter(record => /prepared|awaiting approval|executing/i.test(record.currentExecutionStage))
+			.reduce((total, record) => total + Math.max(1, record.estimatedBusinessGrowthScoreLift || 0) * .28, 0);
+		const current = clampScore(weightedBase + completedLift);
+		return {
+			components,
+			current,
+			projected: clampScore(current + preparedLift),
+			delta: current - metrics.businessGrowthScore
+		};
+	}
+
+	function notificationsFor(records, score) {
+		const notifications = [];
+		const approval = records.find(record => record.currentExecutionStage === 'Awaiting Approval');
+		const completed = records.find(record => record.currentExecutionStage === 'Completed');
+		const verified = records.find(record => record.currentExecutionStage === 'Verified' || record.currentExecutionStage === 'Monitoring');
+		if (completed) notifications.push(['Mission completed', completed.title, 'complete']);
+		if (approval) notifications.push(['Approval required', approval.title, 'approval']);
+		if (verified) notifications.push(['Verification updated', verified.title, 'verified']);
+		if (score.delta > 0) notifications.push(['Business score increased', `+${score.delta} Business Growth Score`, 'growth']);
+		notifications.push(['Competitor changed', 'Competitor proof pressure refreshed this morning.', 'warning']);
+		if (/completed|verified|monitoring/i.test(records.find(record => record.id === 'google-business-profile-verification')?.currentExecutionStage || '')) {
+			notifications.push(['Google profile verified', 'Local trust layer moved forward.', 'complete']);
+		}
+		if (/completed|verified|monitoring/i.test(records.find(record => record.id === 'review-strategy')?.currentExecutionStage || '')) {
+			notifications.push(['Review milestone reached', 'Review strategy entered monitoring.', 'growth']);
+		}
+		return notifications.slice(0, 6).map(([title, detail, state]) => ({ title, detail, state }));
+	}
+
+	function timelineFor(records, score) {
+		const primaryEvents = records.slice(0, 6).flatMap((record, index) => [
+			[`08:${String(2 + index).padStart(2, '0')}`, 'Research', `${record.title} research refreshed.`, 'complete'],
+			[`08:${String(8 + index).padStart(2, '0')}`, record.currentExecutionStage, `${record.title}: ${record.currentExecutionStage}.`, /blocked/i.test(record.currentExecutionStage) ? 'blocked' : /approval/i.test(record.currentExecutionStage) ? 'approval' : 'complete']
+		]);
+		return primaryEvents.concat([
+			['08:18', 'Business score movement', `${score.components.base} base / ${score.current} current / ${score.projected} projected.`, 'growth'],
+			['08:20', 'Forecast updated', 'Projected score recalculated from shared mission state.', 'growth']
+		]).slice(0, 14);
+	}
+
+	function memoryRecordsFor(records, score) {
+		return records
+			.filter(record => /completed|verified|monitoring/i.test(record.currentExecutionStage))
+			.map(record => ({
+				missionId: record.id,
+				title: record.title,
+				whatChanged: record.expectedOutcome,
+				why: record.reason,
+				expectedOutcome: record.expectedOutcome,
+				actualOutcome: record.currentExecutionStage === 'Completed' ? record.expectedOutcome : 'Verification in progress',
+				evidence: record.evidenceCollected,
+				businessScoreMovement: `${score.components.base} -> ${score.current}`,
+				confidenceBefore: `${Math.max(50, record.confidence - 8)}%`,
+				confidenceAfter: `${record.confidence}%`
+			}));
+	}
+
+	function insightsFor(records, score, notifications) {
+		const completedCount = records.filter(record => /completed|verified|monitoring/i.test(record.currentExecutionStage)).length;
+		const approvalCount = records.filter(record => record.currentExecutionStage === 'Awaiting Approval').length;
+		const blocked = records.find(record => record.currentExecutionStage === 'Blocked');
+		const topReady = records.find(record => /prepared|validation passed|awaiting approval/i.test(record.currentExecutionStage));
+		const insights = [
+			completedCount
+				? `${completedCount} missions completed or verified from the shared mission state.`
+				: 'Apex prepared the mission queue and evidence package from one shared operating state.',
+			`Business Growth Score recalculated from ${score.components.base} base to ${score.current} current, with ${score.projected} projected after prepared work.`,
+			approvalCount
+				? `${approvalCount} approval-gated decisions require human judgment.`
+				: 'No approval-gated decisions are waiting right now.',
+			blocked
+				? `${blocked.title} is blocked: ${blocked.blockedReason}.`
+				: `${topReady?.title || records[0]?.title || 'Next mission'} is ready for the next execution step.`,
+			notifications[0]?.detail || 'Executive notifications are synchronized with mission status, score, approval, and verification state.'
+		];
+		return Array.from(new Set(insights)).slice(0, 5);
+	}
+
+	function readinessFor(records) {
+		if (records.some(record => record.currentExecutionStage === 'Awaiting Approval')) return 'Waiting for Approval';
+		if (records.some(record => record.currentExecutionStage === 'Verification')) return 'Needs Verification';
+		if (records.some(record => record.currentExecutionStage === 'Executing')) return 'Ready';
+		if (records.some(record => record.currentExecutionStage === 'Blocked')) return 'Blocked';
+		if (records.every(record => record.currentExecutionStage === 'Completed')) return 'Execution Paused';
+		return 'Ready';
+	}
+
+	function primaryMissionFor(records, fallbackId) {
+		return records.find(record => record.currentExecutionStage === 'Executing')
+			|| records.find(record => record.currentExecutionStage === 'Awaiting Approval')
+			|| records.find(record => !/completed|verified|monitoring|blocked/i.test(record.currentExecutionStage))
+			|| records.find(record => /blocked/i.test(record.currentExecutionStage))
+			|| records.find(record => record.id === fallbackId)
+			|| records[0];
+	}
+
+	function applyUnifiedMissionState(records, missionState = {}) {
+		const completed = completedMissionSet(missionState);
+		return records.map((record, index) => {
+			const dependencies = Array.from(new Set([...(record.dependencies || []), ...(missionDependencyRules[record.id] || [])]));
+			const unmet = dependencies.filter(id => id !== 'verification-complete' ? !completed.has(id) : !Array.from(completed).length);
+			const requestedStage = missionState[record.id] || record.currentExecutionStage || 'Prepared';
+			const currentExecutionStage = unmet.length ? 'Blocked' : requestedStage;
+			const blockedReason = unmet.length ? `Waiting for ${unmet.map(id => id.replace(/-/g, ' ')).join(', ')}` : '';
+			return {
+				...record,
+				dependencies,
+				blockedReason,
+				currentExecutionStage,
+				approvalRequirement: currentExecutionStage === 'Awaiting Approval' ? 'Required' : record.approvalRequirement,
+				executionHistory: pipelineForStage(currentExecutionStage, record.approvalRequirement === 'Required', index, blockedReason)
+			};
+		});
+	}
+
+	function buildExecutionCenter(input = {}) {
+		const plan = generateDailyMission(input);
+		const missionMap = new Map(plan.missionQueue.map(mission => [mission.id, mission]));
+		const records = missionDefinitionCatalog.map((definition, index) => executionRecordFor(definition, missionMap.get(definition.id), index, plan.metrics));
+		const primary = records.find(record => record.id === plan.primaryMission?.id) || records[0];
+		return {
+			version: '0.3.0',
+			generatedAt: new Date().toISOString(),
+			summary: {
+				overnightChange: 'Apex scanned the business, refreshed competitor pressure, prepared the mission queue, and assembled approval packages.',
+				doingNow: `${primary.title} is ${primary.currentExecutionStage.toLowerCase()}.`,
+				waitingForOwner: `${records.filter(record => record.approvalRequirement === 'Required').length} missions require approval before live-business changes.`,
+				improvesNext: primary.expectedOutcome
+			},
+			primaryMissionId: primary.id,
+			missionDefinitions: missionDefinitionCatalog,
+			missionRecords: records,
+			approvalQueue: approvalQueueFor(records),
+			providerPermissions: providerPermissionFramework(),
+			verificationEngine: verificationEngineFor(records),
+			evidenceEngine: ['Before scan', 'After scan', 'Schema validation', 'Google verification', 'Screenshot', 'Performance metrics', 'Citation verification', 'Internal link validation', 'Structured data validation'].map(item => ({ item, status: item === 'After scan' ? 'Reserved' : 'Prepared' })),
+			dailyOperations: dailyOperationsEngineFor(records, plan.metrics),
+			missionPlan: plan
+		};
+	}
+
+	function buildUnifiedMissionState(input = {}) {
+		const execution = buildExecutionCenter(input);
+		const missionState = input.missionState || {};
+		const records = applyUnifiedMissionState(execution.missionRecords, missionState);
+		const score = dynamicBusinessScore(execution.missionPlan.metrics, records);
+		const primary = primaryMissionFor(records, execution.primaryMissionId);
+		const approvalQueue = approvalQueueFor(records.filter(record => record.currentExecutionStage === 'Awaiting Approval'));
+		const notifications = notificationsFor(records, score);
+		const timeline = timelineFor(records, score);
+		const memoryRecords = memoryRecordsFor(records, score);
+		const insights = insightsFor(records, score, notifications);
+		return {
+			...execution,
+			version: '0.4.0',
+			primaryMissionId: primary?.id,
+			primaryMission: primary,
+			missionRecords: records,
+			approvalQueue,
+			notifications,
+			timeline,
+			memoryRecords,
+			insights,
+			executiveReadiness: readinessFor(records),
+			businessScore: score,
+			summary: {
+				overnightChange: notifications[0]?.detail || 'Apex refreshed the mission state.',
+				doingNow: primary ? `${primary.title} is ${primary.currentExecutionStage.toLowerCase()}.` : 'No active mission.',
+				waitingForOwner: approvalQueue.length ? `${approvalQueue.length} approvals require human judgment.` : 'No owner approvals waiting.',
+				improvesNext: primary?.expectedOutcome || 'Next improvement is being calculated.'
+			},
+			dailyOperations: {
+				...execution.dailyOperations,
+				missionQueue: `${records.length} missions synchronized`,
+				pendingApprovals: `${approvalQueue.length} approval decisions`,
+				businessGrowthScoreMovement: `${score.components.base} base / ${score.current} current / ${score.projected} projected`,
+				executiveReadiness: readinessFor(records),
+				executiveEmail: 'Prepared from unified mission state'
+			}
+		};
+	}
+
 	function buildExecutionLayer(primary, secondary, blocked, metrics, planName) {
 		const mission = primary || secondary[0] || blocked[0] || null;
 		const lifecycle = executionLifecycleFor(mission);
@@ -788,7 +1684,7 @@
 	}
 
 	window.ApexMissionEngine = {
-		version: '0.2.0',
+		version: '1.0.0-mvp',
 		MissionStates,
 		MissionTypes,
 		ExecutionModes,
@@ -796,6 +1692,22 @@
 		candidateMissions,
 		scoreMission,
 		generateDailyMission,
-		buildExecutionLayer
+		buildExecutionLayer,
+		buildExecutionCenter,
+		buildUnifiedMissionState,
+		missionDefinitionCatalog,
+		missionLibraryCatalog,
+		subscriptionCapabilityMatrix,
+		aiResponsibilityMatrix,
+		humanResponsibilityMatrix,
+		buildMissionSchedulingArchitecture,
+		missionIntelligenceModel,
+		missionIntelligenceCatalog,
+		buildMissionIntelligenceCatalog,
+		getMissionIntelligenceById,
+		aiWorkforceSpecialists,
+		runAIWorkforceMission,
+		orchestrateAIWorkforce,
+		providerPermissionFramework
 	};
 })();

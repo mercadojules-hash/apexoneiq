@@ -3,6 +3,12 @@
     "start": "node server.js",
     "validate": "node --check server.js && node --check js/app.js"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {},
+  "name": "apex-cloud-dashboard-v2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

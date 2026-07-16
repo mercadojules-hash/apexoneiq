@@ -169,7 +169,7 @@ const pageTitles = {
 	'alerts.html': 'ApexOneIQ - Decision Alerts',
 	'website-profile.html': 'ApexOneIQ - Website Health',
 	'settings.html': 'ApexOneIQ - Settings',
-	'command-dashboard.html': 'ApexOneIQ - Command Center',
+	'command-dashboard.html': 'ApexOneIQ - Execution Center',
 	'enterprise-dashboard.html': 'ApexOneIQ - Enterprise Operations',
 	'concierge-dashboard.html': 'ApexOneIQ - Concierge Workspace',
 	'concierge-essentials-dashboard.html': 'ApexOneIQ - Concierge Essentials',
@@ -211,10 +211,10 @@ const commandPreviewNav = [
 		['Local Rankings', 'local-rankings.html']
 	]],
 	['Execution', [
-		['Command Center', 'command-dashboard.html'],
+		['Execution Center', 'command-dashboard.html'],
 		['Approval Queue', 'command-dashboard.html#approvals'],
-		['Agent Work', 'command-dashboard.html#agents'],
-		['Automation Health', 'command-dashboard.html#automation']
+		['Mission Queue', 'command-dashboard.html#mission-queue'],
+		['Permissions', 'command-dashboard.html#permissions']
 	]],
 	['Upgrade-Only', [
 		['Managed Concierge', null, 'Upgrade'],
@@ -366,6 +366,7 @@ function renderAccountState() {
 		});
 	}
 	renderWorkspaceContext();
+	renderPlanPills();
 }
 
 document.querySelectorAll('[data-nav]').forEach(link => {
@@ -469,7 +470,7 @@ const routeAskDefaults = {
 	'intelligence-ai-visibility.html': 'How do I become a stronger AI recommendation?',
 	'search-trends.html': 'Which trend should I act on this week?',
 	'local-rankings.html': 'Which city needs attention first?',
-	'command-dashboard.html': 'Show active AI agent work.',
+	'command-dashboard.html': 'What is Apex executing right now?',
 	'enterprise-dashboard.html': 'Which region needs intervention?',
 	'concierge-dashboard.html': "Summarize today's Concierge progress.",
 	'concierge-essentials-dashboard.html': 'Explain Concierge Essentials.',
@@ -504,7 +505,7 @@ const routeAskSuggestions = {
 	'intelligence-ai-visibility.html': ['How do I become a stronger AI recommendation?', 'Which engine is weakest?', 'What proof is missing?'],
 	'search-trends.html': ['Which trend should I act on this week?', 'What trend affects revenue?', 'What should I monitor?'],
 	'local-rankings.html': ['Which city needs attention first?', 'Where is Map Pack movement possible?', 'Which ZIP has competitor pressure?'],
-	'command-dashboard.html': ['Run another citation campaign.', 'Pause all publishing.', 'Show failed automations.'],
+	'command-dashboard.html': ['What changed overnight?', 'What is waiting for me?', 'What will improve next?'],
 	'enterprise-dashboard.html': ['Which region needs intervention?', 'Why is Florida behind Texas?', 'Generate the executive board report.'],
 	'concierge-dashboard.html': ["Summarize today's Concierge progress.", 'Show work waiting for my approval.', 'Compare Concierge tiers.'],
 	'concierge-essentials-dashboard.html': ['Explain Concierge Essentials.', 'What is pending approval?', 'Should I upgrade to Growth?'],
@@ -799,15 +800,28 @@ function openAsk(question = routeAskDefaults[route] || 'What should I do next?')
 
 async function startCheckout(plan, control) {
 	if (!plan) return;
+	const normalizedPlan = window.ApexSubscriptionConfig?.normalizePlanId?.(plan) || plan;
+	if (normalizedPlan === 'enterprise') {
+		await requestEnterpriseInformation(control);
+		return;
+	}
 	const originalText = control?.textContent;
 	if (control) {
 		control.disabled = true;
 		control.textContent = 'Preparing Checkout...';
 	}
 	try {
-		const response = await fetch(`/api/billing/checkout/${encodeURIComponent(plan)}`, {
+		const profile = getStoredProfile() || {};
+		const user = getApexUser() || {};
+		const response = await fetch(`/api/billing/checkout/${encodeURIComponent(normalizedPlan)}`, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' }
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				userId: user.id || user.email || 'local-user',
+				accountId: profile.website || user.email || 'local-account',
+				businessWebsite: profile.website || '',
+				businessId: profile.website || ''
+			})
 		});
 		const payload = await response.json().catch(() => ({}));
 		if (response.status === 401 && payload?.data?.login_url) {
@@ -826,6 +840,97 @@ async function startCheckout(plan, control) {
 			control.textContent = originalText;
 		}
 	}
+}
+
+async function requestEnterpriseInformation(control) {
+	const originalText = control?.textContent;
+	if (control) {
+		control.disabled = true;
+		control.textContent = 'Sending Request...';
+	}
+	try {
+		const profile = getStoredProfile() || {};
+		const user = getApexUser() || {};
+		const response = await fetch('/api/enterprise/inquiry', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				userId: user.id || user.email || 'local-user',
+				accountId: profile.website || user.email || 'local-account',
+				website: profile.website || '',
+				email: user.email || profile.email || '',
+				message: 'Enterprise request information from subscription page'
+			})
+		});
+		const payload = await response.json().catch(() => ({}));
+		if (!response.ok || !payload.requested) throw new Error(payload.message || 'Enterprise request could not be recorded.');
+		openDrawer('Enterprise Request Received', 'Enterprise remains request-information only. No Stripe Checkout session was created and no subscription was automatically activated.', 'Billing');
+	} catch (error) {
+		openDrawer('Enterprise Request', `Apex could not record the Enterprise request locally. ${error.message}`, 'Billing');
+	} finally {
+		if (control) {
+			control.disabled = false;
+			control.textContent = originalText;
+		}
+	}
+}
+
+function currentSubscriptionState() {
+	const stored = readStorage('apexoneiq_subscription', {});
+	const planId = window.ApexSubscriptionConfig?.normalizePlanId?.(stored.entitlementPlan || stored.planId || stored.plan || 'free') || 'free';
+	const plan = window.ApexSubscriptionConfig?.planFor?.(planId) || { displayName: planId, entitlements: [] };
+	return {
+		...stored,
+		planId,
+		entitlementPlan: stored.entitlementPlan || planId,
+		displayName: plan.displayName || planId,
+		entitlements: stored.entitlements || plan.entitlements || []
+	};
+}
+
+function hasLocalEntitlement(entitlement) {
+	return currentSubscriptionState().entitlements.includes(entitlement);
+}
+
+async function refreshBillingStatus() {
+	const profile = getStoredProfile() || {};
+	const user = getApexUser() || {};
+	const params = new URLSearchParams({
+		user_id: user.id || user.email || 'local-user',
+		account_id: profile.website || user.email || 'local-account'
+	});
+	try {
+		const response = await fetch(`/api/billing/status?${params.toString()}`);
+		const status = await response.json();
+		if (response.ok && status.entitlements) {
+			writeStorage('apexoneiq_subscription', {
+				planId: status.planId || 'free',
+				entitlementPlan: status.entitlementPlan || status.planId || 'free',
+				billingStatus: status.billingStatus,
+				entitlements: status.entitlements,
+				stripeCustomerId: status.stripeCustomerId,
+				stripeSubscriptionId: status.stripeSubscriptionId,
+				updatedAt: status.updatedAt || new Date().toISOString()
+			});
+			renderPlanPills();
+			return status;
+		}
+	} catch (error) {
+		// Local entitlement state remains the fallback when the sandbox server is unavailable.
+	}
+	return currentSubscriptionState();
+}
+
+function renderPlanPills() {
+	const subscription = currentSubscriptionState();
+	document.querySelectorAll('.account').forEach(account => {
+		if (account.querySelector('[data-plan-pill]')) return;
+		const pill = document.createElement('span');
+		pill.className = 'status-pill status-ok';
+		pill.dataset.planPill = '';
+		pill.textContent = subscription.displayName || 'Free';
+		account.prepend(pill);
+	});
 }
 
 function setupLandingCapture() {
@@ -986,6 +1091,18 @@ function setupExecutiveScan() {
 				completedAt: new Date().toISOString(),
 				trend: [12, 28, 41, 55, profile?.score || scanScoreFor(website)]
 			});
+			const runtime = window.ApexMissionEngine?.orchestrateAIWorkforce?.({
+				profile: completedProfile,
+				businessGrowthScore: completedProfile.score,
+				subscription: { plan: currentSubscriptionState().entitlementPlan || 'free' },
+				missionId: 'website-scan',
+				missionState: readStorage('apexoneiq_unified_mission_state', {}),
+				realAnalysis: false
+			});
+			if (runtime?.result?.updatedMissionState) {
+				writeStorage('apexoneiq_unified_mission_state', runtime.result.updatedMissionState);
+				writeStorage('apexoneiq_ai_workforce_results', [runtime.result].concat(readStorage('apexoneiq_ai_workforce_results', [])).slice(0, 20));
+			}
 			status.textContent = 'Scan complete. Opening your Executive Brief...';
 			persistExecutiveScan(completedProfile).then(dashboardUrl => {
 				const nextUrl = new URL(dashboardUrl || apexHref('free-dashboard.html'), window.location.origin);
@@ -1350,11 +1467,10 @@ function fallbackMissionPlan(context) {
 	};
 }
 
-function getMissionPlan() {
-	const profile = getStoredProfile() || {};
+function missionContextForProfile(profile = getStoredProfile() || {}) {
 	const score = clampScore(profile.score || 66);
 	const drivers = growthDriverScores(score);
-	const context = {
+	return {
 		profile,
 		businessGrowthScore: score,
 		executiveHealth: drivers,
@@ -1368,11 +1484,53 @@ function getMissionPlan() {
 		approvals: readStorage('apexoneiq_customer_approvals', []),
 		completedWork: readStorage('apexoneiq_completed_work', []),
 		completedMissionIds: readStorage('apexoneiq_completed_mission_ids', []),
-		missionHistory: readStorage('apexoneiq_mission_history', [])
+		missionHistory: readStorage('apexoneiq_mission_history', []),
+		missionState: readStorage('apexoneiq_unified_mission_state', {})
 	};
+}
 
-	if (window.ApexMissionEngine?.generateDailyMission) {
-		return window.ApexMissionEngine.generateDailyMission(context);
+function getUnifiedMissionState(context = missionContextForProfile()) {
+	if (window.ApexMissionEngine?.buildUnifiedMissionState) {
+		return window.ApexMissionEngine.buildUnifiedMissionState(context);
+	}
+	const missionPlan = window.ApexMissionEngine?.generateDailyMission
+		? window.ApexMissionEngine.generateDailyMission(context)
+		: fallbackMissionPlan(context);
+	return {
+		missionPlan,
+		primaryMission: missionPlan.primaryMission,
+		missionRecords: missionPlan.missionQueue || [],
+		approvalQueue: [],
+		notifications: [],
+		timeline: [],
+		memoryRecords: [],
+		executiveReadiness: 'Ready',
+		businessScore: {
+			components: context.executiveHealth,
+			current: context.businessGrowthScore,
+			projected: clampScore(context.businessGrowthScore + 8),
+			delta: 0
+		},
+		dailyOperations: {}
+	};
+}
+
+function setUnifiedMissionStage(missionId, stage) {
+	if (!missionId || !stage) return;
+	if (/Executing|Awaiting Approval|Completed|Verified|Monitoring/i.test(stage) && !hasLocalEntitlement('approval_packages')) {
+		openDrawer('Upgrade Required', 'This action requires AI Automated or Concierge access. DIY users receive instructions and prepared guidance, but Apex does not move approval or execution states.', 'Subscription');
+		return;
+	}
+	const current = readStorage('apexoneiq_unified_mission_state', {});
+	writeStorage('apexoneiq_unified_mission_state', { ...current, [missionId]: stage });
+	window.dispatchEvent(new CustomEvent('apexoneiq:mission-state-change', { detail: { missionId, stage } }));
+}
+
+function getMissionPlan() {
+	const context = missionContextForProfile();
+	const unifiedState = getUnifiedMissionState(context);
+	if (unifiedState?.missionPlan) {
+		return unifiedState.missionPlan;
 	}
 
 	return fallbackMissionPlan(context);
@@ -1387,13 +1545,32 @@ function buildExecutiveBriefData() {
 		completedAt: new Date().toISOString(),
 		trend: [58, 61, 64, 66]
 	};
-	const score = clampScore(profile.score || 66);
-	const drivers = growthDriverScores(score);
-	const projected = clampScore(score + 13);
+	const baseScore = clampScore(profile.score || 66);
+	const baseDrivers = growthDriverScores(baseScore);
+	const unifiedState = getUnifiedMissionState(missionContextForProfile(profile));
+	const score = unifiedState.businessScore?.current || baseScore;
+	const scoreComponents = unifiedState.businessScore?.components || {};
+	const drivers = {
+		...baseDrivers,
+		trustCoverage: scoreComponents.trust || baseDrivers.trustCoverage,
+		localSeo: scoreComponents.visibility || baseDrivers.localSeo,
+		contentAuthority: scoreComponents.authority || baseDrivers.contentAuthority,
+		websiteHealth: scoreComponents.website || baseDrivers.websiteHealth,
+		aiVisibility: scoreComponents.aiVisibility || baseDrivers.aiVisibility,
+		...scoreComponents
+	};
+	const projected = unifiedState.businessScore?.projected || clampScore(score + 13);
 	const goal = Math.max(90, projected + 8);
 	const health = businessHealth(score);
-	const missionPlan = getMissionPlan();
-	const primaryMission = missionPlan.primaryMission || fallbackMissionPlan({ businessGrowthScore: score, executiveHealth: drivers }).primaryMission;
+	const missionPlan = unifiedState.missionPlan || getMissionPlan();
+	const fallbackPrimaryMission = fallbackMissionPlan({ businessGrowthScore: score, executiveHealth: drivers }).primaryMission;
+	const plannedPrimaryMission = (missionPlan.missionQueue || []).find(mission => mission.id === unifiedState.primaryMission?.id) || missionPlan.primaryMission || fallbackPrimaryMission;
+	const primaryMission = {
+		...plannedPrimaryMission,
+		...(unifiedState.primaryMission || {}),
+		expectedBusinessGrowthScore: unifiedState.primaryMission?.estimatedBusinessGrowthScoreLift || plannedPrimaryMission.expectedBusinessGrowthScore || fallbackPrimaryMission.expectedBusinessGrowthScore,
+		expectedRevenueImpact: Number(String(unifiedState.primaryMission?.projectedRevenueLift || '').replace(/[^0-9]/g, '')) || plannedPrimaryMission.expectedRevenueImpact || fallbackPrimaryMission.expectedRevenueImpact
+	};
 	const domain = workspaceDomain(profile.website) || profile.businessName || 'your business';
 	const businessName = profile.businessName || domain;
 	const missionTarget = clampScore(score + (primaryMission.expectedBusinessGrowthScore || 8));
@@ -1401,7 +1578,7 @@ function buildExecutiveBriefData() {
 	const previousScore = trend.length > 1 ? trend[trend.length - 2] : Math.max(0, score - 5);
 	const scoreDelta = score - previousScore;
 	const momentumState = scoreDelta > 2 ? 'Accelerating' : scoreDelta < 0 ? 'Losing Ground' : 'Stagnating';
-	const confidence = clampScore(78 + Math.max(0, Math.min(12, scoreDelta * 2)));
+	const confidence = clampScore((unifiedState.primaryMission?.confidence || 78) + Math.max(0, Math.min(8, scoreDelta)));
 	const opportunity = {
 		monthly: Math.max(3400, (100 - score) * 210),
 		leads: Math.max(8, Math.round((100 - drivers.trustCoverage) / 4) + 1),
@@ -1409,7 +1586,7 @@ function buildExecutiveBriefData() {
 		scoreIncrease: projected - score,
 		confidence
 	};
-	const summary = `${businessName} is showing demand potential, but ${primaryMission.reason.charAt(0).toLowerCase()}${primaryMission.reason.slice(1)} If nothing changes, competitors with stronger proof can keep capturing the highest-intent opportunities. Today’s highest-value mission is ${primaryMission.title.toLowerCase()}, projected to move the Business Growth Score™ from ${score} toward ${projected}.`;
+	const summary = unifiedState.insights?.[0] || `${businessName} is showing demand potential, but ${primaryMission.reason.charAt(0).toLowerCase()}${primaryMission.reason.slice(1)} If nothing changes, competitors with stronger proof can keep capturing the highest-intent opportunities. Today’s highest-value mission is ${primaryMission.title.toLowerCase()}, projected to move the Business Growth Score™ from ${score} toward ${projected}.`;
 	const recommendations = missionPlan.recommendations?.length ? missionPlan.recommendations : [
 		{
 			title: 'Increase trust coverage across core business profiles',
@@ -1482,7 +1659,12 @@ function buildExecutiveBriefData() {
 			status: 'Planned'
 		}
 	];
-	const missionStages = [
+	const missionStages = (unifiedState.primaryMission?.executionHistory || []).map(stage => [
+		stage.stage,
+		stage.status,
+		stage.state
+	]);
+	const fallbackMissionStages = [
 		['Scanning', 'Completed', 'complete'],
 		['Research', 'Completed', 'complete'],
 		['Content Generated', primaryMission.executionMode === 'Customer Required' ? 'Prepared' : 'Completed', 'complete'],
@@ -1491,8 +1673,9 @@ function buildExecutiveBriefData() {
 		['Deployment', primaryMission.executionMode === 'Automatic' ? 'Queued' : 'Pending', 'pending'],
 		['Verification', 'Pending', 'pending']
 	];
-	const completedStages = missionStages.filter(([, , state]) => state === 'complete').length;
-	const missionProgress = clampScore((completedStages / missionStages.length) * 100 + (missionStages.some(([, , state]) => state === 'active') ? 8 : 0));
+	const activeMissionStages = missionStages.length ? missionStages : fallbackMissionStages;
+	const completedStages = activeMissionStages.filter(([, , state]) => state === 'complete').length;
+	const missionProgress = clampScore((completedStages / activeMissionStages.length) * 100 + (activeMissionStages.some(([, , state]) => state === 'active') ? 8 : 0));
 	const confidenceDrivers = [
 		['Business profile incomplete', 'Trust source is not fully verified', 'risk'],
 		['Competitor trust advantage', 'Competitors show stronger proof density', 'warning'],
@@ -1507,7 +1690,7 @@ function buildExecutiveBriefData() {
 		['Buyer Confidence', 'growth'],
 		['Service Area Proof', 'stable']
 	];
-	const activityTimeline = [
+	const activityTimeline = Array.isArray(unifiedState.timeline) && unifiedState.timeline.length ? unifiedState.timeline : [
 		['08:01', 'Scan Started', '8 pages analyzed', 'complete'],
 		['08:02', 'Competitor Changes Detected', '2 competitors gained trust signals', 'warning'],
 		['08:03', 'Local SEO Score Updated', `Local SEO recalculated at ${drivers.localSeo}`, 'stable'],
@@ -1518,12 +1701,12 @@ function buildExecutiveBriefData() {
 		['08:12', 'Executive Brief Generated', 'Mission queue reordered', 'complete']
 	];
 	const activityProof = [
-		['8', 'Pages Scanned', 'complete'],
-		['4', 'Competitor Changes', 'warning'],
-		['18', 'Internal Link Opportunities', 'stable'],
-		['6', 'AI Citation Improvements', 'growth'],
-		['2', 'Structured Data Opportunities', 'stable'],
-		['1', 'Mission Queue Reordered', 'complete']
+		[String((unifiedState.missionRecords || []).length || 8), 'Missions Synced', 'complete'],
+		[String((unifiedState.notifications || []).length || 4), 'Executive Notices', 'warning'],
+		[String((unifiedState.timeline || []).length || 18), 'Timeline Events', 'stable'],
+		[String((unifiedState.approvalQueue || []).length || 0), 'Approvals Waiting', (unifiedState.approvalQueue || []).length ? 'warning' : 'growth'],
+		[String((unifiedState.memoryRecords || []).length || 0), 'Memory Records', 'stable'],
+		['1', 'Shared State Engine', 'complete']
 	];
 	const impactBlocks = [
 		['Revenue', `$${primaryMission.expectedRevenueImpact?.toLocaleString() || '3,200'}/mo`, 'growth'],
@@ -1580,8 +1763,8 @@ function buildExecutiveBriefData() {
 			title: primaryMission.title,
 			type: primaryMission.type,
 			progress: missionProgress,
-			currentStage: 'Validation In Progress',
-			remainingSteps: missionStages.filter(([, , state]) => state === 'pending').length,
+			currentStage: unifiedState.primaryMission?.currentExecutionStage || 'Validation In Progress',
+			remainingSteps: activeMissionStages.filter(([, , state]) => state === 'pending').length,
 			estimatedCompletion: primaryMission.estimatedTime || '7 days',
 			impact: `${primaryMission.businessImpact} Expected to create ${primaryMission.expectedLeads || opportunity.leads} new monthly lead opportunities and lift the Business Growth Score™ by ${primaryMission.expectedBusinessGrowthScore || 4} points.`,
 			currentScore: score,
@@ -1594,8 +1777,13 @@ function buildExecutiveBriefData() {
 			reason: primaryMission.reason,
 			dependencies: primaryMission.dependencies || []
 		},
+		unifiedState,
+		notifications: unifiedState.notifications || [],
+		timeline: unifiedState.timeline || activityTimeline,
+		memoryRecords: unifiedState.memoryRecords || [],
+		executiveReadiness: unifiedState.executiveReadiness || 'Ready',
 		missionPlan,
-		missionStages,
+		missionStages: activeMissionStages,
 		confidenceDrivers,
 		unlocks,
 		activityTimeline,
@@ -2213,6 +2401,24 @@ function missionCompactGrid(items, className = 'mission-compact-grid') {
 	`;
 }
 
+function executiveNotificationStrip(notifications = [], readiness = 'Ready') {
+	const items = notifications.length ? notifications.slice(0, 4) : [{ title: 'Executive OS synchronized', detail: 'Mission state is current across workspaces.', state: 'complete' }];
+	return `
+		<section class="executive-os-strip" data-executive-notifications>
+			<div>
+				<span class="panel-label">Executive OS Notifications</span>
+				<strong>${escapeHtml(readiness)}</strong>
+			</div>
+			${items.map(item => `
+				<article class="${escapeHtml(item.state || 'stable')}">
+					<span>${escapeHtml(item.title)}</span>
+					<strong>${escapeHtml(item.detail)}</strong>
+				</article>
+			`).join('')}
+		</section>
+	`;
+}
+
 function missionWorkflow(title, steps, state = '') {
 	return `
 		<div class="mission-workflow ${state ? escapeHtml(state) : ''}">
@@ -2240,39 +2446,43 @@ function renderMissionWorkspace() {
 	const pageHead = document.querySelector('.page-head');
 	if (!main || !pageHead || main.querySelector('[data-mission-workspace]')) return;
 	const data = buildExecutiveBriefData();
+	const unified = data.unifiedState || getUnifiedMissionState(missionContextForProfile(data.profile));
 	const missionPlan = data.missionPlan;
+	const missionRecord = unified.primaryMission || (unified.missionRecords || [])[0] || {};
 	const mission = missionPlan.primaryMission;
 	const layer = missionPlan.executionLayer || window.ApexMissionEngine?.buildExecutionLayer?.(mission, missionPlan.secondaryMissions || [], missionPlan.blockedMissions || [], missionPlan.metrics || {}, missionPlan.subscriptionLevel) || {};
 	const workspace = layer.missionWorkspace || {};
 	const approval = layer.approvalIntelligence || {};
 	const provider = layer.providerArchitecture || {};
-	const daily = layer.dailyOperations || {};
+	const daily = unified.dailyOperations || layer.dailyOperations || {};
 	const email = layer.dailyEmail || { sections: [] };
-	const bgsLift = workspace.estimatedImpact?.businessGrowthScore || mission?.expectedBusinessGrowthScore || 0;
-	const confidence = workspace.confidenceScore || mission?.confidence || 0;
+	const bgsLift = missionRecord.estimatedBusinessGrowthScoreLift || workspace.estimatedImpact?.businessGrowthScore || mission?.expectedBusinessGrowthScore || 0;
+	const confidence = missionRecord.confidence || workspace.confidenceScore || mission?.confidence || 0;
 	const revenue = workspace.estimatedImpact?.revenue || mission?.expectedRevenueImpact || 0;
 	const timeSaved = workspace.estimatedImpact?.timeSaved || 0;
-	const approvalWaiting = Array.isArray(daily.pendingApprovals) ? daily.pendingApprovals.length : 0;
-	const lifecycle = workspace.lifecycle || [];
+	const approvalWaiting = (unified.approvalQueue || []).length || (Array.isArray(daily.pendingApprovals) ? daily.pendingApprovals.length : 0);
+	const lifecycle = missionRecord.executionHistory?.map(stage => [stage.stage, stage.status, stage.timestamp, stage.state]) || workspace.lifecycle || [];
 	const activeStage = lifecycle.find(item => item[3] === 'active') || lifecycle.find(item => item[3] === 'pending') || lifecycle[0] || [];
 	const completedStages = lifecycle.filter(item => item[3] === 'complete').length;
+	const operationsTimeline = (unified.timeline || layer.operationsLog || []).map(item => Array.isArray(item) ? item : [item.time, item.title, item.note, item.state]);
 	const summaryItems = [
-		['Mission', mission?.title || 'Mission prepared', 'priority'],
+		['Mission', missionRecord.title || mission?.title || 'Mission prepared', 'priority'],
 		['Business Growth', `+${bgsLift} BGS`, 'growth'],
 		['Confidence', `${confidence}%`, 'confidence'],
 		['Expected Lift', `$${revenue.toLocaleString()}/mo`, 'growth'],
 		['Approval', approval.currentDecision || workspace.approvalStatus || 'Prepared', approvalWaiting ? 'approval' : 'clear'],
-		['Status', workspace.executionStatus || 'Prepared, not executed', 'status']
+		['Status', missionRecord.currentExecutionStage || workspace.executionStatus || 'Prepared, not executed', 'status']
 	];
 	const commandMetrics = [
 		['Business Growth Score', daily.businessGrowthScoreMovement || `+${bgsLift} projected`, 'growth'],
-		["Today's Mission", mission?.title || 'Mission prepared', 'priority'],
+		["Today's Mission", missionRecord.title || mission?.title || 'Mission prepared', 'priority'],
 		['Completed Yesterday', daily.completedYesterday || 'Baseline, mission queue, forecast.', 'complete'],
 		['Approvals Waiting', `${approvalWaiting}`, approvalWaiting ? 'approval' : 'clear'],
 		['Forecast', daily.forecast || 'Prepared', 'forecast'],
 		['Business Risk', daily.businessRisks || 'Approval delay can slow forecast movement.', 'risk'],
 		['Competitor Changes', daily.competitorChanges || 'No critical ranking shock detected.', 'competitor'],
-		['Current Status', workspace.executionStatus || 'Prepared', 'status'],
+		['Current Status', missionRecord.currentExecutionStage || workspace.executionStatus || 'Prepared', 'status'],
+		['Executive Readiness', unified.executiveReadiness || 'Ready', statusClassForState(unified.executiveReadiness || 'Ready').replace('status-', '')],
 		['Time Saved', `${timeSaved} min`, 'time'],
 		['Projected Revenue', `$${revenue.toLocaleString()}/mo`, 'revenue']
 	];
@@ -2304,7 +2514,7 @@ function renderMissionWorkspace() {
 			<section class="mission-command-center">
 				<div class="command-greeting">
 					<span class="panel-label">Good Morning</span>
-					<h2>${escapeHtml(mission?.title || 'Mission prepared')}</h2>
+					<h2>${escapeHtml(missionRecord.title || mission?.title || 'Mission prepared')}</h2>
 					<p>${missionStatement(daily.executiveRecommendation, 'Apex prepared the highest-value work. Human judgment is only needed for live-business approval.')}</p>
 				</div>
 				<div class="command-score">
@@ -2319,11 +2529,12 @@ function renderMissionWorkspace() {
 				</div>
 				${missionCompactGrid(commandMetrics, 'command-metric-grid')}
 			</section>
+			${executiveNotificationStrip(unified.notifications || [], unified.executiveReadiness || 'Ready')}
 
 			<section class="mission-ops-preview" id="activity">
 				<div class="panel-head"><div><div class="panel-label">Executive Operations Log</div><h3>Apex already handled everything it could.</h3></div><span class="status-pill status-ok">Waiting for approval</span></div>
 				<div class="operations-log executive">
-					${(layer.operationsLog || []).map(([time, title, note, state]) => `
+					${operationsTimeline.map(([time, title, note, state]) => `
 						<div class="${escapeHtml(state)}"><span>${escapeHtml(time)}</span><strong>${escapeHtml(title)}</strong><p>${escapeHtml(note)}</p></div>
 					`).join('')}
 				</div>
@@ -2371,7 +2582,7 @@ function renderMissionWorkspace() {
 						<div><span>Automatic Preparation</span>${(approval.automatic || []).map(item => `<b>${escapeHtml(item)}</b>`).join('')}</div>
 						<div><span>Requires Approval</span>${(approval.requiresApproval || []).map(item => `<b>${escapeHtml(item)}</b>`).join('')}</div>
 					</div>
-					<div class="approval-actions">${(approval.visualActions || []).map(([label, note, kind]) => `<button class="${kind === 'primary' ? 'button' : 'ghost-button'}" type="button" data-coming-soon="Approval execution is visually prepared but intentionally deferred."><strong>${escapeHtml(label)}</strong><span>${escapeHtml(note)}</span></button>`).join('')}</div>
+					<div class="approval-actions">${(approval.visualActions || []).map(([label, note, kind]) => `<button class="${kind === 'primary' ? 'button' : 'ghost-button'}" type="button" data-mission-transition="${escapeHtml(missionRecord.id || mission?.id || '')}" data-next-stage="${kind === 'primary' ? 'Executing' : label === 'Reject' ? 'Blocked' : 'Prepared'}"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(note)}</span></button>`).join('')}</div>
 				`)}
 
 				${missionWorkspacePanel('Verification', workspace.verificationStatus || 'Verification architecture prepared', `
@@ -2380,7 +2591,7 @@ function renderMissionWorkspace() {
 
 				${missionWorkspacePanel('Operations Log', `${(layer.operationsLog || []).length} events this morning`, `
 					<div class="operations-log">
-						${(layer.operationsLog || []).map(([time, title, note, state]) => `
+						${operationsTimeline.map(([time, title, note, state]) => `
 							<div class="${escapeHtml(state)}"><span>${escapeHtml(time)}</span><strong>${escapeHtml(title)}</strong><p>${escapeHtml(note)}</p></div>
 						`).join('')}
 					</div>
@@ -2405,6 +2616,13 @@ function renderMissionWorkspace() {
 			</section>
 		</section>
 	`);
+	main.querySelectorAll('[data-mission-transition]').forEach(button => {
+		button.addEventListener('click', () => {
+			setUnifiedMissionStage(button.dataset.missionTransition, button.dataset.nextStage);
+			main.querySelector('[data-mission-workspace]')?.remove();
+			renderMissionWorkspace();
+		});
+	});
 }
 
 function renderMissionQueuePanel() {
@@ -2489,7 +2707,209 @@ function renderMissionSettingsPanel() {
 	`);
 }
 
+function renderExecutionCenter() {
+	if (route !== 'command-dashboard.html') return;
+	const main = document.querySelector('.main');
+	if (!main || main.querySelector('[data-execution-center]')) return;
+	const briefData = buildExecutiveBriefData();
+	const execution = briefData.unifiedState || getUnifiedMissionState(missionContextForProfile(briefData.profile));
+	const missions = execution.missionRecords || [];
+	const primaryId = execution.primaryMissionId || missions[0]?.id;
+	const approvals = execution.approvalQueue || [];
+	const daily = execution.dailyOperations || {};
+	const summary = execution.summary || {};
+	document.body.classList.add('execution-center-page');
+	document.querySelector('.command-workspace .brand span')?.replaceChildren(document.createTextNode('Execution Center'));
+	document.querySelector('.command-workspace .site-card .eyebrow')?.replaceChildren(document.createTextNode('Execution architecture ready'));
+	const activeTasks = missions.filter(mission => mission.currentExecutionStage !== 'Completed').length;
+	const readiness = execution.executiveReadiness || 'Ready';
+	main.innerHTML = `
+		<header class="topbar">
+			<div><span class="eyebrow"><span class="live-dot"></span>Execution center online</span></div>
+			<div class="account"><span class="status-pill ${statusClassForState(readiness)}">${escapeHtml(readiness)}</span><span class="status-pill status-ok">${activeTasks} active missions</span><button class="ghost-button" data-ask="What is Apex executing right now?">Ask Apex</button><div class="avatar">JM</div></div>
+		</header>
+		<section class="execution-center" data-execution-center>
+			<section class="execution-command-hero">
+				<div>
+					<div class="page-kicker">Execution Center</div>
+					<h1>Apex already prepared the work. Only approval-gated decisions are waiting.</h1>
+					<p>Provider execution is still architectural. The system now models preparation, approval, verification, evidence, rollback, and reporting as one reusable operating layer.</p>
+				</div>
+				<div class="execution-command-grid">
+					<div><span>What changed overnight?</span><strong>${escapeHtml(summary.overnightChange || 'Business scan refreshed.')}</strong></div>
+					<div><span>What is Apex doing right now?</span><strong>${escapeHtml(summary.doingNow || 'Preparing the top mission.')}</strong></div>
+					<div><span>What is waiting for me?</span><strong>${escapeHtml(summary.waitingForOwner || 'No approvals waiting.')}</strong></div>
+					<div><span>What will improve next?</span><strong>${escapeHtml(summary.improvesNext || 'Business Growth Score movement.')}</strong></div>
+				</div>
+			</section>
+			${executiveNotificationStrip(execution.notifications || [], readiness)}
+
+			<section class="execution-grid" id="mission-queue">
+				<article class="execution-panel execution-queue-panel">
+					<div class="panel-head"><div><div class="panel-label">Mission Queue</div><h3>Every mission follows the same execution lifecycle.</h3></div><span class="status-pill">${missions.length} missions</span></div>
+					<div class="execution-mission-list">
+						${missions.map((mission, index) => `
+							<button class="${mission.id === primaryId ? 'active' : ''}" type="button" data-execution-mission="${escapeHtml(mission.id)}">
+								<b>${index + 1}</b>
+								<span><strong>${escapeHtml(mission.title)}</strong><small>${escapeHtml(mission.category)} / ${escapeHtml(mission.currentExecutionStage)}</small></span>
+								<i>+${mission.estimatedBusinessGrowthScoreLift} BGS</i>
+							</button>
+						`).join('')}
+					</div>
+				</article>
+				<article class="execution-panel execution-detail-panel">
+					${missions.map(mission => `
+						<div class="execution-detail" data-execution-detail="${escapeHtml(mission.id)}" ${mission.id === primaryId ? '' : 'hidden'}>
+							<div class="panel-head"><div><div class="panel-label">Mission Details</div><h3>${escapeHtml(mission.title)}</h3></div><span class="status-pill ${statusClassForState(mission.currentExecutionStage)}">${escapeHtml(mission.currentExecutionStage)}</span></div>
+							<div class="execution-kpi-grid">
+								<div><span>Priority</span><strong>${mission.priority}</strong></div>
+								<div><span>Confidence</span><strong>${mission.confidence}%</strong></div>
+								<div><span>Score Lift</span><strong>+${mission.estimatedBusinessGrowthScoreLift}</strong></div>
+								<div><span>Time</span><strong>${escapeHtml(mission.estimatedTime)}</strong></div>
+								<div><span>Owner</span><strong>${escapeHtml(mission.owner)}</strong></div>
+								<div><span>Approval</span><strong>${escapeHtml(mission.approvalRequirement)}</strong></div>
+								<div><span>Dependencies</span><strong>${mission.blockedReason || (mission.dependencies.length ? mission.dependencies.map(item => item.replace(/-/g, ' ')).join(', ') : 'Clear')}</strong></div>
+								<div><span>Rollback</span><strong>${mission.rollbackAvailable ? 'Available' : 'Unavailable'}</strong></div>
+							</div>
+							<div class="execution-detail-sections">
+								<div><span>Mission Summary</span><p>${escapeHtml(mission.objective)}</p></div>
+								<div><span>Reason It Exists</span><p>${escapeHtml(mission.reason)}</p></div>
+								<div><span>Business Evidence</span><p>${escapeHtml(mission.businessEvidence)}</p></div>
+								<div><span>Competitor Evidence</span><p>${escapeHtml(mission.competitorEvidence)}</p></div>
+								<div><span>AI Evidence</span><p>${escapeHtml(mission.aiEvidence)}</p></div>
+								<div><span>Expected Outcome</span><p>${escapeHtml(mission.expectedOutcome)} / ${escapeHtml(mission.projectedRevenueLift)}</p></div>
+							</div>
+							<div class="execution-asset-grid">
+								<div><span>Files Generated</span>${mission.filesGenerated.map(item => `<b>${escapeHtml(item)}</b>`).join('')}</div>
+								<div><span>Content Generated</span>${mission.contentGenerated.map(item => `<b>${escapeHtml(item)}</b>`).join('')}</div>
+								<div><span>Schema Prepared</span><b>${escapeHtml(mission.schemaPrepared)}</b></div>
+								<div><span>Internal Links Prepared</span><b>${escapeHtml(mission.internalLinksPrepared)}</b></div>
+								<div><span>Review Responses Prepared</span><b>${escapeHtml(mission.reviewResponsesPrepared)}</b></div>
+								<div><span>Completion Criteria</span>${mission.completionCriteria.map(item => `<b>${escapeHtml(item)}</b>`).join('')}</div>
+							</div>
+							<div class="execution-pipeline">
+								${mission.executionHistory.map(stage => `
+									<div class="${escapeHtml(stage.state)}">
+										<span>${escapeHtml(stage.timestamp)}</span>
+										<strong>${escapeHtml(stage.stage)}</strong>
+										<small>${escapeHtml(stage.status)}</small>
+									</div>
+								`).join('')}
+							</div>
+						</div>
+					`).join('')}
+				</article>
+			</section>
+
+			<section class="execution-grid">
+				<article class="execution-panel" id="approvals">
+					<div class="panel-head"><div><div class="panel-label">Approval Center</div><h3>Only live-business decisions appear here.</h3></div><span class="status-pill status-high">${approvals.length} waiting</span></div>
+					<div class="execution-approval-list">
+						${approvals.length ? approvals.map(item => `
+							<div>
+								<span>${escapeHtml(item.title)}</span>
+								<strong>${escapeHtml(item.summary)}</strong>
+								<p>Risk: ${escapeHtml(item.risk)} / Gain: ${escapeHtml(item.expectedGain)} / Rollback: ${item.rollbackAvailable ? 'Available' : 'Unavailable'}</p>
+								<div><button class="button" data-mission-transition="${escapeHtml(item.id)}" data-next-stage="Executing">Approve</button><button class="ghost-button" data-mission-transition="${escapeHtml(item.id)}" data-next-stage="Blocked">Reject</button><button class="ghost-button" data-mission-transition="${escapeHtml(item.id)}" data-next-stage="Prepared">Request Revision</button></div>
+							</div>
+						`).join('') : '<div><span>No owner approval waiting</span><strong>Apex has no approval-gated decisions in the current shared state.</strong><p>Approved work is removed from this queue automatically.</p></div>'}
+					</div>
+				</article>
+				<article class="execution-panel">
+					<div class="panel-head"><div><div class="panel-label">Evidence Engine</div><h3>Evidence becomes part of the mission record.</h3></div></div>
+					<div class="execution-evidence-grid">
+						${(execution.evidenceEngine || []).map(item => `<div><span>${escapeHtml(item.item)}</span><strong>${escapeHtml(item.status)}</strong></div>`).join('')}
+					</div>
+				</article>
+			</section>
+
+			<section class="execution-grid">
+				<article class="execution-panel">
+					<div class="panel-head"><div><div class="panel-label">Verification Engine</div><h3>No mission completes without verification.</h3></div></div>
+					<div class="execution-verification-list">
+						${(execution.verificationEngine || []).map(item => `
+							<div>
+								<strong>${escapeHtml(item.mission)}</strong>
+								<span>Expected: ${escapeHtml(item.expectedVerification)}</span>
+								<span>Actual: ${escapeHtml(item.actualVerification)}</span>
+								<span>Retry: ${escapeHtml(item.retryStatus)}</span>
+								<span>Failure: ${escapeHtml(item.failureReason)}</span>
+								<b>${escapeHtml(item.confidenceAfterExecution)} / score ${item.missionScore}</b>
+							</div>
+						`).join('')}
+					</div>
+				</article>
+				<article class="execution-panel" id="permissions">
+					<div class="panel-head"><div><div class="panel-label">Automation Permissions</div><h3>Provider-agnostic permission framework.</h3></div><span class="status-pill">No integrations</span></div>
+					<div class="execution-permission-grid">
+						${(execution.providerPermissions || []).map(provider => `
+							<div>
+								<strong>${escapeHtml(provider.provider)}</strong>
+								${Object.entries(provider.permissions).map(([permission, value]) => `<span>${escapeHtml(permission)} <b>${escapeHtml(value)}</b></span>`).join('')}
+							</div>
+						`).join('')}
+					</div>
+				</article>
+			</section>
+
+			<section class="execution-grid">
+				<article class="execution-panel">
+					<div class="panel-head"><div><div class="panel-label">Unified Activity Timeline</div><h3>One timeline powers the brief, workspace, command center, and daily operations.</h3></div><span class="status-pill">${(execution.timeline || []).length} events</span></div>
+					<div class="execution-verification-list">
+						${(execution.timeline || []).map(([time, title, note, state]) => `
+							<div>
+								<span>${escapeHtml(time)}</span>
+								<strong>${escapeHtml(title)}</strong>
+								<span>${escapeHtml(note)}</span>
+								<b>${escapeHtml(state)}</b>
+							</div>
+						`).join('')}
+					</div>
+				</article>
+				<article class="execution-panel">
+					<div class="panel-head"><div><div class="panel-label">Executive Memory Layer</div><h3>Business history architecture for completed mission records.</h3></div><span class="status-pill">No AI memory</span></div>
+					<div class="execution-verification-list">
+						${(execution.memoryRecords || []).length ? (execution.memoryRecords || []).map(item => `
+							<div>
+								<strong>${escapeHtml(item.title)}</strong>
+								<span>Changed: ${escapeHtml(item.whatChanged)}</span>
+								<span>Why: ${escapeHtml(item.why)}</span>
+								<span>Score: ${escapeHtml(item.businessScoreMovement)}</span>
+								<b>${escapeHtml(item.confidenceBefore)} -> ${escapeHtml(item.confidenceAfter)}</b>
+							</div>
+						`).join('') : '<div><strong>No completed mission history yet.</strong><span>Completed and verified missions will record outcome, evidence, score movement, and confidence deltas here.</span></div>'}
+					</div>
+				</article>
+			</section>
+
+			<section class="execution-panel" id="activity">
+				<div class="panel-head"><div><div class="panel-label">Daily Operations Foundation</div><h3>Prepared for future morning automation. No scheduler is active.</h3></div><span class="status-pill">Architecture only</span></div>
+				<div class="execution-daily-grid">
+					${Object.entries(daily).map(([key, value]) => `<div><span>${escapeHtml(key.replace(/([A-Z])/g, ' $1'))}</span><strong>${escapeHtml(String(value))}</strong></div>`).join('')}
+				</div>
+			</section>
+		</section>
+	`;
+
+	main.querySelectorAll('[data-execution-mission]').forEach(button => {
+		button.addEventListener('click', () => {
+			main.querySelectorAll('[data-execution-mission]').forEach(item => item.classList.toggle('active', item === button));
+			main.querySelectorAll('[data-execution-detail]').forEach(detail => {
+				detail.hidden = detail.dataset.executionDetail !== button.dataset.executionMission;
+			});
+		});
+	});
+	main.querySelectorAll('[data-mission-transition]').forEach(button => {
+		button.addEventListener('click', () => {
+			setUnifiedMissionStage(button.dataset.missionTransition, button.dataset.nextStage);
+			main.innerHTML = '';
+			renderExecutionCenter();
+		});
+	});
+}
+
 function renderMissionEngineIntegrations() {
+	renderExecutionCenter();
 	renderMissionWorkspace();
 	renderMissionQueuePanel();
 	renderMissionForecastPanel();
@@ -2636,7 +3056,7 @@ document.addEventListener('click', event => {
 		return;
 	}
 
-	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]):not([data-coming-soon]):not([data-export-brief-pdf]), a[href="#"]');
+	const genericControl = event.target.closest('button:not([data-range]):not([data-filter]):not([data-sim]):not([data-playback]):not([data-billing]):not([data-toggle-section]):not([data-select-plan]):not([data-select-meeting]):not([data-connection]):not([data-enroll-back]):not([data-enroll-continue]):not([data-enroll-submit]):not([data-close-drawer]):not([data-play-check]):not([data-checkout-plan]):not([data-coming-soon]):not([data-export-brief-pdf]):not([data-execution-mission]):not([data-mission-transition]), a[href="#"]');
 	if (genericControl && !genericControl.disabled && !genericControl.closest('[data-drawer-text]')) {
 		const text = genericControl.textContent.trim() || genericControl.getAttribute('aria-label') || routeAskDefaults[route] || 'What should I do next?';
 		openAsk(text);
@@ -2849,4 +3269,17 @@ if (initialSim) {
 if (params.get('complete') === 'gbp') {
 	updatePageProgress();
 	document.querySelector('[data-sim="one"]')?.click();
+}
+
+refreshBillingStatus();
+
+if (window.location.pathname.includes('/checkout/success')) {
+	refreshBillingStatus().then(status => {
+		const card = document.querySelector('.checkout-card');
+		const plan = window.ApexSubscriptionConfig?.planFor?.(params.get('plan') || status.planId || 'free');
+		const copy = card?.querySelector('p');
+		if (copy) {
+			copy.textContent = `Checkout returned for ${plan?.displayName || 'the selected plan'}. Paid access is activated only after the verified Stripe webhook updates the Apex entitlement store. Current billing status: ${status.billingStatus || 'pending'}.`;
+		}
+	});
 }
