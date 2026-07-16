@@ -1858,7 +1858,14 @@ button[disabled],
 
 .brief-executive-blocks div,
 .brief-risk-matrix div {
-	min-height: 86px;
+	min-height: 160px;
+	min-width: 0;
+}
+
+.brief-risk-matrix div {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 }
 
 .brief-executive-blocks span,
@@ -1876,6 +1883,13 @@ button[disabled],
 	color: #111827;
 	font-size: 24px;
 	line-height: 1;
+}
+
+.brief-risk-matrix strong {
+	font-size: 15px;
+	line-height: 1.18;
+	overflow-wrap: anywhere;
+	white-space: normal;
 }
 
 .brief-unlocks {
@@ -1911,6 +1925,60 @@ button[disabled],
 .brief-priority-result-grid span {
 	min-height: 66px;
 	overflow-wrap: anywhere;
+}
+
+.brief-evidence-list {
+	display: grid;
+	gap: 7px;
+	padding: 12px;
+	border: 1px solid rgba(22, 32, 51, .1);
+	border-radius: 12px;
+	background: #fff;
+}
+
+.brief-execution-state {
+	display: grid;
+	gap: 6px;
+	padding: 12px;
+	border: 1px solid rgba(22, 32, 51, .1);
+	border-left: 5px solid #9aa3b2;
+	border-radius: 12px;
+	background: #f8fafc;
+}
+
+.brief-execution-state span {
+	color: #111827;
+	font-size: 11px;
+	font-weight: 950;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+}
+
+.brief-execution-state small {
+	color: #526071;
+	font-size: 12px;
+	font-weight: 800;
+	line-height: 1.35;
+}
+
+.brief-execution-state.auto { border-left-color: #14844a; background: #f0fdf4; }
+.brief-execution-state.approval { border-left-color: #2563eb; background: #eff6ff; }
+.brief-execution-state.third-party { border-left-color: #d28a00; background: #fff7ed; }
+.brief-execution-state.info-required { border-left-color: #c7314b; background: #fef2f2; }
+
+.brief-evidence-list span {
+	color: #687386;
+	font-size: 10px;
+	font-weight: 950;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+}
+
+.brief-evidence-list small {
+	color: #111827;
+	font-size: 12px;
+	font-weight: 800;
+	line-height: 1.35;
 }
 
 .brief-priority-blocks .stable,
@@ -2059,13 +2127,17 @@ button[disabled],
 
 .brief-activity-timeline div {
 	align-items: start;
-	border-left: 2px solid #dbe3ef;
 	display: grid;
 	gap: 8px;
-	grid-template-columns: 58px 18px minmax(160px, .65fr) minmax(0, 1fr);
-	margin-left: 9px;
-	padding: 0 0 14px 18px;
+	grid-template-columns: 76px 18px minmax(170px, .65fr) minmax(0, 1fr);
+	margin-left: 0;
+	padding: 0 0 14px;
 	position: relative;
+}
+
+.brief-activity-timeline time {
+	text-align: right;
+	white-space: nowrap;
 }
 
 .brief-activity-timeline i {
@@ -2073,7 +2145,6 @@ button[disabled],
 	border-radius: 999px;
 	background: #14844a;
 	box-shadow: 0 0 0 4px #f7f8fb;
-	margin-left: -28px;
 	margin-top: 1px;
 	width: 14px;
 }
@@ -2228,6 +2299,10 @@ button[disabled],
 .brief-competitors .you small { color: #fff; }
 .brief-competitors .you i { background: rgba(255, 255, 255, .2); }
 .brief-competitors .you b { background: #fff; }
+.brief-competitors .pending {
+	background: #fff7ed;
+	border-color: rgba(194, 65, 12, .24);
+}
 
 .brief-trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
@@ -2252,12 +2327,57 @@ button[disabled],
 	text-transform: uppercase;
 }
 
+.brief-trust-grid small,
+.brief-trust-grid em {
+	color: #687386;
+	font-size: 11px;
+	font-style: normal;
+	font-weight: 750;
+	line-height: 1.35;
+}
+
+.brief-trust-grid em {
+	color: #111827;
+}
+
 .brief-ai-progress {
 	display: grid;
 	grid-template-columns: auto 1fr auto;
 	gap: 18px;
 	align-items: center;
 	min-height: 150px;
+}
+
+.brief-keyword-grid {
+	display: grid;
+	gap: 10px;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.brief-keyword-grid div,
+.brief-pending-copy {
+	background: #f8fafc;
+	border: 1px solid rgba(22, 32, 51, .1);
+	border-radius: 12px;
+	display: grid;
+	gap: 7px;
+	padding: 14px;
+}
+
+.brief-keyword-grid strong {
+	color: #111827;
+	font-size: 18px;
+}
+
+.brief-keyword-grid span,
+.brief-keyword-grid small,
+.brief-keyword-grid em,
+.brief-pending-copy {
+	color: #687386;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 800;
+	line-height: 1.35;
 }
 
 .brief-ai-progress strong,
@@ -2346,12 +2466,12 @@ button[disabled],
 
 	.brief-confidence-intel,
 	.brief-executive-signal,
-	.brief-mission-ring-card,
-	.brief-activity-timeline div {
+	.brief-mission-ring-card {
 		grid-template-columns: 1fr;
 	}
 
 	.brief-activity-timeline div {
+		grid-template-columns: 62px 18px minmax(130px, .7fr) minmax(0, 1fr);
 		margin-left: 0;
 		padding-left: 0;
 		border-left: 0;
@@ -2590,7 +2710,7 @@ button[disabled],
 
 	.brief-executive-blocks div,
 	.brief-risk-matrix div {
-		min-height: 54px;
+		min-height: 112px;
 		padding: 8px;
 	}
 
@@ -2598,6 +2718,11 @@ button[disabled],
 	.brief-risk-matrix strong,
 	.brief-activity-proof strong {
 		font-size: 18px;
+	}
+
+	.brief-risk-matrix strong {
+		font-size: 14px;
+		line-height: 1.18;
 	}
 
 	.brief-growth-score,
