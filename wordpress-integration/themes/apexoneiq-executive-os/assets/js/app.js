@@ -1540,11 +1540,12 @@ function buildExecutiveBriefData() {
 			['Goal', goal]
 		],
 		waterfall: [
-			['Baseline', score, 'historical'],
-			['Trust', primaryMission.expectedBusinessGrowthScore || 4, 'growth'],
-			['AI', 3, 'stable'],
-			['Forecast', 4, 'opportunity'],
-			['Projected', projected, 'total']
+			['Current Score', score, 'baseline'],
+			['Trust Improvement', 4, 'trust'],
+			['AI Visibility Improvement', 3, 'ai'],
+			['Projected Score', score + 7, 'subtotal'],
+			['Additional Planned Lift', 6, 'planned'],
+			['30-Day Projection', score + 13, 'final']
 		],
 		aiDistribution: [
 			['Citation Gaps', 34],
@@ -1759,29 +1760,58 @@ function activityTimelineHtml(data) {
 function forecastConeSvg(data) {
 	const points = data.intelligenceVisuals.forecastCone;
 	const coords = points.map(([label, value], index) => {
-		const x = 74 + index * 176;
-		const y = 168 - (value / 100) * 112;
+		const x = 78 + index * 178;
+		const y = 162 - (value / 100) * 108;
 		return { label, value, x, y };
 	});
 	const line = coords.map((point, index) => `${index ? 'L' : 'M'}${point.x} ${point.y}`).join(' ');
+	const upper = coords.map((point, index) => `${index ? 'L' : 'M'}${point.x} ${point.y - (10 + index * 4)}`).join(' ');
+	const lower = coords.slice().reverse().map((point, index) => `L${point.x} ${point.y + (16 + (coords.length - index) * 5)}`).join(' ');
 	return `
-		<svg class="brief-cone-chart" viewBox="0 0 640 190" role="img" aria-label="Forecast confidence cone">
-			<path class="cone-band" d="M74 146 C210 106 344 78 602 42 L602 108 C360 138 206 154 74 170 Z"></path>
+		<svg class="brief-cone-chart" viewBox="0 0 660 220" role="img" aria-label="Forecast confidence cone">
+			<path class="cone-baseline" d="M58 178H626"></path>
+			<path class="cone-band" d="${upper} ${lower} Z"></path>
 			<path class="cone-line" d="${line}"></path>
-			${coords.map(point => `<g><circle cx="${point.x}" cy="${point.y}" r="6"></circle><text x="${point.x}" y="180">${escapeHtml(point.label)}</text><text class="value" x="${point.x}" y="${point.y - 14}">${point.value}</text></g>`).join('')}
+			${coords.map((point, index) => `<g><circle cx="${point.x}" cy="${point.y}" r="6"></circle><text x="${point.x}" y="204">${escapeHtml(point.label)}</text><text class="value" x="${point.x}" y="${Math.max(20, point.y - 20 - index * 2)}">${point.value}</text></g>`).join('')}
 		</svg>
 	`;
 }
 
 function opportunityWaterfallHtml(data) {
 	const steps = data.intelligenceVisuals.waterfall;
+	const floor = 60;
+	const ceiling = 82;
+	const chart = { width: 780, height: 300, top: 42, bottom: 236, left: 58, gap: 22, bar: 82 };
+	const scaleY = value => chart.bottom - ((value - floor) / (ceiling - floor)) * (chart.bottom - chart.top);
+	let cumulative = steps[0][1];
+	const bars = steps.map(([label, value, state], index) => {
+		const x = chart.left + index * (chart.bar + chart.gap);
+		if (index === 0 || state === 'subtotal' || state === 'final') {
+			const total = value;
+			cumulative = total;
+			return { label, value: total, state, x, y: scaleY(total), height: chart.bottom - scaleY(total), from: floor, to: total, display: total };
+		}
+		const from = cumulative;
+		const to = cumulative + value;
+		cumulative = to;
+		return { label, value, state, x, y: scaleY(to), height: scaleY(from) - scaleY(to), from, to, display: `+${value}` };
+	});
 	return `
-		<div class="brief-waterfall" role="img" aria-label="Business score waterfall">
-			${steps.map(([label, value, state], index) => {
-				const height = index === 0 || state === 'total' ? Math.max(46, value) : Math.max(30, value * 12);
-				return `<div class="${escapeHtml(state)}"><span style="height:${height}px"></span><strong>${state === 'total' || index === 0 ? value : `+${value}`}</strong><small>${escapeHtml(label)}</small></div>`;
+		<svg class="brief-waterfall-svg" viewBox="0 0 ${chart.width} ${chart.height}" role="img" aria-label="Business score waterfall from current to projected">
+			<path class="waterfall-baseline" d="M42 ${chart.bottom}H738"></path>
+			${bars.slice(0, -1).map((bar, index) => {
+				const next = bars[index + 1];
+				const y = scaleY(bar.to);
+				return `<path class="waterfall-connector" d="M${bar.x + chart.bar} ${y}H${next.x}"></path>`;
 			}).join('')}
-		</div>
+			${bars.map(bar => `
+				<g class="waterfall-step ${escapeHtml(bar.state)}">
+					<rect x="${bar.x}" y="${bar.y}" width="${chart.bar}" height="${Math.max(3, bar.height)}" rx="7"></rect>
+					<text class="waterfall-value" x="${bar.x + chart.bar / 2}" y="${Math.max(24, bar.y - 10)}">${bar.display}</text>
+					<text class="waterfall-label" x="${bar.x + chart.bar / 2}" y="274">${escapeHtml(bar.label)}</text>
+				</g>
+			`).join('')}
+		</svg>
 	`;
 }
 
@@ -1927,7 +1957,12 @@ function renderExecutiveBrief() {
 										<span class="muted"><small>Time</small>${escapeHtml(item.time)}</span>
 										<span class="${/Blocked|Waiting/.test(item.status) ? 'blocked' : 'growth'}"><small>Status</small>${escapeHtml(item.status)}</span>
 									</div>
-									<div class="brief-unlocks compact"><span>Expected Result</span><b class="growth">${escapeHtml(item.owner)}</b><b class="stable">${escapeHtml(item.approvalStatus)}</b><b class="muted">${escapeHtml(item.dependencies)}</b></div>
+									<div class="brief-priority-result-grid">
+										<span><small>Expected Result</small>${escapeHtml(item.scoreLift)} / ${escapeHtml(item.visibility)}</span>
+										<span><small>Owner</small>${escapeHtml(item.owner)}</span>
+										<span><small>Approval</small>${escapeHtml(item.approvalStatus)}</span>
+										<span><small>Dependency</small>${escapeHtml(item.dependencies)}</span>
+									</div>
 									${confidenceIntelligenceHtml(data, item, index)}
 								</div>
 							</div>
