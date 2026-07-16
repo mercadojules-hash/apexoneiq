@@ -1254,10 +1254,10 @@ button[disabled],
 
 .executive-brief-document {
 	display: grid;
-	gap: 18px;
-	width: min(1180px, 100%);
-	margin: 18px auto 44px;
-	padding: 28px;
+	gap: 24px;
+	width: min(1320px, calc(100% - 32px));
+	margin: 24px auto 48px;
+	padding: 32px;
 	color: #162033;
 	border: 1px solid rgba(255, 255, 255, .24);
 	border-radius: 18px;
@@ -1316,8 +1316,8 @@ button[disabled],
 .brief-section {
 	display: grid;
 	grid-template-columns: 58px minmax(0, 1fr);
-	gap: 18px;
-	padding: 18px;
+	gap: 24px;
+	padding: 24px;
 	border: 1px solid rgba(22, 32, 51, .1);
 	border-radius: 14px;
 	background: #fff;
@@ -1509,7 +1509,7 @@ button[disabled],
 
 .brief-section-body {
 	display: grid;
-	gap: 14px;
+	gap: 16px;
 }
 
 .brief-section-copy {
@@ -1695,8 +1695,9 @@ button[disabled],
 }
 
 .brief-mission-os-grid {
-	grid-template-columns: 1.05fr 1.25fr .9fr;
+	grid-template-columns: minmax(220px, .95fr) minmax(360px, 1.35fr) minmax(260px, .9fr);
 	align-items: stretch;
+	gap: 16px;
 }
 
 .brief-mission-ring-card {
@@ -1771,6 +1772,7 @@ button[disabled],
 .brief-stage-ladder {
 	display: grid;
 	gap: 8px;
+	grid-auto-rows: minmax(44px, auto);
 }
 
 .brief-stage-ladder div {
@@ -1780,7 +1782,7 @@ button[disabled],
 	border-radius: 12px;
 	display: grid;
 	gap: 10px;
-	grid-template-columns: 18px minmax(0, 1fr) auto;
+	grid-template-columns: 18px minmax(0, 1fr) 128px;
 	padding: 10px 12px;
 }
 
@@ -1799,6 +1801,8 @@ button[disabled],
 .brief-stage-ladder strong {
 	color: #687386;
 	font-size: 12px;
+	text-align: right;
+	white-space: nowrap;
 }
 
 .brief-stage-ladder .complete i,
@@ -1839,6 +1843,11 @@ button[disabled],
 	padding: 13px;
 }
 
+.brief-executive-blocks div,
+.brief-risk-matrix div {
+	min-height: 86px;
+}
+
 .brief-executive-blocks span,
 .brief-risk-matrix span,
 .brief-activity-proof span {
@@ -1861,7 +1870,7 @@ button[disabled],
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
-	padding-top: 2px;
+	padding-top: 8px;
 }
 
 .brief-unlocks.compact { padding-top: 0; }
@@ -1875,7 +1884,20 @@ button[disabled],
 }
 
 .brief-priority-blocks span {
-	min-height: 0;
+	min-height: 66px;
+	height: 100%;
+	overflow-wrap: anywhere;
+}
+
+.brief-priority-result-grid {
+	display: grid;
+	gap: 10px;
+	grid-template-columns: 1.1fr .7fr 1fr 1fr;
+}
+
+.brief-priority-result-grid span {
+	min-height: 66px;
+	overflow-wrap: anywhere;
 }
 
 .brief-priority-blocks .stable,
@@ -1910,9 +1932,9 @@ button[disabled],
 
 .brief-confidence-intel {
 	display: grid;
-	grid-template-columns: 118px minmax(0, 1fr) auto;
-	gap: 10px;
-	padding: 12px;
+	grid-template-columns: 126px minmax(340px, 1fr) 116px;
+	gap: 16px;
+	padding: 16px;
 	border: 1px solid rgba(22, 32, 51, .1);
 	border-radius: 12px;
 	background: #fff;
@@ -1943,9 +1965,10 @@ button[disabled],
 
 .brief-confidence-intel small {
 	display: block;
-	margin-top: 6px;
+	margin-top: 8px;
 	color: #111827;
 	font-weight: 850;
+	line-height: 1.35;
 }
 
 .brief-confidence-intel small em {
@@ -2030,13 +2053,21 @@ button[disabled],
 }
 
 .brief-cone-chart,
-.brief-waterfall {
-	min-height: 190px;
+.brief-waterfall-svg {
+	min-height: 260px;
 	width: 100%;
+}
+
+.brief-cone-chart .cone-baseline {
+	fill: none;
+	stroke: rgba(100, 116, 139, .28);
+	stroke-width: 1;
 }
 
 .brief-cone-chart .cone-band {
 	fill: rgba(37, 99, 235, .12);
+	stroke: rgba(37, 99, 235, .26);
+	stroke-width: 1.5;
 }
 
 .brief-cone-chart .cone-line {
@@ -2060,38 +2091,43 @@ button[disabled],
 	font-weight: 950;
 }
 
-.brief-waterfall {
-	align-items: end;
-	display: grid;
-	gap: 12px;
-	grid-template-columns: repeat(5, minmax(0, 1fr));
-	padding-top: 18px;
-}
-
-.brief-waterfall div {
-	align-items: center;
-	display: grid;
-	gap: 7px;
-	justify-items: center;
-}
-
-.brief-waterfall span {
-	background: #2563eb;
-	border-radius: 8px 8px 3px 3px;
+.brief-waterfall-svg {
 	display: block;
-	width: 100%;
+	overflow: visible;
 }
 
-.brief-waterfall .historical span { background: #64748b; }
-.brief-waterfall .growth span { background: #14844a; }
-.brief-waterfall .opportunity span { background: #c2410c; }
-.brief-waterfall .total span { background: #111827; }
-.brief-waterfall strong { color: #111827; font-size: 22px; }
-.brief-waterfall small {
-	color: #687386;
+.waterfall-baseline {
+	fill: none;
+	stroke: rgba(100, 116, 139, .45);
+	stroke-width: 2;
+}
+
+.waterfall-connector {
+	fill: none;
+	stroke: rgba(17, 24, 39, .32);
+	stroke-dasharray: 5 5;
+	stroke-width: 2;
+}
+
+.waterfall-step rect { fill: #64748b; }
+.waterfall-step.trust rect { fill: #14844a; }
+.waterfall-step.ai rect { fill: #2563eb; }
+.waterfall-step.planned rect { fill: #d28a00; }
+.waterfall-step.subtotal rect { fill: #334155; }
+.waterfall-step.final rect { fill: #111827; }
+
+.waterfall-value {
+	fill: #111827;
+	font-size: 20px;
+	font-weight: 950;
+	text-anchor: middle;
+}
+
+.waterfall-label {
+	fill: #687386;
 	font-size: 10px;
 	font-weight: 950;
-	text-align: center;
+	text-anchor: middle;
 	text-transform: uppercase;
 }
 
@@ -2104,7 +2140,7 @@ button[disabled],
 
 .brief-ai-distribution div {
 	display: grid;
-	grid-template-columns: 160px 1fr 44px;
+	grid-template-columns: minmax(150px, 170px) minmax(180px, 1fr) 52px;
 	gap: 10px;
 	align-items: center;
 }
@@ -2132,6 +2168,7 @@ button[disabled],
 .brief-ai-distribution strong {
 	color: #111827;
 	font-size: 14px;
+	text-align: right;
 }
 
 .brief-competitors,
@@ -2241,6 +2278,16 @@ button[disabled],
 	font-size: 16px;
 }
 
+@media (max-width: 1380px) {
+	.brief-mission-os-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.brief-executive-blocks {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
 @media (max-width: 1080px) {
 	.brief-score-hero,
 	.brief-chart-pair,
@@ -2257,7 +2304,6 @@ button[disabled],
 		grid-template-columns: 34px minmax(0, 1fr);
 	}
 
-	.brief-priority span,
 	.brief-priority-main {
 		grid-column: 2;
 	}
@@ -2291,8 +2337,23 @@ button[disabled],
 	.brief-mission-meta,
 	.brief-ai-progress,
 	.brief-ai-distribution div,
-	.brief-waterfall {
+	.brief-priority-result-grid,
+	.brief-confidence-intel {
 		grid-template-columns: 1fr;
+	}
+
+	.brief-stage-ladder div {
+		grid-template-columns: 18px minmax(0, 1fr);
+	}
+
+	.brief-stage-ladder strong {
+		text-align: left;
+		white-space: normal;
+	}
+
+	.brief-waterfall-svg,
+	.brief-cone-chart {
+		min-height: 230px;
 	}
 
 	.brief-promise {
@@ -2332,8 +2393,69 @@ button[disabled],
 		border: 0;
 		border-radius: 0;
 		box-shadow: none;
-		gap: 10px;
-		font-size: 10px;
+		gap: 12px;
+		font-size: 10.5px;
+	}
+
+	.brief-section {
+		gap: 12px;
+		padding: 12px;
+	}
+
+	.brief-score-hero {
+		grid-template-columns: 1.05fr .8fr 1fr;
+	}
+
+	.brief-chart-pair {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.brief-mission-os-grid {
+		grid-template-columns: .85fr 1.15fr;
+	}
+
+	.brief-executive-blocks {
+		grid-column: 1 / -1;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+
+	.brief-health-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.brief-momentum-strip {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+
+	.brief-activity-proof {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.brief-priority-blocks {
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+	}
+
+	.brief-priority-result-grid {
+		grid-template-columns: 1.1fr .7fr 1fr 1fr;
+	}
+
+	.brief-score-hero,
+	.brief-chart-pair,
+	.brief-mission-os-grid,
+	.brief-health-grid,
+	.brief-momentum-strip,
+	.brief-activity-proof {
+		gap: 8px;
+	}
+
+	.brief-growth-score,
+	.brief-health-card,
+	.brief-opportunity-card,
+	.brief-chart-panel,
+	.brief-mission-card,
+	.brief-mission-ring-card,
+	.brief-priority {
+		padding: 12px;
 	}
 
 	.brief-title-row h1 {
@@ -2356,22 +2478,101 @@ button[disabled],
 	}
 
 	.brief-radar,
-	.brief-timeline-chart {
-		min-height: 190px;
+	.brief-timeline-chart,
+	.brief-cone-chart,
+	.brief-waterfall-svg {
+		min-height: 170px;
 	}
 
-	.brief-section,
+	.brief-priority {
+		gap: 8px;
+	}
+
+	.brief-priority-blocks,
+	.brief-priority-result-grid,
+	.brief-confidence-intel {
+		gap: 6px;
+	}
+
+	.brief-confidence-intel {
+		grid-template-columns: 92px minmax(0, 1fr) 90px;
+		padding: 8px;
+	}
+
+	.brief-confidence-gauge {
+		border-width: 5px;
+	}
+
+	.brief-confidence-gauge strong {
+		font-size: 18px;
+	}
+
+	.brief-confidence-intel small {
+		margin-top: 3px;
+		line-height: 1.18;
+	}
+
+	.brief-mission-ring-card {
+		padding: 8px;
+	}
+
+	.brief-mission-ring {
+		width: 96px;
+		height: 96px;
+	}
+
+	.brief-mission-ring-card strong {
+		font-size: 15px;
+		max-width: 210px;
+	}
+
+	.brief-stage-ladder {
+		gap: 5px;
+	}
+
+	.brief-stage-ladder div {
+		min-height: 32px;
+		padding: 6px 8px;
+	}
+
+	.brief-executive-blocks div,
+	.brief-risk-matrix div {
+		min-height: 54px;
+		padding: 8px;
+	}
+
+	.brief-executive-blocks strong,
+	.brief-risk-matrix strong,
+	.brief-activity-proof strong {
+		font-size: 18px;
+	}
+
 	.brief-growth-score,
 	.brief-health-card,
 	.brief-opportunity-card,
 	.brief-chart-panel,
 	.brief-mission-card,
+	.brief-mission-ring-card,
 	.brief-kpi-card,
 	.brief-priority,
+	.brief-confidence-intel,
+	.brief-stage-ladder div,
+	.brief-executive-blocks div,
+	.brief-risk-matrix div,
 	.brief-competitors div,
 	.brief-trust-grid div {
 		break-inside: avoid;
+		page-break-inside: avoid;
 		box-shadow: none;
+	}
+
+	.brief-chart-pair,
+	.brief-mission-os-grid,
+	.brief-priority-blocks,
+	.brief-priority-result-grid,
+	.brief-activity-proof {
+		break-inside: avoid;
+		page-break-inside: avoid;
 	}
 }
 
