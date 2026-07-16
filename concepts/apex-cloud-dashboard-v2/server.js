@@ -219,7 +219,7 @@ function handleGoogleOAuthStart(req, res, url) {
 		return;
 	}
 	const origin = publicOrigin(req, url);
-	const redirectUri = process.env.APEXONEIQ_GOOGLE_CALLBACK_URL || process.env.GOOGLE_CALLBACK_URL || `${origin}/oauth/google/callback/`;
+	const redirectUri = googleCallbackUrl(origin);
 	const redirectTo = safeRedirectPath(url.searchParams.get('redirect_to') || '/sign-in.html');
 	const state = crypto.randomBytes(24).toString('hex');
 	const statePayload = Buffer.from(JSON.stringify({ state, redirectTo })).toString('base64url');
@@ -293,6 +293,16 @@ function publicOrigin(req, url) {
 	if (configured) return configured.replace(/\/+$/, '');
 	const proto = req.headers['x-forwarded-proto'] || url.protocol.replace(':', '') || 'https';
 	return `${proto}://${req.headers.host}`;
+}
+
+function googleCallbackUrl(origin) {
+	const configured = process.env.APEXONEIQ_GOOGLE_CALLBACK_URL || process.env.GOOGLE_CALLBACK_URL || '';
+	const cleaned = configured.replace(/^(APEXONEIQ_GOOGLE_CALLBACK_URL|GOOGLE_CALLBACK_URL)=/i, '').trim();
+	const callback = new URL(cleaned || `${origin}/oauth/google/callback/`, origin);
+	callback.pathname = '/oauth/google/callback/';
+	callback.search = '';
+	callback.hash = '';
+	return callback.toString();
 }
 
 function safeRedirectPath(value) {
