@@ -1964,6 +1964,15 @@ button[disabled],
 	line-height: 1.45;
 }
 
+.free-summary-label {
+	margin: 18px 0 8px;
+	color: var(--cyan);
+	font-size: 10px;
+	font-weight: 950;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+}
+
 .free-brief-score,
 .growth-choice-promise {
 	display: grid;
