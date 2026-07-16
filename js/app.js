@@ -14,6 +14,7 @@ const apexHref = href => {
 
 	return `${apexRoot}${href}`;
 };
+const apexBrandLogoUrl = apexHref('assets/brand/apexoneiq-logo.png');
 const apexPageUrl = page => new URL(apexHref(page), window.location.origin).toString();
 document.body.classList.add(`route-${route.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`);
 if (apexDemoMode) document.body.classList.add('demo-mode');
@@ -292,7 +293,15 @@ if (apexDemoMode) {
 
 document.querySelectorAll('.brand strong').forEach(item => item.textContent = 'ApexOneIQ');
 document.querySelectorAll('.brand span').forEach(item => item.textContent = 'Executive Intelligence OS');
-document.querySelectorAll('.logo').forEach(item => item.textContent = 'IQ');
+document.querySelectorAll('.logo, .landing-logo').forEach(item => {
+	item.textContent = '';
+	item.classList.add('brand-logo-mark');
+	const image = document.createElement('img');
+	image.src = apexBrandLogoUrl;
+	image.alt = 'ApexOneIQ';
+	image.loading = 'eager';
+	item.appendChild(image);
+});
 document.querySelectorAll('.system-card .eyebrow').forEach(item => item.textContent = 'ApexOneIQ focus');
 document.querySelectorAll('.system-card p').forEach(item => item.textContent = 'The Executive Brief is the center of the ApexOneIQ customer experience.');
 document.querySelectorAll('.system-card .button').forEach(item => item.textContent = 'Open Executive Brief');
