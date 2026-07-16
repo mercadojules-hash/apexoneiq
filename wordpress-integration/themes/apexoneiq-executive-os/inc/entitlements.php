@@ -118,6 +118,7 @@ function apexoneiq_required_capability_for_page( $page ) {
 	$map = array(
 		'dashboard.html'                       => 'free_dashboard.access',
 		'executive-brief.html'                 => 'executive_brief.access',
+		'mission-workspace.html'               => 'executive_brief.access',
 		'opportunities.html'                   => 'action_center.access',
 		'ai-visibility.html'                   => 'ai.access',
 		'competitors.html'                     => 'competitors.access',
