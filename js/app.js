@@ -1477,6 +1477,82 @@ function buildExecutiveBriefData() {
 			status: 'Planned'
 		}
 	];
+	const missionStages = [
+		['Scanning', 'Completed', 'complete'],
+		['Research', 'Completed', 'complete'],
+		['Content Generated', primaryMission.executionMode === 'Customer Required' ? 'Prepared' : 'Completed', 'complete'],
+		['Validation', 'In Progress', 'active'],
+		['Waiting For Approval', primaryMission.executionMode === 'Approval Required' ? 'Pending' : 'Not Required', primaryMission.executionMode === 'Approval Required' ? 'pending' : 'muted'],
+		['Deployment', primaryMission.executionMode === 'Automatic' ? 'Queued' : 'Pending', 'pending'],
+		['Verification', 'Pending', 'pending']
+	];
+	const completedStages = missionStages.filter(([, , state]) => state === 'complete').length;
+	const missionProgress = clampScore((completedStages / missionStages.length) * 100 + (missionStages.some(([, , state]) => state === 'active') ? 8 : 0));
+	const confidenceDrivers = [
+		['Business profile incomplete', 'Trust source is not fully verified', 'risk'],
+		['Competitor trust advantage', 'Competitors show stronger proof density', 'warning'],
+		['Review velocity below market', 'Fresh review signal trails the local set', 'warning'],
+		['AI citation coverage low', 'AI systems need clearer sourceable proof', 'risk'],
+		['Historical success rate', 'Similar trust missions produced fast lift', 'growth']
+	];
+	const unlocks = [
+		['Local Pack', 'growth'],
+		['AI Visibility', 'growth'],
+		['Review Authority', 'stable'],
+		['Buyer Confidence', 'growth'],
+		['Service Area Proof', 'stable']
+	];
+	const activityTimeline = [
+		['08:01', 'Scan Started', '8 pages analyzed', 'complete'],
+		['08:02', 'Competitor Changes Detected', '2 competitors gained trust signals', 'warning'],
+		['08:03', 'Local SEO Score Updated', `Local SEO recalculated at ${drivers.localSeo}`, 'stable'],
+		['08:05', 'Generated FAQ Draft', '6 AI answer opportunities prepared', 'complete'],
+		['08:07', 'Built Schema Markup', 'Structured data opportunity generated', 'complete'],
+		['08:09', 'Forecast Recalculated', `Mission lift modeled at +${primaryMission.expectedForecast || 7} forecast points`, 'growth'],
+		['08:11', primaryMission.executionMode === 'Approval Required' ? 'Waiting for Approval' : 'Mission Ready', primaryMission.approvalStatus || primaryMission.status, primaryMission.executionMode === 'Approval Required' ? 'warning' : 'stable'],
+		['08:12', 'Executive Brief Generated', 'Mission queue reordered', 'complete']
+	];
+	const activityProof = [
+		['8', 'Pages Scanned', 'complete'],
+		['4', 'Competitor Changes', 'warning'],
+		['18', 'Internal Link Opportunities', 'stable'],
+		['6', 'AI Citation Improvements', 'growth'],
+		['2', 'Structured Data Opportunities', 'stable'],
+		['1', 'Mission Queue Reordered', 'complete']
+	];
+	const impactBlocks = [
+		['Revenue', `$${primaryMission.expectedRevenueImpact?.toLocaleString() || '3,200'}/mo`, 'growth'],
+		['Trust', `+${primaryMission.expectedTrust || 8}`, 'growth'],
+		['Visibility', `+${primaryMission.expectedVisibility || 6}%`, 'stable'],
+		['Lead Growth', `+${primaryMission.expectedLeads || opportunity.leads}/mo`, 'growth']
+	];
+	const riskBlocks = [
+		['Customer Effort', primaryMission.executionMode === 'Customer Required' ? 'Medium' : 'Low', primaryMission.executionMode === 'Customer Required' ? 'warning' : 'growth'],
+		['Dependency Risk', primaryMission.dependencies?.length ? 'Blocked' : 'Low', primaryMission.dependencies?.length ? 'blocked' : 'growth'],
+		['Opportunity Window', 'Open', 'opportunity'],
+		['Approval', primaryMission.executionMode === 'Approval Required' ? 'Needed' : 'Clear', primaryMission.executionMode === 'Approval Required' ? 'warning' : 'growth']
+	];
+	const intelligenceVisuals = {
+		forecastCone: [
+			['Current', score],
+			['After Mission', missionTarget],
+			['30 Day', projected],
+			['Goal', goal]
+		],
+		waterfall: [
+			['Baseline', score, 'historical'],
+			['Trust', primaryMission.expectedBusinessGrowthScore || 4, 'growth'],
+			['AI', 3, 'stable'],
+			['Forecast', 4, 'opportunity'],
+			['Projected', projected, 'total']
+		],
+		aiDistribution: [
+			['Citation Gaps', 34],
+			['FAQ Answers', 26],
+			['Schema', 18],
+			['Comparison Proof', 22]
+		]
+	};
 	return {
 		profile,
 		businessName,
@@ -1497,7 +1573,9 @@ function buildExecutiveBriefData() {
 			id: primaryMission.id,
 			title: primaryMission.title,
 			type: primaryMission.type,
-			progress: drivers.trustCoverage,
+			progress: missionProgress,
+			currentStage: 'Validation In Progress',
+			remainingSteps: missionStages.filter(([, , state]) => state === 'pending').length,
 			estimatedCompletion: primaryMission.estimatedTime || '7 days',
 			impact: `${primaryMission.businessImpact} Expected to create ${primaryMission.expectedLeads || opportunity.leads} new monthly lead opportunities and lift the Business Growth Score™ by ${primaryMission.expectedBusinessGrowthScore || 4} points.`,
 			currentScore: score,
@@ -1511,6 +1589,14 @@ function buildExecutiveBriefData() {
 			dependencies: primaryMission.dependencies || []
 		},
 		missionPlan,
+		missionStages,
+		confidenceDrivers,
+		unlocks,
+		activityTimeline,
+		activityProof,
+		impactBlocks,
+		riskBlocks,
+		intelligenceVisuals,
 		competitors: [
 			['You', score, drivers.trustCoverage, drivers.aiVisibility],
 			['Competitor A', clampScore(score + 8), clampScore(drivers.trustCoverage + 13), clampScore(drivers.aiVisibility + 6)],
@@ -1604,6 +1690,147 @@ function aiProgressSvg(data) {
 	`;
 }
 
+function missionRingSvg(data) {
+	const radius = 58;
+	const circumference = 2 * Math.PI * radius;
+	const offset = circumference - (data.mission.progress / 100) * circumference;
+	return `
+		<svg class="brief-mission-ring" viewBox="0 0 150 150" role="img" aria-label="Mission completion ${data.mission.progress}%">
+			<circle class="ring-track" cx="75" cy="75" r="${radius}"></circle>
+			<circle class="ring-progress" cx="75" cy="75" r="${radius}" stroke-dasharray="${circumference.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"></circle>
+			<text x="75" y="72">${data.mission.progress}%</text>
+			<text class="ring-label" x="75" y="94">Mission</text>
+		</svg>
+	`;
+}
+
+function missionOperatingSystemHtml(data) {
+	return `
+		<section class="brief-section brief-mission-os">
+			<div class="brief-section-number">03</div>
+			<div class="brief-section-body">
+				<div class="brief-section-head"><span>Mission Operating System</span><strong>Where Apex is inside today's work.</strong></div>
+				<div class="brief-mission-os-grid">
+					<div class="brief-mission-ring-card">
+						${missionRingSvg(data)}
+						<div>
+							<span>Today’s Mission</span>
+							<strong>${escapeHtml(data.mission.title)}</strong>
+							<small>${escapeHtml(data.mission.currentStage)} / ${data.mission.remainingSteps} steps remaining</small>
+						</div>
+					</div>
+					<div class="brief-stage-ladder">
+						${data.missionStages.map(([label, status, state]) => `
+							<div class="${escapeHtml(state)}"><i></i><span>${escapeHtml(label)}</span><strong>${escapeHtml(status)}</strong></div>
+						`).join('')}
+					</div>
+					<div class="brief-executive-blocks">
+						${data.impactBlocks.map(([label, value, state]) => `<div class="${escapeHtml(state)}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('')}
+					</div>
+				</div>
+				<div class="brief-unlocks">
+					<span>Unlocks</span>
+					${data.unlocks.map(([label, state]) => `<b class="${escapeHtml(state)}">✓ ${escapeHtml(label)}</b>`).join('')}
+				</div>
+			</div>
+		</section>
+	`;
+}
+
+function activityTimelineHtml(data) {
+	return `
+		<section class="brief-section brief-activity-section">
+			<div class="brief-section-number">04</div>
+			<div class="brief-section-body">
+				<div class="brief-section-head"><span>Apex Activity Timeline</span><strong>What Apex already did this morning.</strong></div>
+				<div class="brief-activity-proof">
+					${data.activityProof.map(([value, label, state]) => `<div class="${escapeHtml(state)}"><strong>${escapeHtml(value)}</strong><span>${escapeHtml(label)}</span></div>`).join('')}
+				</div>
+				<div class="brief-activity-timeline">
+					${data.activityTimeline.map(([time, title, note, state]) => `
+						<div class="${escapeHtml(state)}"><time>${escapeHtml(time)}</time><i></i><strong>${escapeHtml(title)}</strong><span>${escapeHtml(note)}</span></div>
+					`).join('')}
+				</div>
+			</div>
+		</section>
+	`;
+}
+
+function forecastConeSvg(data) {
+	const points = data.intelligenceVisuals.forecastCone;
+	const coords = points.map(([label, value], index) => {
+		const x = 74 + index * 176;
+		const y = 168 - (value / 100) * 112;
+		return { label, value, x, y };
+	});
+	const line = coords.map((point, index) => `${index ? 'L' : 'M'}${point.x} ${point.y}`).join(' ');
+	return `
+		<svg class="brief-cone-chart" viewBox="0 0 640 190" role="img" aria-label="Forecast confidence cone">
+			<path class="cone-band" d="M74 146 C210 106 344 78 602 42 L602 108 C360 138 206 154 74 170 Z"></path>
+			<path class="cone-line" d="${line}"></path>
+			${coords.map(point => `<g><circle cx="${point.x}" cy="${point.y}" r="6"></circle><text x="${point.x}" y="180">${escapeHtml(point.label)}</text><text class="value" x="${point.x}" y="${point.y - 14}">${point.value}</text></g>`).join('')}
+		</svg>
+	`;
+}
+
+function opportunityWaterfallHtml(data) {
+	const steps = data.intelligenceVisuals.waterfall;
+	return `
+		<div class="brief-waterfall" role="img" aria-label="Business score waterfall">
+			${steps.map(([label, value, state], index) => {
+				const height = index === 0 || state === 'total' ? Math.max(46, value) : Math.max(30, value * 12);
+				return `<div class="${escapeHtml(state)}"><span style="height:${height}px"></span><strong>${state === 'total' || index === 0 ? value : `+${value}`}</strong><small>${escapeHtml(label)}</small></div>`;
+			}).join('')}
+		</div>
+	`;
+}
+
+function confidenceIntelligenceHtml(data, item, index) {
+	const confidence = index === 0 ? data.mission.confidence : Math.max(72, (data.mission.confidence || 88) - index * 5);
+	const drivers = data.confidenceDrivers.slice(0, 4);
+	return `
+		<div class="brief-confidence-intel">
+			<div class="brief-confidence-gauge"><strong>${confidence}%</strong><span>Confidence</span></div>
+			<div>
+				<span>Confidence Drivers</span>
+				${drivers.map(([label, note, state]) => `<small class="${escapeHtml(state)}">${escapeHtml(label)} <em>${escapeHtml(note)}</em></small>`).join('')}
+			</div>
+			<div class="brief-expected-lift">
+				<b>${escapeHtml(item.scoreLift)}</b><b>${escapeHtml(item.visibility)}</b><b>${escapeHtml(item.time)}</b>
+			</div>
+		</div>
+	`;
+}
+
+function premiumVisualsHtml(data) {
+	return `
+		<section class="brief-chart-pair brief-intelligence-visuals">
+			<div class="brief-chart-panel">
+				<div class="brief-section-head"><span>Forecast Confidence Cone</span><strong>Current → mission → goal.</strong></div>
+				${forecastConeSvg(data)}
+			</div>
+			<div class="brief-chart-panel">
+				<div class="brief-section-head"><span>Opportunity Waterfall</span><strong>Which improvements move the score.</strong></div>
+				${opportunityWaterfallHtml(data)}
+			</div>
+		</section>
+		<section class="brief-chart-pair brief-intelligence-visuals">
+			<div class="brief-chart-panel">
+				<div class="brief-section-head"><span>Risk Matrix</span><strong>Status before reading.</strong></div>
+				<div class="brief-risk-matrix">
+					${data.riskBlocks.map(([label, value, state]) => `<div class="${escapeHtml(state)}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('')}
+				</div>
+			</div>
+			<div class="brief-chart-panel">
+				<div class="brief-section-head"><span>AI Recommendation Distribution</span><strong>Where visibility can improve.</strong></div>
+				<div class="brief-ai-distribution">
+					${data.intelligenceVisuals.aiDistribution.map(([label, value]) => `<div><span>${escapeHtml(label)}</span><i><b style="width:${value}%"></b></i><strong>${value}%</strong></div>`).join('')}
+				</div>
+			</div>
+		</section>
+	`;
+}
+
 function renderExecutiveBrief() {
 	if (route !== 'executive-brief.html') return;
 	const main = document.querySelector('.main');
@@ -1658,18 +1885,20 @@ function renderExecutiveBrief() {
 					</div>
 				</div>
 			</section>
+			${missionOperatingSystemHtml(data)}
+			${activityTimelineHtml(data)}
 			<section class="brief-section">
-				<div class="brief-section-number">03</div>
+				<div class="brief-section-number">05</div>
 				<div class="brief-section-body">
 					<div class="brief-section-head"><span>Executive Momentum</span><strong>Watch the business improve.</strong></div>
-					<p class="brief-section-copy">${escapeHtml(data.momentumStory)}</p>
+					<div class="brief-executive-signal"><b>${escapeHtml(data.momentumStory.split(':')[0])}</b><span>${escapeHtml(data.momentumStory.replace(`${data.momentumStory.split(':')[0]}: `, ''))}</span></div>
 					<div class="brief-momentum-strip">
 						${data.momentum.map(([label, value, note]) => `<div><span>${escapeHtml(label)}</span><strong>${value}</strong><small>${escapeHtml(note)}</small></div>`).join('')}
 					</div>
 				</div>
 			</section>
 			<section class="brief-section">
-				<div class="brief-section-number">04</div>
+				<div class="brief-section-number">06</div>
 				<div class="brief-section-body">
 					<div class="brief-section-head"><span>Executive Health</span><strong>One score, five drivers.</strong></div>
 					<div class="brief-health-grid">
@@ -1684,26 +1913,29 @@ function renderExecutiveBrief() {
 			<section class="brief-section">
 				<div class="brief-section-number">07</div>
 				<div class="brief-section-body">
-					<div class="brief-section-head"><span>Top Priorities</span><strong>Maximum five business actions.</strong></div>
+					<div class="brief-section-head"><span>Top Priorities</span><strong>Executive investment opportunities.</strong></div>
 					<div class="brief-priority-list">
 						${data.recommendations.map((item, index) => `
 							<div class="brief-priority">
 								<b>${index + 1}</b>
-								<div class="brief-priority-main"><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.why)}</p><em>${escapeHtml(item.impact)}</em></div>
-								<span><small>BGS Lift</small>${escapeHtml(item.scoreLift)}</span>
-								<span><small>Visibility</small>${escapeHtml(item.visibility)}</span>
-								<span><small>Expected ROI</small>${escapeHtml(item.roi)}</span>
-								<span><small>Effort</small>${escapeHtml(item.effort)}</span>
-								<span><small>Time</small>${escapeHtml(item.time)}</span>
-								<span><small>Owner</small>${escapeHtml(item.owner)}</span>
-								<span><small>Status</small>${escapeHtml(item.status)}</span>
-								<span><small>Approval</small>${escapeHtml(item.approvalStatus)}</span>
-								<span><small>Dependency</small>${escapeHtml(item.dependencies)}</span>
+								<div class="brief-priority-main">
+									<strong>${escapeHtml(item.title)}</strong>
+									<div class="brief-priority-blocks">
+										<span class="growth"><small>BGS Lift</small>${escapeHtml(item.scoreLift)}</span>
+										<span class="stable"><small>Visibility</small>${escapeHtml(item.visibility)}</span>
+										<span class="opportunity"><small>ROI</small>${escapeHtml(item.roi)}</span>
+										<span class="muted"><small>Time</small>${escapeHtml(item.time)}</span>
+										<span class="${/Blocked|Waiting/.test(item.status) ? 'blocked' : 'growth'}"><small>Status</small>${escapeHtml(item.status)}</span>
+									</div>
+									<div class="brief-unlocks compact"><span>Expected Result</span><b class="growth">${escapeHtml(item.owner)}</b><b class="stable">${escapeHtml(item.approvalStatus)}</b><b class="muted">${escapeHtml(item.dependencies)}</b></div>
+									${confidenceIntelligenceHtml(data, item, index)}
+								</div>
 							</div>
 						`).join('')}
 					</div>
 				</div>
 			</section>
+			${premiumVisualsHtml(data)}
 			<section class="brief-chart-pair">
 				<div class="brief-chart-panel">
 					<div class="brief-section-head"><span>Competitor Snapshot</span><strong>You vs market pressure.</strong></div>
@@ -1724,14 +1956,14 @@ function renderExecutiveBrief() {
 					${aiProgressSvg(data)}
 				</div>
 				<div class="brief-mission-card">
-					<span>Today’s Mission</span>
-					<strong>${escapeHtml(data.mission.title)}</strong>
+					<span>Approval Intelligence</span>
+					<strong>${escapeHtml(data.mission.executionMode)}</strong>
 					<div class="brief-mission-progress"><i><b style="width:${data.mission.progress}%"></b></i><em>${data.mission.progress}%</em></div>
-					<p>${escapeHtml(data.mission.impact)}</p>
+					<p>${escapeHtml(data.mission.impact.split('. ')[0])}.</p>
 					<div class="brief-mission-meta">
 						<div><small>Estimated Completion</small><b>${escapeHtml(data.mission.estimatedCompletion)}</b></div>
-						<div><small>Current Score</small><b>${data.mission.currentScore}</b></div>
-						<div><small>Target</small><b>${data.mission.targetScore}</b></div>
+						<div><small>Current Stage</small><b>${escapeHtml(data.mission.currentStage)}</b></div>
+						<div><small>Remaining</small><b>${data.mission.remainingSteps}</b></div>
 						<div><small>Owner</small><b>${escapeHtml(data.mission.owner)}</b></div>
 					</div>
 				</div>
@@ -1817,11 +2049,11 @@ function setupExecutiveDashboard() {
 					<button class="ghost-button" data-template="drawer-gbp">View Playbook</button>
 				</article>
 				<article class="live-feed-card" data-assemble-card style="--delay:2100ms">
-					<div class="panel-label">Activity Feed</div>
+					<div class="panel-label">Apex Activity Feed</div>
 					<div class="mini-timeline">
-						<button><span>Now</span><strong>Executive scan completed</strong><small>${escapeHtml(profile.website)}</small></button>
-						<button><span>Now</span><strong>Score baseline created</strong><small>${score}/100 ${escapeHtml(status)}</small></button>
-						<button><span>Next</span><strong>${escapeHtml(mission.title)}</strong><small>${escapeHtml(mission.owner)} owns the next step</small></button>
+						${briefData.activityProof.slice(0, 6).map(([value, label, state]) => `
+							<button><span>${escapeHtml(value)}</span><strong>${escapeHtml(label)}</strong><small>${escapeHtml(state === 'warning' ? 'Needs attention' : state === 'growth' ? 'Growth signal' : 'Completed intelligence')}</small></button>
+						`).join('')}
 					</div>
 				</article>
 			</section>
