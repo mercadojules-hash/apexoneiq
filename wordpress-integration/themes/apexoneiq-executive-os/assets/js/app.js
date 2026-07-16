@@ -1529,7 +1529,7 @@ function buildExecutiveBriefData() {
 	const riskBlocks = [
 		['Customer Effort', primaryMission.executionMode === 'Customer Required' ? 'Medium' : 'Low', primaryMission.executionMode === 'Customer Required' ? 'warning' : 'growth'],
 		['Dependency Risk', primaryMission.dependencies?.length ? 'Blocked' : 'Low', primaryMission.dependencies?.length ? 'blocked' : 'growth'],
-		['Opportunity Window', 'Open', 'opportunity'],
+		['Opportunity Window', 'Open — 7 Days', 'opportunity'],
 		['Approval', primaryMission.executionMode === 'Approval Required' ? 'Needed' : 'Clear', primaryMission.executionMode === 'Approval Required' ? 'warning' : 'growth']
 	];
 	const intelligenceVisuals = {
@@ -1540,12 +1540,12 @@ function buildExecutiveBriefData() {
 			['Goal', goal]
 		],
 		waterfall: [
-			['Current Score', score, 'baseline'],
-			['Trust Improvement', 4, 'trust'],
-			['AI Visibility Improvement', 3, 'ai'],
-			['Projected Score', score + 7, 'subtotal'],
-			['Additional Planned Lift', 6, 'planned'],
-			['30-Day Projection', score + 13, 'final']
+			['Current', score, 'baseline'],
+			['Trust', 4, 'trust'],
+			['AI', 3, 'ai'],
+			['Projected', score + 7, 'subtotal'],
+			['Planned', 6, 'planned'],
+			['30-Day', score + 13, 'final']
 		],
 		aiDistribution: [
 			['Citation Gaps', 34],
@@ -1815,15 +1815,65 @@ function opportunityWaterfallHtml(data) {
 	`;
 }
 
+function confidenceDriversFor(item) {
+	const title = String(item.title || '').toLowerCase();
+	if (title.includes('google business') || title.includes('trust coverage')) {
+		return [
+			['Profile verification incomplete', 'Primary business proof is not confirmed'],
+			['Missing source-of-truth business proof', 'AI systems need a verified entity anchor'],
+			['Competitors have verified local profiles', 'Trust advantage is visible in market comparisons'],
+			['High historical impact on local trust', 'Similar missions lift confidence quickly']
+		];
+	}
+	if (title.includes('faq')) {
+		return [
+			['Limited question-and-answer coverage', 'Buyer questions are not fully answered'],
+			['No clear sourceable answers detected', 'AI systems lack concise citation material'],
+			['Competitors provide stronger structured responses', 'Market answers are easier to reuse'],
+			['FAQ schema opportunity detected', 'Structured answer markup can be generated']
+		];
+	}
+	if (title.includes('internal link')) {
+		return [
+			['High-value service pages are isolated', 'Important pages receive weak discovery support'],
+			['Buyer-intent pages receive insufficient link equity', 'Conversion paths are harder to follow'],
+			['Multiple contextual link opportunities detected', 'Apex found relevant supporting pages'],
+			['Low implementation risk', 'Changes are contained and reversible']
+		];
+	}
+	if (title.includes('comparison')) {
+		return [
+			['Competitors have stronger comparison proof', 'Buyers can compare alternatives more easily'],
+			['No sourceable differentiation page detected', 'Apex needs a clear decision asset'],
+			['High-intent decision content is missing', 'Comparison searches can leak demand'],
+			['Approval required before publication', 'Strategic positioning needs customer signoff']
+		];
+	}
+	if (title.includes('speed') || title.includes('stability') || title.includes('performance')) {
+		return [
+			['Core performance weaknesses detected', 'Technical health is limiting conversion confidence'],
+			['High-value pages load below target', 'Buyer-intent traffic can experience friction'],
+			['Conversion friction affects buyer-intent traffic', 'Slow pages reduce action probability'],
+			['Technical implementation required', 'Apex can prepare but deployment needs execution access']
+		];
+	}
+	return [
+		['Mission-specific evidence detected', 'Apex found measurable business impact'],
+		['Dependency path is clear', 'No blocking prerequisite is preventing review'],
+		['Expected lift is modeled', 'Forecast moved after mission scoring'],
+		['Implementation effort is understood', 'Risk and time are bounded']
+	];
+}
+
 function confidenceIntelligenceHtml(data, item, index) {
 	const confidence = index === 0 ? data.mission.confidence : Math.max(72, (data.mission.confidence || 88) - index * 5);
-	const drivers = data.confidenceDrivers.slice(0, 4);
+	const drivers = confidenceDriversFor(item);
 	return `
 		<div class="brief-confidence-intel">
-			<div class="brief-confidence-gauge"><strong>${confidence}%</strong><span>Confidence</span></div>
+			<div class="brief-confidence-gauge"><div><strong class="confidence-value">${confidence}%</strong><span class="confidence-label">CONFIDENCE</span></div></div>
 			<div>
 				<span>Confidence Drivers</span>
-				${drivers.map(([label, note, state]) => `<small class="${escapeHtml(state)}">${escapeHtml(label)} <em>${escapeHtml(note)}</em></small>`).join('')}
+				${drivers.map(([label, note, state]) => `<small class="${escapeHtml(state || '')}">${escapeHtml(label)} <em>${escapeHtml(note)}</em></small>`).join('')}
 			</div>
 			<div class="brief-expected-lift">
 				<b>${escapeHtml(item.scoreLift)}</b><b>${escapeHtml(item.visibility)}</b><b>${escapeHtml(item.time)}</b>
