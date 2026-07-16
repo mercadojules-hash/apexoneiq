@@ -114,6 +114,109 @@ function scanScoreFor(website) {
 	return 54 + (seed % 18);
 }
 
+function calculateBusinessGrowthScore(components = {}) {
+	const weights = {
+		localSeo: .14,
+		websiteHealth: .16,
+		trustCoverage: .18,
+		aiVisibility: .14,
+		technicalHealth: .12,
+		authority: .1,
+		content: .1,
+		reputation: .06
+	};
+	return clampScore(Object.entries(weights).reduce((sum, [key, weight]) => sum + (Number(components[key]) || 0) * weight, 0));
+}
+
+function normalizeScanComponents(scanResult, fallbackScore = 0) {
+	const fallback = growthDriverScores(fallbackScore);
+	const components = scanResult?.components || {};
+	return {
+		localSeo: clampScore(components.localSeo ?? fallback.localSeo),
+		websiteHealth: clampScore(components.websiteHealth ?? fallback.websiteHealth),
+		trustCoverage: clampScore(components.trustCoverage ?? fallback.trustCoverage),
+		aiVisibility: clampScore(components.aiVisibility ?? fallback.aiVisibility),
+		technicalHealth: clampScore(components.technicalHealth ?? fallback.websiteHealth),
+		authority: clampScore(components.authority ?? fallback.contentAuthority),
+		content: clampScore(components.content ?? fallback.contentAuthority),
+		reputation: clampScore(components.reputation ?? fallback.trustCoverage)
+	};
+}
+
+function fallbackExecutiveScanResult(website, reason = 'Executive scan endpoint unavailable.') {
+	const domain = workspaceDomain(website) || 'submitted website';
+	const components = {
+		localSeo: 0,
+		websiteHealth: 0,
+		trustCoverage: 0,
+		aiVisibility: 0,
+		technicalHealth: 0,
+		authority: 0,
+		content: 0,
+		reputation: 0
+	};
+	return {
+		source: 'scan_unavailable',
+		simulated: false,
+		website,
+		domain,
+		scannedAt: new Date().toISOString(),
+		businessGrowthScore: 0,
+		components,
+		findings: {
+			website,
+			error: reason,
+			coreWebVitals: { status: 'Pending', note: 'Core Web Vitals require field data or Lighthouse collection.' },
+			trustCoverage: ['Google Business Profile', 'BBB', 'Apple Business Connect', 'Yelp', 'Facebook', 'Trustpilot', 'Industry directories'].map(name => ({ name, status: 'Pending', evidence: 'Pending live data.' }))
+		},
+		timeline: [['Now', 'Website scan unavailable', reason, 'warning']],
+		competitors: { status: 'processing', message: 'Competitor discovery still processing...', items: [] },
+		keywords: [],
+		forecast: { status: 'pending', message: 'Pending live data.' },
+		trend: [0],
+		scoreExplanation: Object.entries(components).map(([component, value]) => ({ component, value, source: 'Executive Scan' }))
+	};
+}
+
+async function runExecutiveScan(website) {
+	try {
+		const response = await fetch(`/api/executive-scan?website=${encodeURIComponent(website)}`, { headers: { Accept: 'application/json' } });
+		if (!response.ok) throw new Error(`Scan endpoint returned ${response.status}`);
+		const result = await response.json();
+		if (!result || typeof result !== 'object') throw new Error('Scan endpoint returned an invalid result.');
+		return result;
+	} catch (error) {
+		return fallbackExecutiveScanResult(website, error.message);
+	}
+}
+
+function scanResultForProfile(profile) {
+	if (profile?.scanResult?.components) return profile.scanResult;
+	if (!profile?.website || !profile?.scanCompleted) return fallbackExecutiveScanResult(profile?.website || '', 'No completed Executive Scan is available.');
+	const score = clampScore(profile.score || 0);
+	const components = normalizeScanComponents(null, score);
+	return {
+		source: 'legacy_profile',
+		simulated: false,
+		website: profile.website,
+		domain: workspaceDomain(profile.website),
+		scannedAt: profile.completedAt || profile.createdAt || new Date().toISOString(),
+		businessGrowthScore: calculateBusinessGrowthScore(components),
+		components,
+		findings: {
+			website: profile.website,
+			coreWebVitals: { status: 'Pending', note: 'Core Web Vitals require field data or Lighthouse collection.' },
+			trustCoverage: ['Google Business Profile', 'BBB', 'Apple Business Connect', 'Yelp', 'Facebook', 'Trustpilot', 'Industry directories'].map(name => ({ name, status: 'Pending', evidence: 'Pending live data.' }))
+		},
+		timeline: [['Now', 'Legacy scan profile loaded', 'Run a new Executive Scan to refresh measured evidence.', 'warning']],
+		competitors: { status: 'processing', message: 'Competitor discovery still processing...', items: [] },
+		keywords: [],
+		forecast: { status: 'pending', message: 'Pending live data.' },
+		trend: Array.isArray(profile.trend) ? profile.trend : [score],
+		scoreExplanation: Object.entries(components).map(([component, value]) => ({ component, value, source: 'Legacy scan profile' }))
+	};
+}
+
 function workspaceDomain(website) {
 	if (!website) return '';
 	try {
@@ -272,7 +375,7 @@ document.querySelectorAll('.nav-list, .free-workspace aside > .workspace-nav:fir
 
 if (apexDemoMode) {
 	document.querySelectorAll('.account').forEach(account => {
-		account.innerHTML = '<span class="status-pill status-ok">Demo Workspace</span><a class="ghost-button" href="/register/">Start Free</a>';
+		account.innerHTML = '<span class="status-pill status-ok">Preview Workspace</span><a class="ghost-button" href="/register/">Start Free</a>';
 	});
 	document.querySelectorAll('.site-card strong').forEach(item => item.textContent = 'Demo Business');
 	document.querySelectorAll('.avatar').forEach(item => item.textContent = 'DW');
@@ -286,7 +389,7 @@ if (apexDemoMode) {
 		const banner = document.createElement('section');
 		banner.className = 'demo-banner';
 		banner.dataset.demoBanner = '';
-		banner.innerHTML = '<strong>Demo Workspace</strong><span>Safe mock data only. Settings, billing, integrations, and account-management controls are hidden until sign-in.</span>';
+		banner.innerHTML = '<strong>Preview Workspace</strong><span>Preview context only. Settings, billing, integrations, and account-management controls are hidden until sign-in.</span>';
 		main.prepend(banner);
 	}
 }
@@ -439,33 +542,32 @@ if (drawer && !drawer.querySelector('[data-drawer-nav]')) {
 }
 
 const askResponses = {
-	'Why is my Business Trust only 68?': 'Business Trust is 68 because your relevance is improving faster than your local trust. Apex sees an incomplete Google Business Profile, thin service-area proof, and fewer trusted listings than the closest competitors. The fastest fix is completing the trust layer before publishing more broad content.',
-	'Why is Business Trust only 68?': 'Business Trust is 68 because your relevance is improving faster than your local proof. The profile trust layer, service-area proof, and trusted listings are still below the competitor band. Complete the Google Business Profile playbook first.',
-	'Why is Forecast Confidence 72%?': 'Forecast Confidence is 72% because the current trend is positive but action-dependent. Customer discovery and AI recommendations improved, but business trust is still limiting the Top 10 path. Completing recommendation #1 lifts the model to 78%; completing #1-3 lifts it to 87%.',
-	'Why is Northstar Legal outranking me?': 'Northstar Legal is ahead because it recently gained service-area proof and has stronger local proof signals. The gap is beatable: your AI recommendation presence is growing, and Apex recommends trust completion plus comparison content to counter their advantage.',
-	"Explain today's recommendation.": 'Today Apex recommends completing the Google Business Profile trust layer because it has the strongest combination of business impact, confidence, short completion time, low difficulty, projected AVI increase, revenue potential, and urgency.',
-	"Explain today's report.": 'Today’s report says the business is improving, but the next executive decision is still trust completion. Discovery and AI mentions are moving up; the constraint is whether buyers and recommendation engines have enough proof to choose you confidently.',
+	'Why is Business Trust the constraint?': 'Business Trust is calculated from the latest scan signals: third-party proof, reputation evidence, citation signals, and visible trust sources. Apex does not assign a trust explanation until those inputs exist.',
+	'Why is forecast confidence pending?': 'Forecast confidence remains pending until Apex has enough verified conversion, ranking, competitor, or historical outcome data to model revenue responsibly.',
+	'Why is this competitor gaining?': 'Competitor discovery uses ranking/search evidence when available. If Apex has not completed that discovery, competitor names remain pending instead of being fabricated.',
+	"Explain today's recommendation.": 'Today’s recommendation is selected from the shared scan and mission state. Apex ranks actions by measurable score impact, dependencies, evidence quality, and plan permissions.',
+	"Explain today's report.": 'Today’s report is generated from the latest Executive Scan, mission state, trust coverage, technical findings, keyword opportunities, and verified timeline events.',
 	'Why is this ranked #1?': 'This is ranked #1 because it has the strongest mix of business impact, confidence, speed, and dependency value. Completing it unlocks better results from the service-area page, trusted listings, and AI comparison content.',
 	'Why does ChatGPT say "Indirect"?': 'ChatGPT says "Indirect" because the business is being referenced through category or competitor context rather than as the direct recommended answer. Apex would improve this by strengthening trust proof first, then publishing comparison-ready content.',
-	'Compare me against Northstar.': 'Northstar is currently more dangerous on local proof and service-area specificity. You are improving faster in AI discovery, but Northstar still has the trust advantage. The right response is not panic; complete the trust layer, then add service-area proof.',
+	'Compare me against competitors.': 'Competitor comparison remains pending until Apex has verified search or ranking evidence. The Executive Brief will not fabricate competitor names.',
 	'Explain the largest issue.': 'The largest issue is not visibility volume; it is business trust. The business is discoverable enough to create opportunity, but incomplete proof is limiting conversion, AI recommendation stability, and forecast confidence.',
-	'What happens if I ignore this opportunity?': 'If you ignore it, Apex expects the momentum window to decay over seven days. The business may still improve, but forecast confidence drops because competitors can continue compounding trust while your business trust constraint remains unresolved.',
+	'What happens if I ignore this opportunity?': 'If you ignore it, Apex keeps the mission in monitoring and waits for the next scan. Forecast impact remains pending unless the platform has enough verified historical data.',
 	'Why are AI recommendations improving?': 'AI recommendations are improving because two comparison-style prompts now mention the business. Apex classifies this as early growth, not dominance. Publishing a comparison page can make the business a more stable answer source.',
 	'What does Google volatility mean?': 'Google volatility means market surfaces and AI recommendations are moving more than normal in your category. In this case it is not a crisis. It is an opportunity window because the market is fluid and Apex sees a low-effort trust action with high confidence.'
 };
 
 const routeAskDefaults = {
-	'dashboard.html': 'Why is Business Trust only 68?',
+	'dashboard.html': 'Why is Business Trust the constraint?',
 	'executive-brief.html': "Explain today's report.",
 	'opportunities.html': 'Why is this ranked #1?',
 	'mission-workspace.html': 'What has Apex already prepared?',
 	'ai-visibility.html': 'Why does ChatGPT say "Indirect"?',
-	'competitors.html': 'Compare me against Northstar.',
+	'competitors.html': 'Compare me against competitors.',
 	'history.html': 'Explain the latest market movement.',
 	'website-profile.html': 'Explain the largest issue.',
 	'monitoring-center.html': 'What business condition needs attention?',
 	'business-timeline.html': 'What did Apex learn from the timeline?',
-	'forecast.html': 'Why is Forecast Confidence 72%?',
+	'forecast.html': 'Why is forecast confidence pending?',
 	'reports.html': "Explain today's report.",
 	'alerts.html': 'Which alert deserves action?',
 	'settings.html': 'What setup issue affects growth today?',
@@ -490,17 +592,17 @@ const routeAskDefaults = {
 };
 
 const routeAskSuggestions = {
-	'dashboard.html': ['Why is Business Trust only 68?', "Explain today's recommendation.", 'What happens if I ignore this opportunity?'],
+	'dashboard.html': ['Why is Business Trust the constraint?', "Explain today's recommendation.", 'What happens if I ignore this opportunity?'],
 	'executive-brief.html': ["Explain today's report.", 'What should I do first?', 'What can wait?'],
 	'opportunities.html': ['Why is this ranked #1?', 'What unlocks after this?', 'What happens if I wait?'],
 	'mission-workspace.html': ['What is ready for approval?', 'What did Apex prepare?', 'What prevents execution?'],
 	'ai-visibility.html': ['Why does ChatGPT say "Indirect"?', 'Why are AI recommendations improving?', 'What improves AI discovery?'],
-	'competitors.html': ['Compare me against Northstar.', 'Who deserves immediate attention?', 'Which competitor can I ignore?'],
+	'competitors.html': ['Compare me against competitors.', 'Who deserves immediate attention?', 'Which competitor can I ignore?'],
 	'history.html': ['Explain the latest market movement.', 'What changed this week?', 'What should I do next?'],
 	'website-profile.html': ['Explain the largest issue.', 'Which connection matters most?', 'What should I fix first?'],
 	'monitoring-center.html': ['What business condition needs attention?', 'What can I ignore?', 'What changed risk today?'],
 	'business-timeline.html': ['What did Apex learn from the timeline?', 'Which decision changed?', 'What happens next?'],
-	'forecast.html': ['Why is Forecast Confidence 72%?', 'What changes the forecast?', 'What if I wait?'],
+	'forecast.html': ['Why is forecast confidence pending?', 'What changes the forecast?', 'What if I wait?'],
 	'reports.html': ["Explain today's report.", 'Prepare the board summary.', 'What decision should this report drive?'],
 	'alerts.html': ['Which alert deserves action?', 'What can be archived?', 'What should interrupt me?'],
 	'settings.html': ['What setup issue affects growth today?', 'Explain billing status.', 'What privacy setting matters?'],
@@ -528,28 +630,28 @@ renderAccountState();
 
 const simScenarios = {
 	current: {
-		forecast: '72%',
-		bar: '72%',
+		forecast: 'Pending',
+		bar: '0%',
 		timeline: 'Today',
-		leads: 'Baseline',
-		revenue: '$3,400/mo potential',
-		confidence: '72%'
+		leads: 'Pending',
+		revenue: 'Pending live data.',
+		confidence: 'Pending'
 	},
 	one: {
-		forecast: '78%',
-		bar: '78%',
-		timeline: '7 Days',
-		leads: '+9/mo',
-		revenue: '$4,700/mo potential',
-		confidence: '78%'
+		forecast: 'Pending',
+		bar: '0%',
+		timeline: 'After next scan',
+		leads: 'Pending',
+		revenue: 'Pending live data.',
+		confidence: 'Pending'
 	},
 	three: {
-		forecast: '87%',
-		bar: '87%',
-		timeline: '30 Days',
-		leads: '+23/mo',
-		revenue: '$7,900/mo potential',
-		confidence: '87%'
+		forecast: 'Pending',
+		bar: '0%',
+		timeline: 'After verified history',
+		leads: 'Pending',
+		revenue: 'Pending live data.',
+		confidence: 'Pending'
 	}
 };
 
@@ -564,7 +666,7 @@ function escapeHtml(value) {
 }
 
 const templateTitles = {
-	'drawer-authority': 'Why Business Trust is 68',
+	'drawer-authority': 'Why Business Trust Is Constrained',
 	'drawer-gbp': 'Complete Google Business Profile',
 	'drawer-chart': 'Why customer discovery increased',
 	'drawer-roadmap': 'Improvement roadmap',
@@ -773,10 +875,10 @@ function openPlaybook(templateId, trackHistory = true) {
 function responseFor(question) {
 	if (askResponses[question]) return askResponses[question];
 	const lower = question.toLowerCase();
-	if (lower.includes('northstar') || lower.includes('competitor')) return askResponses['Compare me against Northstar.'];
+	if (lower.includes('competitor')) return askResponses['Compare me against competitors.'];
 	if (lower.includes('chatgpt') || lower.includes('indirect')) return askResponses['Why does ChatGPT say "Indirect"?'];
-	if (lower.includes('forecast')) return askResponses['Why is Forecast Confidence 72%?'];
-	if (lower.includes('trust')) return askResponses['Why is Business Trust only 68?'];
+	if (lower.includes('forecast')) return askResponses['Why is forecast confidence pending?'];
+	if (lower.includes('trust')) return askResponses['Why is Business Trust the constraint?'];
 	if (lower.includes('report') || lower.includes('brief')) return askResponses["Explain today's report."];
 	if (lower.includes('rank') || lower.includes('#1') || lower.includes('order')) return askResponses['Why is this ranked #1?'];
 	if (lower.includes('issue') || lower.includes('health')) return askResponses['Explain the largest issue.'];
@@ -1062,12 +1164,13 @@ function setupExecutiveScan() {
 		scan.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
 		const host = new URL(website).hostname.replace(/^www\./, '');
+		const scanResultPromise = runExecutiveScan(website);
 		saveProfile({
 			businessName: window.ApexOneIQ?.businessName || host,
 			website,
 			email: window.ApexOneIQ?.businessEmail || getApexUser()?.email || '',
 			scanCompleted: false,
-			score: scanScoreFor(website),
+			score: 0,
 			createdAt: new Date().toISOString(),
 			dataMode: window.ApexOneIQ?.isLoggedIn ? 'wordpress-onboarding' : 'static-onboarding'
 		});
@@ -1092,21 +1195,26 @@ function setupExecutiveScan() {
 			}, 360 + index * 680);
 		});
 
-		setTimeout(() => {
+		setTimeout(async () => {
 			const profile = getStoredProfile();
+			const scanResult = await scanResultPromise;
+			const score = clampScore(scanResult.businessGrowthScore || calculateBusinessGrowthScore(scanResult.components || {}));
 			const completedProfile = saveProfile({
 				...profile,
 				scanCompleted: true,
 				completedAt: new Date().toISOString(),
-				trend: [12, 28, 41, 55, profile?.score || scanScoreFor(website)]
+				score,
+				scanResult,
+				trend: Array.isArray(scanResult.trend) && scanResult.trend.length ? scanResult.trend : [score]
 			});
 			const runtime = window.ApexMissionEngine?.orchestrateAIWorkforce?.({
 				profile: completedProfile,
-				businessGrowthScore: completedProfile.score,
+				businessGrowthScore: score,
+				executiveHealth: normalizeScanComponents(scanResult, score),
 				subscription: { plan: currentSubscriptionState().entitlementPlan || 'free' },
 				missionId: 'website-scan',
 				missionState: readStorage('apexoneiq_unified_mission_state', {}),
-				realAnalysis: false
+				realAnalysis: scanResult.source === 'live_scan'
 			});
 			if (runtime?.result?.updatedMissionState) {
 				writeStorage('apexoneiq_unified_mission_state', runtime.result.updatedMissionState);
@@ -1192,7 +1300,7 @@ function setupRegistrationForm() {
 				scanCompleted: false,
 				score: scanScoreFor(values.business_website),
 				createdAt: new Date().toISOString(),
-				dataMode: 'static-placeholder'
+				dataMode: 'pending_live_scan'
 			});
 		} catch (error) {
 			// Local storage is only used by the standalone concept.
@@ -1391,6 +1499,121 @@ function briefStatusFor(score) {
 	return 'Critical';
 }
 
+function recommendationEvidenceFromScan(item, scanResult, drivers) {
+	const title = String(item?.title || '').toLowerCase();
+	const findings = scanResult?.findings || {};
+	const trustItems = Array.isArray(findings.trustCoverage) ? findings.trustCoverage : [];
+	const missingTrust = trustItems.filter(source => source.status !== 'Found').slice(0, 2);
+	if (/trust|profile|citation|review|local/.test(title)) {
+		return [
+			`Trust Coverage ${clampScore(drivers.trustCoverage)}/100 from Executive Scan.`,
+			missingTrust.length ? `${missingTrust.map(source => `${source.name}: ${source.status}`).join(' / ')}` : 'Core trust sources detected.',
+			findings.reviewSignals?.status ? `Review signal: ${findings.reviewSignals.status}.` : 'Review signal pending.'
+		];
+	}
+	if (/faq|answer|schema|ai/.test(title)) {
+		return [
+			findings.faqDetected ? 'FAQ schema/content detected.' : 'FAQ schema not detected in JSON-LD.',
+			findings.schemaDetected ? `Schema detected: ${(findings.schemaTypes || []).join(', ')}.` : 'No JSON-LD schema detected.',
+			`AI Visibility ${clampScore(drivers.aiVisibility)}/100 from schema, content, and metadata inputs.`
+		];
+	}
+	if (/internal|link|page|content/.test(title)) {
+		return [
+			`${findings.internalLinks || 0} internal links detected during scan.`,
+			`${findings.wordCount || 0} words evaluated on the scanned page.`,
+			findings.h1 ? 'Primary H1 detected.' : 'Primary H1 not detected.'
+		];
+	}
+	return [
+		`Business Growth Score ${scanResult?.businessGrowthScore || 0}/100 from Executive Scan.`,
+		`Website Health ${clampScore(drivers.websiteHealth)}/100 and Technical Health ${clampScore(drivers.technicalHealth)}/100.`,
+		scanResult?.forecast?.message || 'Pending live data.'
+	];
+}
+
+function enrichRecommendationsWithScanEvidence(recommendations, scanResult, drivers) {
+	const actions = Array.isArray(scanResult?.executionActions) ? scanResult.executionActions : [];
+	return (recommendations || []).map((item, index) => ({
+		...item,
+		evidence: item.evidence || recommendationEvidenceFromScan(item, scanResult, drivers),
+		executionAction: executionActionForRecommendation(item, actions, index),
+		executionState: executionActionForRecommendation(item, actions, index)?.state || 'INFORMATION REQUIRED'
+	}));
+}
+
+function executionActionForRecommendation(item, actions, index = 0) {
+	if (!actions.length) return null;
+	const title = String(item?.title || '').toLowerCase();
+	const match = actions.find(action => {
+		const actionTitle = String(action.title || '').toLowerCase();
+		return title.includes('trust') && /google|apple|bbb|merchant|contact|nap|review/.test(actionTitle)
+			|| title.includes('schema') && /schema|json-ld/.test(actionTitle)
+			|| title.includes('faq') && /faq/.test(actionTitle)
+			|| title.includes('internal') && /link/.test(actionTitle)
+			|| title.includes('content') && /title|meta|content|breadcrumb/.test(actionTitle);
+	});
+	return match || actions[index % actions.length];
+}
+
+function scanConfidenceDrivers(scanResult, drivers) {
+	const findings = scanResult?.findings || {};
+	const missingTrust = (findings.trustCoverage || []).filter(item => item.status === 'Missing').length;
+	return [
+		[`Trust Coverage ${drivers.trustCoverage}/100`, missingTrust ? `${missingTrust} trust signals still missing.` : 'Core trust signals detected.', drivers.trustCoverage >= 70 ? 'growth' : 'warning'],
+		[`AI Visibility ${drivers.aiVisibility}/100`, findings.schemaDetected ? 'Schema proof detected.' : 'Structured data needs support.', drivers.aiVisibility >= 70 ? 'growth' : 'warning'],
+		[`Website Health ${drivers.websiteHealth}/100`, findings.statusCode ? `HTTP ${findings.statusCode} / ${findings.responseMs}ms response.` : 'Website response pending.', drivers.websiteHealth >= 70 ? 'growth' : 'warning'],
+		[`Reputation ${drivers.reputation}/100`, findings.reviewSignals?.status ? `Review signal: ${findings.reviewSignals.status}.` : 'Review data pending.', drivers.reputation >= 70 ? 'growth' : 'warning']
+	];
+}
+
+function liveIntelligenceVisuals(score, missionTarget, projected, goal, drivers, scanResult) {
+	const trustLift = Math.max(0, Math.min(10, Math.round((100 - drivers.trustCoverage) / 11)));
+	const aiLift = Math.max(0, Math.min(8, Math.round((100 - drivers.aiVisibility) / 14)));
+	const technicalLift = Math.max(0, Math.min(6, Math.round((100 - drivers.technicalHealth) / 18)));
+	const contentLift = Math.max(0, Math.min(6, Math.round((100 - drivers.content) / 18)));
+	const gapItems = [
+		['Trust Gaps', Math.max(0, 100 - drivers.trustCoverage)],
+		['AI Answer Gaps', Math.max(0, 100 - drivers.aiVisibility)],
+		['Technical Gaps', Math.max(0, 100 - drivers.technicalHealth)],
+		['Content Gaps', Math.max(0, 100 - drivers.content)]
+	];
+	const totalGap = gapItems.reduce((sum, [, value]) => sum + value, 0) || 1;
+	return {
+		forecastCone: [
+			['Current', score],
+			['After Mission', missionTarget],
+			['30 Day', projected],
+			['Goal', goal]
+		],
+		waterfall: [
+			['Current', score, 'baseline'],
+			['Trust', trustLift, 'trust'],
+			['AI', aiLift, 'ai'],
+			['Projected', clampScore(score + trustLift + aiLift), 'subtotal'],
+			['Technical', technicalLift + contentLift, 'planned'],
+			['30-Day', clampScore(score + trustLift + aiLift + technicalLift + contentLift), 'final']
+		],
+		aiDistribution: gapItems.map(([label, value]) => [label, clampScore((value / totalGap) * 100)]),
+		source: scanResult?.source || 'scan_unavailable'
+	};
+}
+
+function trustStateClass(state) {
+	const value = String(state || '').toLowerCase();
+	if (value === 'found' || value === 'strong' || value === 'connected') return 'connected';
+	if (value === 'weak') return 'weak';
+	return 'missing';
+}
+
+function executionStateClass(state) {
+	const value = String(state || '').toLowerCase();
+	if (value.includes('auto')) return 'auto';
+	if (value.includes('approval')) return 'approval';
+	if (value.includes('third')) return 'third-party';
+	return 'info-required';
+}
+
 function fallbackMissionPlan(context) {
 	const score = clampScore(context.businessGrowthScore || 66);
 	const drivers = context.executiveHealth || growthDriverScores(score);
@@ -1422,7 +1645,7 @@ function fallbackMissionPlan(context) {
 	const recommendation = {
 		title: mission.title,
 		why: mission.reason,
-		impact: `${mission.businessImpact} Expected outcome: +${mission.expectedBusinessGrowthScore} Business Growth Score™ points, +${mission.expectedVisibility}% visibility, and ${mission.expectedLeads} estimated new leads per month.`,
+		impact: `${mission.businessImpact} Expected score and visibility impact remain modeled until verified by a follow-up scan.`,
 		scoreLift: `+${mission.expectedBusinessGrowthScore} BGS`,
 		visibility: `+${mission.expectedVisibility}%`,
 		effort: mission.difficulty,
@@ -1469,7 +1692,7 @@ function fallbackMissionPlan(context) {
 			aiVisibility: { current: drivers.aiVisibility, change: '+6% projected' },
 			forecast: { current: clampScore(score + 6), change: '+5 projected' },
 			risksDetected: 'No critical planning risks detected.',
-			competitorMovement: 'Competitor pressure is stable today.',
+			competitorMovement: 'Pending live data.',
 			blockedItems: [],
 			approvalsNeeded: []
 		}
@@ -1477,10 +1700,12 @@ function fallbackMissionPlan(context) {
 }
 
 function missionContextForProfile(profile = getStoredProfile() || {}) {
-	const score = clampScore(profile.score || 66);
-	const drivers = growthDriverScores(score);
+	const scanResult = scanResultForProfile(profile);
+	const drivers = normalizeScanComponents(scanResult, profile.score || 0);
+	const score = clampScore(scanResult.businessGrowthScore || calculateBusinessGrowthScore(drivers));
 	return {
 		profile,
+		scanResult,
 		businessGrowthScore: score,
 		executiveHealth: drivers,
 		localSeo: drivers.localSeo,
@@ -1546,30 +1771,33 @@ function getMissionPlan() {
 }
 
 function buildExecutiveBriefData() {
-	const profile = getStoredProfile() || {
-		businessName: 'Your Business',
-		website: 'https://example.com',
-		score: 66,
-		scanCompleted: true,
-		completedAt: new Date().toISOString(),
-		trend: [58, 61, 64, 66]
+	const storedProfile = getStoredProfile();
+	const profile = storedProfile || {
+		businessName: 'No completed scan',
+		website: '',
+		score: 0,
+		scanCompleted: false,
+		completedAt: '',
+		trend: [0]
 	};
-	const baseScore = clampScore(profile.score || 66);
-	const baseDrivers = growthDriverScores(baseScore);
+	const scanResult = scanResultForProfile(profile);
+	const scanComponents = normalizeScanComponents(scanResult, profile.score || 0);
+	const baseScore = clampScore(scanResult.businessGrowthScore || calculateBusinessGrowthScore(scanComponents));
 	const unifiedState = getUnifiedMissionState(missionContextForProfile(profile));
-	const score = unifiedState.businessScore?.current || baseScore;
-	const scoreComponents = unifiedState.businessScore?.components || {};
+	const score = baseScore;
 	const drivers = {
-		...baseDrivers,
-		trustCoverage: scoreComponents.trust || baseDrivers.trustCoverage,
-		localSeo: scoreComponents.visibility || baseDrivers.localSeo,
-		contentAuthority: scoreComponents.authority || baseDrivers.contentAuthority,
-		websiteHealth: scoreComponents.website || baseDrivers.websiteHealth,
-		aiVisibility: scoreComponents.aiVisibility || baseDrivers.aiVisibility,
-		...scoreComponents
+		...scanComponents,
+		contentAuthority: scanComponents.content,
+		competitivePosition: scanComponents.localSeo
 	};
-	const projected = unifiedState.businessScore?.projected || clampScore(score + 13);
-	const goal = Math.max(90, projected + 8);
+	const improvementPotential = Math.max(0, Math.round([
+		drivers.trustCoverage,
+		drivers.aiVisibility,
+		drivers.content,
+		drivers.technicalHealth
+	].filter(value => value < 72).length * 2.5));
+	const projected = clampScore(score + improvementPotential);
+	const goal = clampScore(Math.max(projected, Math.min(90, score + Math.max(8, improvementPotential + 6))));
 	const health = businessHealth(score);
 	const missionPlan = unifiedState.missionPlan || getMissionPlan();
 	const fallbackPrimaryMission = fallbackMissionPlan({ businessGrowthScore: score, executiveHealth: drivers }).primaryMission;
@@ -1583,24 +1811,30 @@ function buildExecutiveBriefData() {
 	const domain = workspaceDomain(profile.website) || profile.businessName || 'your business';
 	const businessName = profile.businessName || domain;
 	const missionTarget = clampScore(score + (primaryMission.expectedBusinessGrowthScore || 8));
-	const trend = Array.isArray(profile.trend) && profile.trend.length ? profile.trend.map(clampScore) : [58, 61, 64, score];
+	const trend = Array.isArray(scanResult.trend) && scanResult.trend.length ? scanResult.trend.map(clampScore) : Array.isArray(profile.trend) && profile.trend.length ? profile.trend.map(clampScore) : [score];
 	const previousScore = trend.length > 1 ? trend[trend.length - 2] : Math.max(0, score - 5);
 	const scoreDelta = score - previousScore;
 	const momentumState = scoreDelta > 2 ? 'Accelerating' : scoreDelta < 0 ? 'Losing Ground' : 'Stagnating';
-	const confidence = clampScore((unifiedState.primaryMission?.confidence || 78) + Math.max(0, Math.min(8, scoreDelta)));
+	const measuredComponentCount = Object.values(scanComponents).filter(value => value > 0).length;
+	const confidence = clampScore(scanResult.source === 'live_scan' ? 58 + measuredComponentCount * 4 + (scanResult.findings?.schemaDetected ? 6 : 0) : 0);
 	const opportunity = {
-		monthly: Math.max(3400, (100 - score) * 210),
-		leads: Math.max(8, Math.round((100 - drivers.trustCoverage) / 4) + 1),
-		visibility: Math.max(11, projected - score + 5),
+		monthly: null,
+		monthlyLabel: scanResult.forecast?.message || 'Pending live data.',
+		leads: null,
+		leadsLabel: 'Pending',
+		visibility: Math.max(0, projected - score),
 		scoreIncrease: projected - score,
 		confidence
 	};
-	const summary = unifiedState.insights?.[0] || `${businessName} is showing demand potential, but ${primaryMission.reason.charAt(0).toLowerCase()}${primaryMission.reason.slice(1)} If nothing changes, competitors with stronger proof can keep capturing the highest-intent opportunities. Today’s highest-value mission is ${primaryMission.title.toLowerCase()}, projected to move the Business Growth Score™ from ${score} toward ${projected}.`;
-	const recommendations = missionPlan.recommendations?.length ? missionPlan.recommendations : [
+	const findingSummary = scanResult.source === 'live_scan'
+		? `${businessName} was scanned live at ${domain}. Apex calculated a ${score}/100 Business Growth Score™ from website health, trust coverage, AI visibility, technical health, authority, content, reputation, and local SEO signals. ${scanResult.forecast?.message || 'Pending live data.'}`
+		: `${businessName} does not have a completed live scan available. Run the Executive Growth Scan before using this brief for decisions.`;
+	const summary = findingSummary;
+	const rawRecommendations = missionPlan.recommendations?.length ? missionPlan.recommendations : [
 		{
 			title: 'Increase trust coverage across core business profiles',
 			why: 'Buyers and AI systems need stronger third-party proof before they can confidently choose the business.',
-			impact: `Projected to add ${opportunity.leads} qualified lead opportunities per month by making the business easier to trust.`,
+			impact: 'Projected business impact pending additional data; trust proof can still be validated from the scan.',
 			scoreLift: '+4 BGS',
 			visibility: '+8%',
 			effort: 'Low',
@@ -1668,6 +1902,7 @@ function buildExecutiveBriefData() {
 			status: 'Planned'
 		}
 	];
+	const recommendations = enrichRecommendationsWithScanEvidence(rawRecommendations, scanResult, drivers);
 	const missionStages = (unifiedState.primaryMission?.executionHistory || []).map(stage => [
 		stage.stage,
 		stage.status,
@@ -1685,13 +1920,7 @@ function buildExecutiveBriefData() {
 	const activeMissionStages = missionStages.length ? missionStages : fallbackMissionStages;
 	const completedStages = activeMissionStages.filter(([, , state]) => state === 'complete').length;
 	const missionProgress = clampScore((completedStages / activeMissionStages.length) * 100 + (activeMissionStages.some(([, , state]) => state === 'active') ? 8 : 0));
-	const confidenceDrivers = [
-		['Business profile incomplete', 'Trust source is not fully verified', 'risk'],
-		['Competitor trust advantage', 'Competitors show stronger proof density', 'warning'],
-		['Review velocity below market', 'Fresh review signal trails the local set', 'warning'],
-		['AI citation coverage low', 'AI systems need clearer sourceable proof', 'risk'],
-		['Historical success rate', 'Similar trust missions produced fast lift', 'growth']
-	];
+	const confidenceDrivers = scanConfidenceDrivers(scanResult, drivers);
 	const unlocks = [
 		['Local Pack', 'growth'],
 		['AI Visibility', 'growth'],
@@ -1699,58 +1928,32 @@ function buildExecutiveBriefData() {
 		['Buyer Confidence', 'growth'],
 		['Service Area Proof', 'stable']
 	];
-	const activityTimeline = Array.isArray(unifiedState.timeline) && unifiedState.timeline.length ? unifiedState.timeline : [
-		['08:01', 'Scan Started', '8 pages analyzed', 'complete'],
-		['08:02', 'Competitor Changes Detected', '2 competitors gained trust signals', 'warning'],
-		['08:03', 'Local SEO Score Updated', `Local SEO recalculated at ${drivers.localSeo}`, 'stable'],
-		['08:05', 'Generated FAQ Draft', '6 AI answer opportunities prepared', 'complete'],
-		['08:07', 'Built Schema Markup', 'Structured data opportunity generated', 'complete'],
-		['08:09', 'Forecast Recalculated', `Mission lift modeled at +${primaryMission.expectedForecast || 7} forecast points`, 'growth'],
-		['08:11', primaryMission.executionMode === 'Approval Required' ? 'Waiting for Approval' : 'Mission Ready', primaryMission.approvalStatus || primaryMission.status, primaryMission.executionMode === 'Approval Required' ? 'warning' : 'stable'],
-		['08:12', 'Executive Brief Generated', 'Mission queue reordered', 'complete']
+	const activityTimeline = Array.isArray(scanResult.timeline) && scanResult.timeline.length ? scanResult.timeline : [
+		['Now', 'Executive Scan pending', 'Run a scan to populate verified activity.', 'warning'],
+		['Now', 'Competitor discovery pending', 'No competitor names will be shown until ranking data is available.', 'stable'],
+		['Now', 'Forecast pending', 'Pending live data.', 'stable']
 	];
 	const activityProof = [
-		[String((unifiedState.missionRecords || []).length || 8), 'Missions Synced', 'complete'],
-		[String((unifiedState.notifications || []).length || 4), 'Executive Notices', 'warning'],
-		[String((unifiedState.timeline || []).length || 18), 'Timeline Events', 'stable'],
+		[String(activityTimeline.length), 'Scan Events', 'complete'],
+		[String(Object.values(scanComponents).filter(value => value > 0).length), 'Score Inputs', 'stable'],
+		[String(scanResult.findings?.trustCoverage?.filter(item => item.status === 'Found').length || 0), 'Trust Sources', scanResult.findings?.trustCoverage?.some(item => item.status === 'Found') ? 'growth' : 'warning'],
 		[String((unifiedState.approvalQueue || []).length || 0), 'Approvals Waiting', (unifiedState.approvalQueue || []).length ? 'warning' : 'growth'],
-		[String((unifiedState.memoryRecords || []).length || 0), 'Memory Records', 'stable'],
-		['1', 'Shared State Engine', 'complete']
+		[scanResult.findings?.schemaDetected ? 'Found' : 'Missing', 'Schema', scanResult.findings?.schemaDetected ? 'complete' : 'warning'],
+		[scanResult.source === 'live_scan' ? 'Live' : 'Pending', 'Data Source', scanResult.source === 'live_scan' ? 'complete' : 'warning']
 	];
 	const impactBlocks = [
-		['Revenue', `$${primaryMission.expectedRevenueImpact?.toLocaleString() || '3,200'}/mo`, 'growth'],
-		['Trust', `+${primaryMission.expectedTrust || 8}`, 'growth'],
-		['Visibility', `+${primaryMission.expectedVisibility || 6}%`, 'stable'],
-		['Lead Growth', `+${primaryMission.expectedLeads || opportunity.leads}/mo`, 'growth']
+		['Revenue', opportunity.monthlyLabel, 'muted'],
+		['Trust', `${drivers.trustCoverage}/100`, drivers.trustCoverage >= 70 ? 'growth' : 'warning'],
+		['Visibility', `+${opportunity.visibility}% modeled`, opportunity.visibility ? 'stable' : 'muted'],
+		['Lead Growth', opportunity.leadsLabel, 'muted']
 	];
 	const riskBlocks = [
 		['Customer Effort', primaryMission.executionMode === 'Customer Required' ? 'Medium' : 'Low', primaryMission.executionMode === 'Customer Required' ? 'warning' : 'growth'],
 		['Dependency Risk', primaryMission.dependencies?.length ? 'Blocked' : 'Low', primaryMission.dependencies?.length ? 'blocked' : 'growth'],
-		['Opportunity Window', 'Open — 7 Days', 'opportunity'],
+		['Opportunity Window', scanResult.source === 'live_scan' ? 'Pending' : 'Scan required', 'opportunity'],
 		['Approval', primaryMission.executionMode === 'Approval Required' ? 'Needed' : 'Clear', primaryMission.executionMode === 'Approval Required' ? 'warning' : 'growth']
 	];
-	const intelligenceVisuals = {
-		forecastCone: [
-			['Current', score],
-			['After Mission', missionTarget],
-			['30 Day', projected],
-			['Goal', goal]
-		],
-		waterfall: [
-			['Current', score, 'baseline'],
-			['Trust', 4, 'trust'],
-			['AI', 3, 'ai'],
-			['Projected', score + 7, 'subtotal'],
-			['Planned', 6, 'planned'],
-			['30-Day', score + 13, 'final']
-		],
-		aiDistribution: [
-			['Citation Gaps', 34],
-			['FAQ Answers', 26],
-			['Schema', 18],
-			['Comparison Proof', 22]
-		]
-	};
+	const intelligenceVisuals = liveIntelligenceVisuals(score, missionTarget, projected, goal, drivers, scanResult);
 	return {
 		profile,
 		businessName,
@@ -1775,7 +1978,7 @@ function buildExecutiveBriefData() {
 			currentStage: unifiedState.primaryMission?.currentExecutionStage || 'Validation In Progress',
 			remainingSteps: activeMissionStages.filter(([, , state]) => state === 'pending').length,
 			estimatedCompletion: primaryMission.estimatedTime || '7 days',
-			impact: `${primaryMission.businessImpact} Expected to create ${primaryMission.expectedLeads || opportunity.leads} new monthly lead opportunities and lift the Business Growth Score™ by ${primaryMission.expectedBusinessGrowthScore || 4} points.`,
+			impact: `${primaryMission.businessImpact} Expected Business Growth Score™ impact remains modeled until verified by a follow-up scan.`,
 			currentScore: score,
 			targetScore: missionTarget,
 			owner: primaryMission.owner || 'Customer',
@@ -1788,6 +1991,7 @@ function buildExecutiveBriefData() {
 		},
 		unifiedState,
 		notifications: unifiedState.notifications || [],
+		executionActions: Array.isArray(scanResult.executionActions) ? scanResult.executionActions : [],
 		timeline: unifiedState.timeline || activityTimeline,
 		memoryRecords: unifiedState.memoryRecords || [],
 		executiveReadiness: unifiedState.executiveReadiness || 'Ready',
@@ -1802,10 +2006,15 @@ function buildExecutiveBriefData() {
 		intelligenceVisuals,
 		competitors: [
 			['You', score, drivers.trustCoverage, drivers.aiVisibility],
-			['Competitor A', clampScore(score + 8), clampScore(drivers.trustCoverage + 13), clampScore(drivers.aiVisibility + 6)],
-			['Competitor B', clampScore(score + 3), clampScore(drivers.trustCoverage + 8), clampScore(drivers.aiVisibility + 3)],
-			['Competitor C', clampScore(score - 4), clampScore(drivers.trustCoverage - 2), clampScore(drivers.aiVisibility - 5)]
+			...((scanResult.competitors?.items || []).map(item => [
+				item.name,
+				clampScore(item.score),
+				clampScore(item.trust),
+				clampScore(item.aiVisibility)
+			]))
 		],
+		competitorStatus: scanResult.competitors?.message || 'Competitor discovery still processing...',
+		keywords: Array.isArray(scanResult.keywords) ? scanResult.keywords : [],
 		momentum: [
 			['Previous', previousScore, 'Prior baseline'],
 			['Current', score, 'Scan baseline'],
@@ -1813,16 +2022,7 @@ function buildExecutiveBriefData() {
 			['Goal', goal, 'Healthy target']
 		],
 		momentumStory: `${momentumState}: the score moved ${scoreDelta >= 0 ? '+' : ''}${scoreDelta} points since the prior baseline. The business is not blocked by demand; it is constrained by proof, so trust coverage is the lever most likely to convert momentum into measurable growth.`,
-		trust: [
-			['Google', 'connected'],
-			['GBP', drivers.trustCoverage >= 76 ? 'connected' : 'weak'],
-			['BBB', 'missing'],
-			['Yelp', drivers.trustCoverage >= 72 ? 'connected' : 'weak'],
-			['Trustpilot', 'missing'],
-			['Apple Business', 'missing'],
-			['Facebook', 'weak'],
-			['Industry Directories', drivers.trustCoverage >= 80 ? 'connected' : 'weak']
-		],
+		trust: scanResult.findings?.trustCoverage || [],
 		updatedAt: formatWorkspaceDate(profile.completedAt || profile.createdAt || new Date().toISOString())
 	};
 }
@@ -2163,9 +2363,9 @@ function renderExecutiveBrief() {
 				</div>
 				<div class="brief-opportunity-card">
 					<span>Estimated Business Opportunity</span>
-					<strong>$${data.opportunity.monthly.toLocaleString()}/mo</strong>
+					<strong>${data.opportunity.monthly ? `$${data.opportunity.monthly.toLocaleString()}/mo` : escapeHtml(data.opportunity.monthlyLabel)}</strong>
 					<div class="brief-opportunity-metrics">
-						<div><small>New Leads</small><b>${data.opportunity.leads}/mo</b></div>
+						<div><small>New Leads</small><b>${data.opportunity.leads ? `${data.opportunity.leads}/mo` : escapeHtml(data.opportunity.leadsLabel)}</b></div>
 						<div><small>Visibility</small><b>+${data.opportunity.visibility}%</b></div>
 						<div><small>BGS Increase</small><b>+${data.opportunity.scoreIncrease}</b></div>
 						<div><small>Confidence</small><b>${data.opportunity.confidence}%</b></div>
@@ -2220,6 +2420,14 @@ function renderExecutiveBrief() {
 										<span><small>Approval</small>${escapeHtml(item.approvalStatus)}</span>
 										<span><small>Dependency</small>${escapeHtml(item.dependencies)}</span>
 									</div>
+									<div class="brief-execution-state ${executionStateClass(item.executionState)}">
+										<span>${escapeHtml(item.executionState)}</span>
+										<small>${escapeHtml(item.executionAction?.nextStep || 'Pending live data.')}</small>
+									</div>
+									<div class="brief-evidence-list">
+										<span>Evidence</span>
+										${(item.evidence || []).slice(0, 3).map(evidence => `<small>${escapeHtml(evidence)}</small>`).join('')}
+									</div>
 									${confidenceIntelligenceHtml(data, item, index)}
 								</div>
 							</div>
@@ -2233,12 +2441,37 @@ function renderExecutiveBrief() {
 					<div class="brief-section-head"><span>Competitor Snapshot</span><strong>You vs market pressure.</strong></div>
 					<div class="brief-competitors">
 						${data.competitors.map(([name, competitorScore, trust, ai], index) => `<div class="${index === 0 ? 'you' : ''}"><strong>${escapeHtml(name)}</strong><span>Score ${competitorScore}</span><i><b style="width:${competitorScore}%"></b></i><small>Trust ${trust} / AI ${ai}</small></div>`).join('')}
+						${data.competitors.length < 2 ? `<div class="pending"><strong>${escapeHtml(data.competitorStatus)}</strong><span>Search/ranking data unavailable</span><i><b style="width:0%"></b></i><small>No competitor names fabricated</small></div>` : ''}
 					</div>
 				</div>
 				<div class="brief-chart-panel">
 					<div class="brief-section-head"><span>Trust Coverage</span><strong>Proof ecosystem.</strong></div>
 					<div class="brief-trust-grid">
-						${data.trust.map(([name, state]) => `<div class="${escapeHtml(state)}"><strong>${escapeHtml(name)}</strong><span>${escapeHtml(state)}</span></div>`).join('')}
+						${data.trust.map(item => `
+							<div class="${trustStateClass(item.status)}">
+								<strong>${escapeHtml(item.name)}</strong>
+								<span>${escapeHtml(item.status)}</span>
+								<small>${escapeHtml(item.evidence || item.why || 'Scan evidence pending.')}</small>
+								<em>${escapeHtml(item.impact || 'Impact pending.')} / ${escapeHtml(item.effort || 'Effort pending')}</em>
+							</div>
+						`).join('')}
+					</div>
+				</div>
+			</section>
+			<section class="brief-section">
+				<div class="brief-section-number">08</div>
+				<div class="brief-section-body">
+					<div class="brief-section-head"><span>Keyword Intelligence</span><strong>Growth opportunities from the scan.</strong></div>
+					<div class="brief-keyword-grid">
+						${data.keywords.length ? data.keywords.map(item => `
+							<div>
+								<strong>${escapeHtml(item.keyword)}</strong>
+								<span>Ranking: ${escapeHtml(item.currentRanking || 'Ranking data pending.')}</span>
+								<span>Opportunity: ${escapeHtml(item.opportunityLevel || 'Pending')}</span>
+								<small>${escapeHtml(item.projectedBusinessImpact || 'Projected business impact pending additional data.')}</small>
+								<em>${escapeHtml(item.estimatedVisibilityGain || 'Estimated visibility gain pending.')}</em>
+							</div>
+						`).join('') : '<p class="brief-pending-copy">Keyword discovery still processing...</p>'}
 					</div>
 				</div>
 			</section>
@@ -2319,7 +2552,7 @@ function setupExecutiveDashboard() {
 					<div class="panel-label">Business Growth Score™ Trend</div>
 					<h3>First scan baseline created.</h3>
 					${executiveBaselineSvg(trend, score)}
-					<p>The first scan is the baseline. Future scans add verified history from this point instead of showing a placeholder line.</p>
+					<p>The first scan is the baseline. Future scans add verified history from this point.</p>
 				</article>
 				<article class="live-opportunity-card" data-assemble-card style="--delay:1460ms">
 					<div class="panel-label">Opportunity Cards</div>
@@ -2489,7 +2722,7 @@ function renderMissionWorkspace() {
 		['Approvals Waiting', `${approvalWaiting}`, approvalWaiting ? 'approval' : 'clear'],
 		['Forecast', daily.forecast || 'Prepared', 'forecast'],
 		['Business Risk', daily.businessRisks || 'Approval delay can slow forecast movement.', 'risk'],
-		['Competitor Changes', daily.competitorChanges || 'No critical ranking shock detected.', 'competitor'],
+		['Competitor Changes', daily.competitorChanges || 'Pending live data.', 'competitor'],
 		['Current Status', missionRecord.currentExecutionStage || workspace.executionStatus || 'Prepared', 'status'],
 		['Executive Readiness', unified.executiveReadiness || 'Ready', statusClassForState(unified.executiveReadiness || 'Ready').replace('status-', '')],
 		['Time Saved', `${timeSaved} min`, 'time'],
