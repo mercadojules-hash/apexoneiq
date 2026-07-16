@@ -261,8 +261,9 @@ function apexoneiq_transform_static_html( $html ) {
 	}
 
 	$replacements = array(
-		'href="css/app.css"' => 'href="' . esc_url( $asset_uri . 'assets/css/app.css?ver=' . APEXONEIQ_THEME_VERSION ) . '"',
-		'src="js/app.js"'    => 'src="' . esc_url( $asset_uri . 'assets/js/app.js?ver=' . APEXONEIQ_THEME_VERSION ) . '"',
+		'href="css/app.css"'        => 'href="' . esc_url( $asset_uri . 'assets/css/app.css?ver=' . APEXONEIQ_THEME_VERSION ) . '"',
+		'src="js/mission-engine.js"' => 'src="' . esc_url( $asset_uri . 'assets/js/mission-engine.js?ver=' . APEXONEIQ_THEME_VERSION ) . '"',
+		'src="js/app.js"'           => 'src="' . esc_url( $asset_uri . 'assets/js/app.js?ver=' . APEXONEIQ_THEME_VERSION ) . '"',
 		'href="sign-in.html"' => 'href="' . esc_url( $auth_url ) . '"',
 		'href="/sign-in/"'   => 'href="' . esc_url( $auth_url ) . '"',
 		'href="/register/"'  => 'href="' . esc_url( $register_url ) . '"',
@@ -283,7 +284,11 @@ function apexoneiq_transform_static_html( $html ) {
 		$html
 	);
 
-	$app_script = '<script src="' . esc_url( $asset_uri . 'assets/js/app.js?ver=' . APEXONEIQ_THEME_VERSION ) . '"></script>';
+	$mission_script = '<script src="' . esc_url( $asset_uri . 'assets/js/mission-engine.js?ver=' . APEXONEIQ_THEME_VERSION ) . '"></script>';
+	$app_script     = '<script src="' . esc_url( $asset_uri . 'assets/js/app.js?ver=' . APEXONEIQ_THEME_VERSION ) . '"></script>';
+	if ( false === strpos( $html, $mission_script ) ) {
+		$html = str_replace( $app_script, $mission_script . $app_script, $html );
+	}
 	$config     = sprintf(
 		'<script>window.ApexOneIQ=%s;</script>',
 		wp_json_encode(

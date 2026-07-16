@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APEXONEIQ_THEME_VERSION', '0.4.0' );
+define( 'APEXONEIQ_THEME_VERSION', '0.5.0' );
 define( 'APEXONEIQ_THEME_DIR', trailingslashit( get_template_directory() ) );
 define( 'APEXONEIQ_THEME_URI', trailingslashit( get_template_directory_uri() ) );
 
@@ -63,9 +63,17 @@ function apexoneiq_enqueue_assets() {
 	);
 
 	wp_enqueue_script(
+		'apexoneiq-mission-engine',
+		APEXONEIQ_THEME_URI . 'assets/js/mission-engine.js',
+		array(),
+		APEXONEIQ_THEME_VERSION,
+		true
+	);
+
+	wp_enqueue_script(
 		'apexoneiq-app',
 		APEXONEIQ_THEME_URI . 'assets/js/app.js',
-		array(),
+		array( 'apexoneiq-mission-engine' ),
 		APEXONEIQ_THEME_VERSION,
 		true
 	);
