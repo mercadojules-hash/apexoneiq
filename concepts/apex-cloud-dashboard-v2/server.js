@@ -380,13 +380,16 @@ async function buildExecutiveScanResult(website) {
 	const description = metaContent(html, 'description');
 	const h1 = textBetween(html, /<h1[^>]*>([\s\S]*?)<\/h1>/i);
 	const bodyText = stripHtml(html);
+	const robots = await fetchOptionalText(`${origin}/robots.txt`);
+	const sitemap = await fetchOptionalText(`${origin}/sitemap.xml`);
+	if (isRestrictedScanResponse(response, title, bodyText, html)) {
+		return restrictedExecutiveScanResult(website, url, response.status, responseMs, title, robots, sitemap);
+	}
 	const wordCount = bodyText.split(/\s+/).filter(Boolean).length;
 	const links = extractLinks(html, origin);
 	const schemaAnalysis = schemaAnalysisFromHtml(html);
 	const schemaTypes = schemaAnalysis.types;
 	const trustCoverage = trustCoverageFromHtml(html, links.external, schemaTypes);
-	const robots = await fetchOptionalText(`${origin}/robots.txt`);
-	const sitemap = await fetchOptionalText(`${origin}/sitemap.xml`);
 	const brokenLinks = await brokenLinkSummary(links.internal);
 	const headingAnalysis = headingHierarchyFromHtml(html);
 	const imageAlt = imageAltCoverageFromHtml(html);
@@ -450,6 +453,108 @@ async function buildExecutiveScanResult(website) {
 		trend: [Math.max(0, businessGrowthScore - 9), Math.max(0, businessGrowthScore - 6), Math.max(0, businessGrowthScore - 3), businessGrowthScore],
 		scoreExplanation: scoreExplanation(components)
 	};
+}
+
+function isRestrictedScanResponse(response, title, bodyText, html) {
+	const status = Number(response?.status || 0);
+	const haystack = `${title || ''} ${bodyText || ''} ${html || ''}`.toLowerCase();
+	return [401, 403, 429].includes(status)
+		|| /\bjust a moment\b|\battention required\b|cf-browser-verification|cf-chl-|checking your browser|enable javascript and cookies/i.test(haystack);
+}
+
+function restrictedExecutiveScanResult(website, url, statusCode, responseMs, title, robots, sitemap) {
+	const components = {
+		localSeo: 0,
+		websiteHealth: 0,
+		trustCoverage: 0,
+		aiVisibility: 0,
+		technicalHealth: 0,
+		authority: 0,
+		content: 0,
+		reputation: 0
+	};
+	const trustCoverage = pendingTrustCoverage('Website access is awaiting verification because the live scan received a restricted response.');
+	const findings = {
+		website,
+		statusCode,
+		responseMs,
+		title,
+		description: '',
+		h1: '',
+		wordCount: 0,
+		internalLinks: 0,
+		externalLinks: 0,
+		checkedInternalLinks: 0,
+		brokenInternalLinks: 0,
+		schemaDetected: false,
+		schemaTypes: [],
+		schemaValidation: { status: 'Awaiting Verification', scriptCount: 0, invalidCount: 0, evidence: 'Website HTML could not be verified because the scan was restricted.' },
+		schemaCoverage: schemaCoverageFromTypes([]),
+		faqDetected: false,
+		robotsFound: Boolean(robots),
+		sitemapFound: Boolean(sitemap) || /sitemap\.xml/i.test(robots || ''),
+		canonical: { status: 'Awaiting Verification', evidence: 'Canonical verification pending website access.' },
+		openGraph: { status: 'Awaiting Verification', evidence: 'OpenGraph verification pending website access.' },
+		twitterCards: { status: 'Awaiting Verification', evidence: 'Twitter Card verification pending website access.' },
+		viewport: { status: 'Awaiting Verification', evidence: 'Viewport verification pending website access.' },
+		titleQuality: { status: 'Awaiting Verification', evidence: 'Title verification pending website access.' },
+		metaDescriptionQuality: { status: 'Awaiting Verification', evidence: 'Meta description verification pending website access.' },
+		headingHierarchy: { status: 'Awaiting Verification', h1Count: 0, count: 0, skippedLevels: false, evidence: 'Heading verification pending website access.' },
+		imageAltCoverage: { status: 'Awaiting Verification', total: 0, withAlt: 0, percent: 0, evidence: 'Image alt verification pending website access.' },
+		https: url.protocol === 'https:',
+		mobileFriendly: 'Awaiting Verification',
+		indexability: { status: 'Awaiting Verification', evidence: `HTTP ${statusCode} restricted full page verification.` },
+		crawlability: crawlabilitySignals(robots, sitemap, statusCode),
+		aiReadableContent: { status: 'Awaiting Verification', score: 0, evidence: 'AI readability verification pending website access.' },
+		reviewSignals: { status: 'Awaiting Verification', aggregateRating: false, pageMentions: false },
+		trustCoverage,
+		coreWebVitals: { status: 'Pending', note: 'Core Web Vitals require field data or Lighthouse collection.' },
+		indexing: { status: 'Awaiting Verification', evidence: `HTTP ${statusCode} restricted full page verification.` },
+		restrictedAccess: true
+	};
+	const executionActions = [{
+		title: 'Website Access Verification',
+		state: 'WAITING FOR THIRD PARTY',
+		category: 'Verification',
+		evidence: `The scan received HTTP ${statusCode}${title ? ` (${title})` : ''}; Apex did not score the restricted page as the business website.`,
+		nextStep: 'Allow Apex scan access or verify through the hosting/security provider, then rescan.',
+		canAutoFix: false,
+		requiresApproval: false,
+		thirdPartyBlocked: true,
+		informationRequired: false
+	}];
+	return {
+		source: 'awaiting_verification',
+		simulated: false,
+		requiresVerification: true,
+		website,
+		domain: url.hostname.replace(/^www\./, ''),
+		scannedAt: new Date().toISOString(),
+		businessGrowthScore: 0,
+		components,
+		findings,
+		executionActions,
+		timeline: [
+			['Now', 'Website scan restricted', `HTTP ${statusCode}; full evidence verification pending`, 'warning'],
+			['Now', 'Robots and sitemap checked', `${findings.robotsFound ? 'Robots found' : 'Robots pending'} / ${findings.sitemapFound ? 'sitemap found' : 'sitemap pending'}`, findings.robotsFound || findings.sitemapFound ? 'stable' : 'warning']
+		],
+		competitors: { status: 'processing', message: 'Competitor discovery still processing...', items: [] },
+		keywords: [],
+		forecast: { status: 'pending', message: 'Pending live data.' },
+		trend: [0],
+		scoreExplanation: scoreExplanation(components)
+	};
+}
+
+function pendingTrustCoverage(evidence) {
+	return ['Google Business Profile', 'Apple Business Connect', 'BBB', 'Yelp', 'Facebook', 'Instagram', 'LinkedIn', 'Pinterest', 'Trustpilot', 'Industry directories', 'Merchant Center', 'Knowledge Graph', 'Organization Schema', 'Review Schema', 'Author Information', 'Contact Consistency', 'NAP Consistency'].map(name => ({
+		name,
+		status: 'Awaiting Verification',
+		evidence,
+		why: 'Apex needs verified page or third-party evidence before scoring this signal.',
+		impact: 'Pending live data.',
+		effort: 'Pending'
+	}));
 }
 
 function fallbackExecutiveScanResult(website, reason) {

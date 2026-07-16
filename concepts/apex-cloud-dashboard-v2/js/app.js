@@ -217,6 +217,10 @@ function scanResultForProfile(profile) {
 	};
 }
 
+function isMeasuredLiveScan(scanResult) {
+	return scanResult?.source === 'live_scan' && !scanResult?.requiresVerification;
+}
+
 function workspaceDomain(website) {
 	if (!website) return '';
 	try {
@@ -1214,7 +1218,7 @@ function setupExecutiveScan() {
 				subscription: { plan: currentSubscriptionState().entitlementPlan || 'free' },
 				missionId: 'website-scan',
 				missionState: readStorage('apexoneiq_unified_mission_state', {}),
-				realAnalysis: scanResult.source === 'live_scan'
+				realAnalysis: isMeasuredLiveScan(scanResult)
 			});
 			if (runtime?.result?.updatedMissionState) {
 				writeStorage('apexoneiq_unified_mission_state', runtime.result.updatedMissionState);
@@ -1816,7 +1820,8 @@ function buildExecutiveBriefData() {
 	const scoreDelta = score - previousScore;
 	const momentumState = scoreDelta > 2 ? 'Accelerating' : scoreDelta < 0 ? 'Losing Ground' : 'Stagnating';
 	const measuredComponentCount = Object.values(scanComponents).filter(value => value > 0).length;
-	const confidence = clampScore(scanResult.source === 'live_scan' ? 58 + measuredComponentCount * 4 + (scanResult.findings?.schemaDetected ? 6 : 0) : 0);
+	const measuredLiveScan = isMeasuredLiveScan(scanResult);
+	const confidence = clampScore(measuredLiveScan ? 58 + measuredComponentCount * 4 + (scanResult.findings?.schemaDetected ? 6 : 0) : 0);
 	const opportunity = {
 		monthly: null,
 		monthlyLabel: scanResult.forecast?.message || 'Pending live data.',
@@ -1826,8 +1831,10 @@ function buildExecutiveBriefData() {
 		scoreIncrease: projected - score,
 		confidence
 	};
-	const findingSummary = scanResult.source === 'live_scan'
+	const findingSummary = measuredLiveScan
 		? `${businessName} was scanned live at ${domain}. Apex calculated a ${score}/100 Business Growth Score™ from website health, trust coverage, AI visibility, technical health, authority, content, reputation, and local SEO signals. ${scanResult.forecast?.message || 'Pending live data.'}`
+		: scanResult.requiresVerification
+			? `${businessName} requires scan verification before Apex can calculate a defensible Business Growth Score™. ${scanResult.executionActions?.[0]?.evidence || 'Pending live data.'}`
 		: `${businessName} does not have a completed live scan available. Run the Executive Growth Scan before using this brief for decisions.`;
 	const summary = findingSummary;
 	const rawRecommendations = missionPlan.recommendations?.length ? missionPlan.recommendations : [
@@ -1939,7 +1946,7 @@ function buildExecutiveBriefData() {
 		[String(scanResult.findings?.trustCoverage?.filter(item => item.status === 'Found').length || 0), 'Trust Sources', scanResult.findings?.trustCoverage?.some(item => item.status === 'Found') ? 'growth' : 'warning'],
 		[String((unifiedState.approvalQueue || []).length || 0), 'Approvals Waiting', (unifiedState.approvalQueue || []).length ? 'warning' : 'growth'],
 		[scanResult.findings?.schemaDetected ? 'Found' : 'Missing', 'Schema', scanResult.findings?.schemaDetected ? 'complete' : 'warning'],
-		[scanResult.source === 'live_scan' ? 'Live' : 'Pending', 'Data Source', scanResult.source === 'live_scan' ? 'complete' : 'warning']
+		[measuredLiveScan ? 'Live' : scanResult.requiresVerification ? 'Awaiting Verification' : 'Pending', 'Data Source', measuredLiveScan ? 'complete' : 'warning']
 	];
 	const impactBlocks = [
 		['Revenue', opportunity.monthlyLabel, 'muted'],
@@ -1950,7 +1957,7 @@ function buildExecutiveBriefData() {
 	const riskBlocks = [
 		['Customer Effort', primaryMission.executionMode === 'Customer Required' ? 'Medium' : 'Low', primaryMission.executionMode === 'Customer Required' ? 'warning' : 'growth'],
 		['Dependency Risk', primaryMission.dependencies?.length ? 'Blocked' : 'Low', primaryMission.dependencies?.length ? 'blocked' : 'growth'],
-		['Opportunity Window', scanResult.source === 'live_scan' ? 'Pending' : 'Scan required', 'opportunity'],
+		['Opportunity Window', measuredLiveScan ? 'Pending' : scanResult.requiresVerification ? 'Awaiting verification' : 'Scan required', 'opportunity'],
 		['Approval', primaryMission.executionMode === 'Approval Required' ? 'Needed' : 'Clear', primaryMission.executionMode === 'Approval Required' ? 'warning' : 'growth']
 	];
 	const intelligenceVisuals = liveIntelligenceVisuals(score, missionTarget, projected, goal, drivers, scanResult);
