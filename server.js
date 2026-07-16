@@ -230,6 +230,18 @@ function handleGoogleOAuthStart(req, res, url) {
 	authUrl.searchParams.set('scope', 'openid email profile');
 	authUrl.searchParams.set('state', statePayload);
 	authUrl.searchParams.set('prompt', 'select_account');
+	console.log('Google OAuth redirect debug');
+	console.log(`client_id=${clientId}`);
+	console.log(`redirect_uri=${redirectUri}`);
+	console.log(`scope=${authUrl.searchParams.get('scope')}`);
+	console.log(`response_type=${authUrl.searchParams.get('response_type')}`);
+	console.log(`access_type=${authUrl.searchParams.get('access_type') || ''}`);
+	console.log(`prompt=${authUrl.searchParams.get('prompt')}`);
+	console.log(`authorization_url=${authUrl.toString()}`);
+	console.log(`APP_URL=${maskEnvValue(process.env.APP_URL || '')}`);
+	console.log(`APEXONEIQ_APP_URL=${maskEnvValue(process.env.APEXONEIQ_APP_URL || '')}`);
+	console.log(`APEXONEIQ_GOOGLE_CALLBACK_URL=${maskEnvValue(process.env.APEXONEIQ_GOOGLE_CALLBACK_URL || '')}`);
+	console.log(`GOOGLE_CALLBACK_URL=${maskEnvValue(process.env.GOOGLE_CALLBACK_URL || '')}`);
 	res.writeHead(302, {
 		Location: authUrl.toString(),
 		'Set-Cookie': cookieHeader('apex_oauth_state', state, 600)
@@ -303,6 +315,13 @@ function googleCallbackUrl(origin) {
 	callback.search = '';
 	callback.hash = '';
 	return callback.toString();
+}
+
+function maskEnvValue(value) {
+	const text = String(value || '');
+	if (!text) return '';
+	if (text.length <= 4) return text;
+	return `${'*'.repeat(Math.max(0, text.length - 4))}${text.slice(-4)}`;
 }
 
 function safeRedirectPath(value) {
