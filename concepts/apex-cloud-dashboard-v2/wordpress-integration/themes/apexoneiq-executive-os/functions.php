@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APEXONEIQ_THEME_VERSION', '0.3.1' );
+define( 'APEXONEIQ_THEME_VERSION', '0.4.0' );
 define( 'APEXONEIQ_THEME_DIR', trailingslashit( get_template_directory() ) );
 define( 'APEXONEIQ_THEME_URI', trailingslashit( get_template_directory_uri() ) );
 
@@ -239,7 +239,7 @@ function apexoneiq_handle_onboarding_scan() {
 
 	wp_send_json_success(
 		array(
-			'dashboardUrl' => home_url( '/executive-brief.html?scan=complete' ),
+			'dashboardUrl' => home_url( '/free-dashboard.html?scan=complete' ),
 			'score'        => $score,
 		)
 	);

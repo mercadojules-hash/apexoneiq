@@ -19,13 +19,6 @@ function apexoneiq_render_static_page( $page ) {
 	$is_demo_request = apexoneiq_is_demo_request( $page );
 	$user_id = get_current_user_id();
 	$workspace_ready = $user_id ? apexoneiq_user_has_existing_workspace( $user_id ) : false;
-	if ( 'free-dashboard.html' === $page && ! $is_demo_request ) {
-		$destination = is_user_logged_in() && $workspace_ready
-			? home_url( '/executive-brief.html' )
-			: home_url( '/sign-in.html' );
-		wp_safe_redirect( $destination );
-		exit;
-	}
 	if ( ! $is_demo_request && is_user_logged_in() && 'sign-in.html' === $page && $workspace_ready ) {
 		wp_safe_redirect( home_url( '/executive-brief.html' ) );
 		exit;

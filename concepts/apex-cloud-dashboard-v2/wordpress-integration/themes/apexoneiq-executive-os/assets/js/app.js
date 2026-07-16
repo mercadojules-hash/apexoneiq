@@ -891,17 +891,17 @@ function setupExecutiveScan() {
 	}
 
 	const scanSteps = [
-		[9, 'Identifying Business...', 'Business Identified', 'Resolving the submitted website into a business identity and market context.'],
-		[18, 'Verifying DNS...', 'DNS Verification Complete', 'Checking domain resolution and technical reachability.'],
-		[27, 'Inspecting SSL...', 'SSL Inspection Complete', 'Confirming secure access and browser trust requirements.'],
-		[36, 'Analyzing Website Architecture...', 'Website Architecture Mapped', 'Reviewing page hierarchy, crawl readiness, metadata, and conversion structure.'],
-		[45, 'Reviewing Technical SEO...', 'Technical SEO Indexed', 'Checking indexability, titles, descriptions, headings, and structural signals.'],
-		[54, 'Locating Google Business Profile...', 'Business Profile Located', 'Matching local identity signals, categories, reviews, photos, and NAP consistency.'],
-		[63, 'Reading Reviews...', 'Review Layer Assessed', 'Measuring public proof, rating depth, recency, and buyer confidence.'],
-		[72, 'Testing Performance...', 'Performance Baseline Created', 'Estimating responsiveness, mobile confidence, and page experience signals.'],
-		[81, 'Scanning AI Visibility...', 'AI Visibility Indexed', 'Testing whether answer engines can understand and recommend the business.'],
-		[90, 'Checking Local Citations...', 'Local Citations Reviewed', 'Comparing directory consistency, trust references, and location proof.'],
-		[98, 'Scoring Opportunities...', 'Executive Snapshot Ready', 'Prioritizing business trust, search visibility, and the next executive action.']
+		[9, 'Identifying the business...', 'Business identity confirmed', 'Understanding the company, market, and customer decision context.'],
+		[18, 'Reading business health...', 'Business health baseline created', 'Measuring whether the business looks credible, findable, and ready to convert demand.'],
+		[27, 'Finding missed opportunity...', 'Opportunity window estimated', 'Estimating the upside available if the highest-value constraints improve.'],
+		[36, 'Reviewing trust coverage...', 'Trust coverage reviewed', 'Checking whether buyers and AI systems have enough proof to choose the business confidently.'],
+		[45, 'Comparing market position...', 'Competitive pressure mapped', 'Understanding where competitors look stronger and where the business can gain ground.'],
+		[54, 'Checking local authority...', 'Local authority scored', 'Reviewing the signals that help customers find and trust the business locally.'],
+		[63, 'Evaluating AI visibility...', 'AI visibility scored', 'Testing whether answer engines can understand and recommend the business.'],
+		[72, 'Estimating growth path...', 'Growth path modeled', 'Projecting current position, likely improvement, and the healthy target.'],
+		[81, 'Prioritizing next moves...', 'Top priorities selected', 'Ranking actions by business impact, visibility lift, effort, confidence, and ROI.'],
+		[90, 'Creating Business Growth Score™...', 'Business Growth Score™ ready', 'Combining growth health, trust, visibility, authority, and market pressure.'],
+		[98, 'Building Executive Brief™...', 'Executive Brief™ ready', 'Preparing the free Executive Brief with the first recommendation and growth path.']
 	];
 	let scanList = scan?.querySelector('[data-scan-systems]');
 	if (scan && !scanList) {
@@ -983,7 +983,7 @@ function setupExecutiveScan() {
 			});
 			status.textContent = 'Scan complete. Opening your Executive Brief...';
 			persistExecutiveScan(completedProfile).then(dashboardUrl => {
-				const nextUrl = new URL(dashboardUrl || apexHref('executive-brief.html'), window.location.origin);
+				const nextUrl = new URL(dashboardUrl || apexHref('free-dashboard.html'), window.location.origin);
 				nextUrl.searchParams.set('scan', 'complete');
 				window.location.assign(nextUrl.toString());
 			});
@@ -993,7 +993,7 @@ function setupExecutiveScan() {
 
 async function persistExecutiveScan(profile) {
 	if (!window.ApexOneIQ?.scanEndpoint || !window.ApexOneIQ?.scanNonce || !profile?.website) {
-		return apexHref('executive-brief.html');
+		return apexHref('free-dashboard.html');
 	}
 
 	try {
@@ -1016,7 +1016,7 @@ async function persistExecutiveScan(profile) {
 		// Local storage still supports the immediate dashboard; WordPress persistence is retried on the next scan.
 	}
 
-	return apexHref('executive-brief.html');
+	return apexHref('free-dashboard.html');
 }
 
 function setupRegistrationForm() {
@@ -1071,7 +1071,69 @@ function setupRegistrationForm() {
 }
 
 function applyFreeProfileSnapshot() {
-	return;
+	if (route !== 'free-dashboard.html') return;
+	const main = document.querySelector('.main');
+	if (!main) return;
+	const data = buildExecutiveBriefData();
+	const topThree = data.recommendations.slice(0, 3);
+	document.body.classList.add('free-executive-brief-v2');
+	main.innerHTML = `
+		<header class="topbar">
+			<div><span class="eyebrow"><span class="live-dot"></span>Free Executive Brief™ Ready</span></div>
+			<div class="account"><a class="ghost-button" href="${escapeHtml(apexHref('subscription.html'))}">Choose How To Grow</a><div class="avatar">IQ</div></div>
+		</header>
+		<section class="free-brief-hero">
+			<div>
+				<div class="page-kicker">Free Executive Brief™</div>
+				<h1>${escapeHtml(data.businessName)} has a clear growth constraint.</h1>
+				<p>${escapeHtml(data.summary)}</p>
+			</div>
+			<div class="free-brief-score">
+				<span>Business Growth Score™</span>
+				<strong>${data.score}</strong>
+				<small>${escapeHtml(data.health.label)} / ${data.confidence}% confidence</small>
+			</div>
+		</section>
+		<section class="free-brief-grid">
+			<article>
+				<span>Business Health</span>
+				<strong>${escapeHtml(data.health.label)}</strong>
+				<p>The business has enough demand signal to justify action, but trust proof is limiting confidence.</p>
+			</article>
+			<article>
+				<span>Estimated Business Opportunity</span>
+				<strong>$${data.opportunity.monthly.toLocaleString()}/mo</strong>
+				<p>${data.opportunity.leads} estimated new monthly lead opportunities if the first constraint improves.</p>
+			</article>
+			<article>
+				<span>Projected Visibility Improvement</span>
+				<strong>+${data.opportunity.visibility}%</strong>
+				<p>Modeled lift from completing the top three priorities.</p>
+			</article>
+		</section>
+		<section class="free-brief-chart-panel">
+			<div class="brief-section-head"><span>Business Growth Progress</span><strong>Current → projected → goal.</strong></div>
+			${businessTimelineSvg(data)}
+		</section>
+		<section class="free-brief-priorities">
+			<div class="brief-section-head"><span>Top Three Priorities</span><strong>The first growth moves.</strong></div>
+			${topThree.map((item, index) => `
+				<article>
+					<b>${index + 1}</b>
+					<div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.why)}</p></div>
+					<span>${escapeHtml(item.scoreLift)} / ${escapeHtml(item.visibility)} visibility</span>
+				</article>
+			`).join('')}
+		</section>
+		<section class="free-brief-recommendation">
+			<div>
+				<div class="page-kicker">Recommended Next Step</div>
+				<h2>${escapeHtml(data.recommendations[0].title)}</h2>
+				<p>${escapeHtml(data.recommendations[0].impact)} Apex can show the complete evidence, refresh the score, and turn this into a repeatable growth plan.</p>
+			</div>
+			<a class="button" href="${escapeHtml(apexHref('subscription.html'))}">Choose How You Want To Grow</a>
+		</section>
+	`;
 }
 
 function dashboardEmptyState(main, pageHead) {

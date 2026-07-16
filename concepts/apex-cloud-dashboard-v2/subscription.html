@@ -1,105 +1,65 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ApexOneIQ - Subscription Plans</title><link rel="stylesheet" href="css/app.css"></head>
-<body>
-	<div class="app subscription-workspace">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ApexOneIQ - Choose How You Want To Grow</title><link rel="stylesheet" href="css/app.css"></head>
+<body data-route="subscription.html">
+	<div class="app subscription-workspace growth-choice-workspace">
 		<aside class="sidebar">
-			<div class="brand"><div class="logo">IQ</div><div><strong>ApexOneIQ</strong><span>Subscription Architecture</span></div></div>
-			<div class="site-card"><span class="eyebrow"><span class="live-dot"></span>Growth path ready</span><strong>Free to Enterprise</strong><p>Choose where your business starts and where Apex should help it grow next.</p></div>
-			<div class="nav-section">Workspaces</div>
+			<div class="brand"><div class="logo">IQ</div><div><strong>ApexOneIQ</strong><span>AI Business Growth Platform</span></div></div>
+			<div class="site-card"><span class="eyebrow"><span class="live-dot"></span>Growth path ready</span><strong>Choose how to grow</strong><p>Start with clarity. Upgrade when you want more momentum.</p></div>
+			<div class="nav-section">Journey</div>
 			<nav class="workspace-nav">
-				<a class="nav-link" href="sign-in.html"><span>Executive Scan</span></a>
-				<a class="nav-link" href="dashboard.html?demo=1"><span>Cloud Intelligence</span></a>
-				<a class="nav-link" href="command-dashboard.html?demo=1"><span>Command Center</span></a>
-				<a class="nav-link" href="concierge-essentials-dashboard.html?demo=1"><span>Concierge Essentials</span></a>
-				<a class="nav-link" href="concierge-dashboard.html"><span>Concierge Growth</span></a>
-				<a class="nav-link" href="enterprise-dashboard.html"><span>Enterprise Ops</span></a>
-				<a class="nav-link active" href="subscription.html"><span>Plans</span></a>
+				<a class="nav-link" href="sign-in.html"><span>Executive Growth Scan™</span></a>
+				<a class="nav-link" href="free-dashboard.html"><span>Free Executive Brief™</span></a>
+				<a class="nav-link active" href="subscription.html"><span>Choose Growth Path</span></a>
 			</nav>
-			<div class="system-card"><span class="eyebrow">Pricing note</span><p>Software plans are billed monthly. Concierge plans include managed services within an agreed monthly scope.</p><a class="button" href="concierge-enrollment.html">Apply for Concierge</a></div>
+			<div class="system-card"><span class="eyebrow">Decision rule</span><p>Choose based on who should do the work: you, Apex with approval, Apex continuously, or your organization.</p><a class="button" href="free-dashboard.html">Review Free Brief</a></div>
 		</aside>
 		<main class="main">
-			<header class="topbar"><div><span class="eyebrow"><span class="live-dot"></span>Subscription guide</span></div><div class="account"><button class="ghost-button" data-ask="Which ApexOneIQ workspace should I preview first?">Ask Apex</button><span class="status-pill status-ok">Executive journey</span><div class="avatar">JM</div></div></header>
-			<section class="subscription-hero">
-				<div class="subscription-hero-copy">
-					<div class="page-kicker">ApexOneIQ Growth Path</div>
-					<h1>See where your business is today and choose the next operating level.</h1>
-					<p>Start with an executive snapshot, gain clarity in Cloud, turn strategy into execution with Command, or bring in the Apex team when you want managed growth support.</p>
+			<header class="topbar"><div><span class="eyebrow"><span class="live-dot"></span>Choose How You Want To Grow</span></div><div class="account"><a class="ghost-button" href="executive-brief.html">Preview Executive Brief</a><div class="avatar">IQ</div></div></header>
+			<section class="growth-choice-hero">
+				<div>
+					<div class="page-kicker">Choose How You Want To Grow</div>
+					<h1>Your Executive Brief™ shows what is wrong. Now choose who improves it.</h1>
+					<p>No SEO software maze. Pick the operating level that matches how much work you want ApexOneIQ to identify, guide, or perform.</p>
 				</div>
-				<div class="billing-toggle billing-selector" aria-label="Software billing toggle">
-					<div class="billing-selector-head">
-						<span>Software Billing</span>
-						<strong>Choose how Cloud and Command are billed</strong>
-					</div>
-					<div class="billing-options">
-						<button class="active" data-billing="monthly"><span>Monthly</span><strong>Flexible</strong></button>
-						<button data-billing="annual"><span>Annual</span><strong>2 months free</strong></button>
-					</div>
-					<div class="billing-savings"><span>Annual savings apply to software plans only.</span><strong>Cloud and Command update instantly.</strong></div>
-					<small>Concierge managed-service agreements are scoped separately with Apex before activation.</small>
+				<div class="growth-choice-promise">
+					<span>Customer promise</span>
+					<strong>Know What's Wrong. Watch It Get Better.</strong>
 				</div>
 			</section>
-
-			<section class="plan-progression journey-progression" aria-label="ApexOneIQ plan progression">
-				<div><span>Free</span><strong>Executive snapshot</strong></div>
-				<i></i><div><span>Cloud</span><strong>Executive clarity</strong></div>
-				<i></i><div><span>Command</span><strong>Strategy into execution</strong></div>
-				<i></i><div><span>Essentials</span><strong>Managed monthly support</strong></div>
-				<i></i><div class="recommended"><span>Growth</span><strong>Apex growth team</strong></div>
-				<i></i><div><span>Enterprise</span><strong>Organization-wide operations</strong></div>
-			</section>
-
-			<section class="plan-stack">
-				<article class="plan-row">
-					<div><span class="panel-label">Free</span><h2>See where your business stands.</h2><p>A lightweight executive scan for prospects who want to understand their current opportunity before choosing a workspace.</p></div>
-					<div class="plan-price"><strong>$0</strong><span>Executive snapshot</span></div>
-					<ul><li>Business Health Snapshot and Business Growth Score™ after scan completion</li><li>Top three opportunities and one recommended action</li><li>Recent activity and upgrade path to Executive Intelligence</li></ul>
-					<div class="plan-actions"><a class="button" href="/oauth/google/?redirect_to=/sign-in.html">Start Executive Scan</a><a class="ghost-button" href="dashboard.html?demo=1">Preview Dashboard</a></div>
+			<section class="growth-choice-grid">
+				<article>
+					<span>Executive Intelligence</span>
+					<h2>$199/month</h2>
+					<p>Perfect for businesses that want Apex to identify every opportunity while they complete the work themselves.</p>
+					<ul><li>Executive Brief™</li><li>Interactive Executive Brief</li><li>Executive PDF</li><li>24-hour refresh</li><li>Updated Business Growth Score™</li><li>Updated recommendations</li><li>Mark Complete</li><li>Re-scan</li></ul>
+					<div class="plan-actions"><button class="button" data-checkout-plan="cloud">Choose Executive Intelligence</button></div>
 				</article>
-				<article class="plan-row">
-					<div><span class="panel-label">Apex Cloud</span><h2>Gain executive clarity.</h2><p>Cloud explains what matters, why it matters, what to do next, and what business improvement is likely if the owner acts.</p></div>
-					<div class="plan-price"><strong data-software-price data-monthly="$79" data-annual="$790">$79</strong><span>/ month</span></div>
-					<ul><li>Business Health, Executive Brief, Action Center, Evidence Layer</li><li>AI Visibility, Competitor Intelligence, Business Pulse, Future Simulation</li><li>Ask Apex, Executive Memory, playbooks, reports</li></ul>
-					<div class="plan-actions"><button class="button" data-checkout-plan="cloud">Choose Cloud</button><a class="ghost-button" href="dashboard.html?demo=1">Preview Workspace</a></div>
+				<article class="recommended">
+					<span>Executive Autopilot</span>
+					<h2>$499/month</h2>
+					<p>Perfect for businesses that want Apex to perform the approved work.</p>
+					<ul><li>Everything in Executive Intelligence</li><li>Daily Executive Brief updates Monday-Friday</li><li>Approval workflow</li><li>Progress tracking</li><li>Business Growth Score™ improvement over time</li></ul>
+					<div class="plan-actions"><button class="button" data-checkout-plan="command">Choose Executive Autopilot</button></div>
 				</article>
-				<article class="plan-row">
-					<div><span class="panel-label">Apex Command</span><h2>Turn strategy into execution.</h2><p>Command gives owners an AI-assisted execution center for approved work, production tracking, approvals, and automation health.</p></div>
-					<div class="plan-price"><strong data-software-price data-monthly="$199" data-annual="$1,990">$199</strong><span>/ month</span></div>
-					<ul><li>Everything in Cloud, plus AI execution workspace</li><li>Agent Queue, Execute Now, Approval Center, Activity Feed</li><li>Automation health, production tracking, execution logs</li></ul>
-					<div class="plan-actions"><button class="button" data-checkout-plan="command">Choose Command</button><a class="ghost-button" href="command-dashboard.html?demo=1">Preview Workspace</a></div>
+				<article>
+					<span>Executive Growth Partner</span>
+					<h2>$999/month</h2>
+					<p>Apex becomes your AI Marketing Department.</p>
+					<ul><li>Continuous optimization</li><li>Strategic approvals only</li><li>Weekly Executive Brief</li><li>Monthly Growth Report</li><li>Continuous Business Growth Score™ improvements</li><li>Continuous monitoring</li></ul>
+					<div class="plan-actions"><button class="button" data-checkout-plan="growth">Choose Growth Partner</button></div>
 				</article>
-				<article class="plan-row">
-					<div><span class="panel-label">Concierge Essentials</span><h2>Get managed monthly support.</h2><p>Essentials is for one small business that wants Apex to handle a focused monthly optimization campaign without the daily cadence of Growth.</p></div>
-					<div class="plan-price"><strong>$499</strong><span>/ month managed service</span></div>
-					<ul><li>Assigned Apex specialist and monthly priority campaign</li><li>GBP maintenance, citation monitoring, and corrections</li><li>Monthly progress report, approvals, and email support</li></ul>
-					<div class="plan-actions"><button class="button" data-checkout-plan="essentials">Choose Essentials</button><a class="ghost-button" href="concierge-essentials-dashboard.html?demo=1">Preview Workspace</a></div>
-				</article>
-				<article class="plan-row concierge-plan">
-					<div><span class="panel-label">Recommended - Apex Growth Team</span><h2>Apex Concierge Growth</h2><p>Your Apex Growth Team delivers a prioritized monthly growth plan based on business impact, available capacity, and approved scope.</p></div>
-					<div class="plan-price"><strong>$999</strong><span>/ month managed service</span></div>
-					<ul><li>Done-for-you monthly execution and dedicated strategy</li><li>Assigned Apex team, approvals, client messaging, weekly progress briefs</li><li>GBP, local trust, citations, content, reviews, schema, competitor response, AI visibility</li></ul>
-					<div class="plan-actions"><button class="button" data-checkout-plan="growth">Apply for Growth</button></div>
-				</article>
-				<article class="plan-row enterprise-plan">
-					<div><span class="panel-label">Apex Enterprise</span><h2>Operate growth across organizations.</h2><p>Enterprise is for multi-location teams that need governance, regional intelligence, dedicated onboarding, and custom implementation across the organization.</p></div>
-					<div class="plan-price"><strong>Custom</strong><span>locations, teams, scope</span></div>
-					<ul><li>Organization hierarchy, regional performance, executive governance</li><li>Brand compliance, approvals, team roles, location rankings</li><li>Centralized Command operations, Enterprise Concierge options, priority service agreements</li></ul>
-					<div class="plan-actions"><a class="button" href="mailto:sales@apexoneiq.com?subject=ApexOneIQ%20Enterprise%20Inquiry">Contact Enterprise Sales</a></div>
+				<article>
+					<span>Executive Enterprise</span>
+					<h2>Starting at $2,500/month</h2>
+					<p>For agencies and multi-location organizations.</p>
+					<ul><li>Portfolio Executive Brief</li><li>Multi-location intelligence</li><li>Board reporting</li><li>Team permissions</li><li>White-label reporting</li><li>Executive Command Center</li></ul>
+					<div class="plan-actions"><a class="button" href="mailto:sales@apexoneiq.com?subject=ApexOneIQ%20Executive%20Enterprise">Contact Enterprise</a></div>
 				</article>
 			</section>
-
-			<section class="managed-comparison">
-				<div class="panel-head"><div><div class="panel-label">Concierge Tier Detail</div><h3>Compare managed-service cadence, scope, and support level.</h3></div><button class="ghost-button" data-toggle-section="concierge-tiers">Compare Concierge tiers</button></div>
-				<div class="concierge-tier-grid" id="concierge-tiers">
-					<div><span>Essentials</span><strong>$499/mo</strong><p>For one small business with limited monthly needs.</p><ul><li>Core monthly optimization</li><li>GBP maintenance</li><li>Citation monitoring and corrections</li><li>One monthly priority campaign</li><li>Monthly report and email support</li></ul><button class="ghost-button" data-checkout-plan="essentials">Choose Essentials</button></div>
-					<div class="recommended"><span>Growth</span><strong>$999/mo</strong><p>Recommended flagship plan for consistent execution and reporting.</p><ul><li>Weekly prioritized execution</li><li>Dedicated growth roadmap</li><li>Content, GBP, citations, reviews, schema, local visibility</li><li>Assigned Apex team and priority messaging</li><li>Monthly strategy meeting and ROI reporting</li></ul><button class="button" data-checkout-plan="growth">Choose Growth</button></div>
-					<div><span>Elite</span><strong>$2,500+</strong><p>For high-value or multi-location organizations with custom service needs.</p><ul><li>Advanced strategy and dedicated specialists</li><li>Higher monthly execution capacity</li><li>Multi-location support</li><li>Weekly executive strategy meetings</li><li>Custom reports and service agreement</li></ul><a class="ghost-button" href="mailto:sales@apexoneiq.com?subject=ApexOneIQ%20Custom%20Plan%20Request">Request Custom Plan</a></div>
-				</div>
-			</section>
-
-			<section class="pricing-note">
-				<strong>Responsible pricing note</strong>
-				<p>Software plans are billed monthly. Concierge plans include managed services within an agreed monthly scope. Enterprise and Elite pricing depend on locations, complexity, and service requirements. Estimated impact and modeled opportunity vary by market, competition, business condition, and implementation.</p>
+			<section class="growth-choice-note">
+				<strong>Simple rule</strong>
+				<p>If you want to do the work yourself, choose Executive Intelligence. If you want Apex to do approved work, choose Executive Autopilot. If you want Apex to continuously improve the business, choose Executive Growth Partner. If you manage many locations or clients, choose Enterprise.</p>
 			</section>
 		</main>
 	</div>
