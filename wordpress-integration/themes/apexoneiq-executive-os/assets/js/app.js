@@ -1213,21 +1213,34 @@ function buildExecutiveBriefData() {
 	const health = businessHealth(score);
 	const domain = workspaceDomain(profile.website) || profile.businessName || 'your business';
 	const businessName = profile.businessName || domain;
-	const opportunity = Math.max(3400, (100 - score) * 210);
 	const missionTarget = clampScore(score + 8);
 	const trend = Array.isArray(profile.trend) && profile.trend.length ? profile.trend.map(clampScore) : [58, 61, 64, score];
-	const summary = `${businessName} is currently constrained by trust coverage and incomplete local authority. Completing the top three priorities is projected to increase the Business Growth Score™ from ${score} to ${projected} over the next 30 days while improving AI Visibility and Local SEO. Today's Mission is to increase trust coverage so future recommendations become easier to earn and verify.`;
+	const previousScore = trend.length > 1 ? trend[trend.length - 2] : Math.max(0, score - 5);
+	const scoreDelta = score - previousScore;
+	const momentumState = scoreDelta > 2 ? 'Accelerating' : scoreDelta < 0 ? 'Losing Ground' : 'Stagnating';
+	const confidence = clampScore(78 + Math.max(0, Math.min(12, scoreDelta * 2)));
+	const opportunity = {
+		monthly: Math.max(3400, (100 - score) * 210),
+		leads: Math.max(8, Math.round((100 - drivers.trustCoverage) / 4) + 1),
+		visibility: Math.max(11, projected - score + 5),
+		scoreIncrease: projected - score,
+		confidence
+	};
+	const summary = `${businessName} is showing demand potential, but weak trust coverage is limiting how confidently customers and AI systems can choose it. If nothing changes, competitors with stronger proof can keep capturing the highest-intent opportunities; the single highest-value move is to strengthen trust coverage first. Complete today’s mission to move the Business Growth Score™ from ${score} toward ${projected} and make every future recommendation easier to validate.`;
 	const recommendations = [
 		{
 			title: 'Increase trust coverage across core business profiles',
 			why: 'Buyers and AI systems need stronger third-party proof before they can confidently choose the business.',
-			impact: `Projected to add ${Math.max(6, Math.round((100 - drivers.trustCoverage) / 4))} qualified lead opportunities per month.`,
+			impact: `Projected to add ${opportunity.leads} qualified lead opportunities per month by making the business easier to trust.`,
 			scoreLift: '+4 BGS',
 			visibility: '+8%',
+			effort: 'Low',
 			time: '7 days',
-			difficulty: 'Low',
 			owner: 'Customer',
-			roi: 'High'
+			roi: 'High',
+			approvalStatus: 'Ready for approval',
+			dependencies: 'Business profile access',
+			status: 'Recommended'
 		},
 		{
 			title: 'Clarify service-area authority with one proof-focused page',
@@ -1235,10 +1248,13 @@ function buildExecutiveBriefData() {
 			impact: 'Projected to improve local discovery and reduce competitor leakage.',
 			scoreLift: '+3 BGS',
 			visibility: '+6%',
+			effort: 'Medium',
 			time: '10 days',
-			difficulty: 'Medium',
 			owner: 'Customer',
-			roi: 'High'
+			roi: 'High',
+			approvalStatus: 'Queued after trust work',
+			dependencies: 'Trust coverage priority',
+			status: 'Next'
 		},
 		{
 			title: 'Answer buyer questions in a structured format',
@@ -1246,10 +1262,13 @@ function buildExecutiveBriefData() {
 			impact: 'Projected to improve AI recommendation readiness and answer coverage.',
 			scoreLift: '+3 BGS',
 			visibility: '+8%',
+			effort: 'Low',
 			time: '5 days',
-			difficulty: 'Low',
 			owner: 'Customer',
-			roi: 'Medium'
+			roi: 'Medium',
+			approvalStatus: 'Ready after source proof',
+			dependencies: 'Service and FAQ inputs',
+			status: 'Planned'
 		},
 		{
 			title: 'Strengthen review authority and recency',
@@ -1257,10 +1276,13 @@ function buildExecutiveBriefData() {
 			impact: 'Projected to increase confidence in high-intent local searches.',
 			scoreLift: '+2 BGS',
 			visibility: '+4%',
+			effort: 'Medium',
 			time: '14 days',
-			difficulty: 'Medium',
 			owner: 'Customer',
-			roi: 'Medium'
+			roi: 'Medium',
+			approvalStatus: 'Needs customer participation',
+			dependencies: 'Customer review process',
+			status: 'Planned'
 		},
 		{
 			title: 'Improve internal links to the highest-value service pages',
@@ -1268,10 +1290,13 @@ function buildExecutiveBriefData() {
 			impact: 'Projected to help existing visibility compound without adding new pages first.',
 			scoreLift: '+2 BGS',
 			visibility: '+3%',
+			effort: 'Low',
 			time: '3 days',
-			difficulty: 'Low',
 			owner: 'Customer',
-			roi: 'Medium'
+			roi: 'Medium',
+			approvalStatus: 'Ready',
+			dependencies: 'Website edit access',
+			status: 'Planned'
 		}
 	];
 	return {
@@ -1279,7 +1304,9 @@ function buildExecutiveBriefData() {
 		businessName,
 		domain,
 		score,
-		previousScore: Math.max(0, score - 5),
+		previousScore,
+		scoreDelta,
+		confidence,
 		projected,
 		goal,
 		health,
@@ -1292,6 +1319,7 @@ function buildExecutiveBriefData() {
 			title: 'Increase Trust Coverage',
 			progress: drivers.trustCoverage,
 			estimatedCompletion: '7 days',
+			impact: `Expected to create ${opportunity.leads} new monthly lead opportunities and lift the Business Growth Score™ by 4 points.`,
 			currentScore: score,
 			targetScore: missionTarget,
 			owner: 'Customer'
@@ -1303,11 +1331,12 @@ function buildExecutiveBriefData() {
 			['Competitor C', clampScore(score - 4), clampScore(drivers.trustCoverage - 2), clampScore(drivers.aiVisibility - 5)]
 		],
 		momentum: [
-			['Previous', Math.max(0, score - 5), 'Starting point'],
+			['Previous', previousScore, 'Prior baseline'],
 			['Current', score, 'Scan baseline'],
 			['Projected', projected, 'After top priorities'],
 			['Goal', goal, 'Healthy target']
 		],
+		momentumStory: `${momentumState}: the score moved ${scoreDelta >= 0 ? '+' : ''}${scoreDelta} points since the prior baseline. The business is not blocked by demand; it is constrained by proof, so trust coverage is the lever most likely to convert momentum into measurable growth.`,
 		trust: [
 			['Google', 'connected'],
 			['GBP', drivers.trustCoverage >= 76 ? 'connected' : 'weak'],
@@ -1423,7 +1452,8 @@ function renderExecutiveBrief() {
 				<div class="brief-growth-score">
 					<span>Business Growth Score™</span>
 					<strong>${data.score}</strong>
-					<small>${data.previousScore} → ${data.score} current / ${data.projected} projected</small>
+					<small>${data.previousScore} previous → ${data.score} current → ${data.projected} projected</small>
+					<div class="brief-score-confidence"><b style="width:${data.confidence}%"></b><em>${data.confidence}% confidence</em></div>
 				</div>
 				<div class="brief-health-card ${data.health.className}">
 					<span>Business Health</span>
@@ -1432,14 +1462,20 @@ function renderExecutiveBrief() {
 				</div>
 				<div class="brief-opportunity-card">
 					<span>Estimated Business Opportunity</span>
-					<strong>$${data.opportunity.toLocaleString()}/mo</strong>
-					<small>Modeled upside from top priorities</small>
+					<strong>$${data.opportunity.monthly.toLocaleString()}/mo</strong>
+					<div class="brief-opportunity-metrics">
+						<div><small>New Leads</small><b>${data.opportunity.leads}/mo</b></div>
+						<div><small>Visibility</small><b>+${data.opportunity.visibility}%</b></div>
+						<div><small>BGS Increase</small><b>+${data.opportunity.scoreIncrease}</b></div>
+						<div><small>Confidence</small><b>${data.opportunity.confidence}%</b></div>
+					</div>
 				</div>
 			</section>
 			<section class="brief-section">
 				<div class="brief-section-number">03</div>
 				<div class="brief-section-body">
 					<div class="brief-section-head"><span>Executive Momentum</span><strong>Watch the business improve.</strong></div>
+					<p class="brief-section-copy">${escapeHtml(data.momentumStory)}</p>
 					<div class="brief-momentum-strip">
 						${data.momentum.map(([label, value, note]) => `<div><span>${escapeHtml(label)}</span><strong>${value}</strong><small>${escapeHtml(note)}</small></div>`).join('')}
 					</div>
@@ -1466,14 +1502,16 @@ function renderExecutiveBrief() {
 						${data.recommendations.map((item, index) => `
 							<div class="brief-priority">
 								<b>${index + 1}</b>
-								<div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.why)}</p></div>
-								<span><small>Impact</small>${escapeHtml(item.impact)}</span>
+								<div class="brief-priority-main"><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.why)}</p><em>${escapeHtml(item.impact)}</em></div>
 								<span><small>BGS Lift</small>${escapeHtml(item.scoreLift)}</span>
 								<span><small>Visibility</small>${escapeHtml(item.visibility)}</span>
-								<span><small>Time</small>${escapeHtml(item.time)}</span>
-								<span><small>Difficulty</small>${escapeHtml(item.difficulty)}</span>
-								<span><small>Owner</small>${escapeHtml(item.owner)}</span>
 								<span><small>Expected ROI</small>${escapeHtml(item.roi)}</span>
+								<span><small>Effort</small>${escapeHtml(item.effort)}</span>
+								<span><small>Time</small>${escapeHtml(item.time)}</span>
+								<span><small>Owner</small>${escapeHtml(item.owner)}</span>
+								<span><small>Status</small>${escapeHtml(item.status)}</span>
+								<span><small>Approval</small>${escapeHtml(item.approvalStatus)}</span>
+								<span><small>Dependency</small>${escapeHtml(item.dependencies)}</span>
 							</div>
 						`).join('')}
 					</div>
@@ -1502,6 +1540,7 @@ function renderExecutiveBrief() {
 					<span>Today’s Mission</span>
 					<strong>${escapeHtml(data.mission.title)}</strong>
 					<div class="brief-mission-progress"><i><b style="width:${data.mission.progress}%"></b></i><em>${data.mission.progress}%</em></div>
+					<p>${escapeHtml(data.mission.impact)}</p>
 					<div class="brief-mission-meta">
 						<div><small>Estimated Completion</small><b>${escapeHtml(data.mission.estimatedCompletion)}</b></div>
 						<div><small>Current Score</small><b>${data.mission.currentScore}</b></div>
