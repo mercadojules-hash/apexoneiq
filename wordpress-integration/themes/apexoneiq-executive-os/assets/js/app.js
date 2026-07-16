@@ -1086,6 +1086,7 @@ function applyFreeProfileSnapshot() {
 			<div>
 				<div class="page-kicker">Free Executive Brief™</div>
 				<h1>${escapeHtml(data.businessName)} has a clear growth constraint.</h1>
+				<div class="free-summary-label">Executive Summary</div>
 				<p>${escapeHtml(data.summary)}</p>
 			</div>
 			<div class="free-brief-score">
