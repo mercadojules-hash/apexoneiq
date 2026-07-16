@@ -1870,7 +1870,12 @@ function confidenceIntelligenceHtml(data, item, index) {
 	const drivers = confidenceDriversFor(item);
 	return `
 		<div class="brief-confidence-intel">
-			<div class="brief-confidence-gauge"><div><strong class="confidence-value">${confidence}%</strong><span class="confidence-label">CONFIDENCE</span></div></div>
+			<div class="brief-confidence-gauge confidence-ring">
+				<div class="confidence-ring__content">
+					<div class="confidence-ring__value">${confidence}%</div>
+					<div class="confidence-ring__label">CONFIDENCE</div>
+				</div>
+			</div>
 			<div>
 				<span>Confidence Drivers</span>
 				${drivers.map(([label, note, state]) => `<small class="${escapeHtml(state || '')}">${escapeHtml(label)} <em>${escapeHtml(note)}</em></small>`).join('')}
