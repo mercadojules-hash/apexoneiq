@@ -2,3 +2,5 @@
 .env.*
 !.env.sandbox.example
 data/subscription-store.json
+data/content-store.json
+media/

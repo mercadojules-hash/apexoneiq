@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "node server.js",
-    "validate": "node --check server.js && node --check js/app.js"
+    "validate": "node --check server.js && node --check js/app.js && node --check js/cms-admin.js"
   },
   "devDependencies": {},
   "name": "apex-cloud-dashboard-v2",

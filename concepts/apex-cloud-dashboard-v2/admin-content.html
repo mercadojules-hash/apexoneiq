@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>ApexOneIQ - Content Admin</title>
+	<link rel="stylesheet" href="css/app.css">
+	<link rel="icon" href="/favicon.ico" sizes="any">
+	<link rel="manifest" href="/site.webmanifest">
+	<meta name="theme-color" content="#020814">
+</head>
+<body data-route="admin-content.html">
+	<div class="app cms-admin">
+		<aside class="sidebar">
+			<div class="brand"><div class="logo">IQ</div><div><strong>ApexOneIQ</strong><span>Content OS</span></div></div>
+			<div class="site-card"><span class="eyebrow"><span class="live-dot"></span>Owner CMS</span><strong>Content Dashboard</strong><p>Pages, blog, FAQs, media, SEO, and publishing in one secure workspace.</p></div>
+			<div class="nav-section">Content</div>
+			<nav class="workspace-nav cms-tabs" data-cms-tabs>
+				<button class="nav-link active" data-cms-tab="pages"><span>Pages</span></button>
+				<button class="nav-link" data-cms-tab="blog"><span>Blog</span></button>
+				<button class="nav-link" data-cms-tab="faqs"><span>FAQs</span></button>
+				<button class="nav-link" data-cms-tab="categories"><span>Categories</span></button>
+				<button class="nav-link" data-cms-tab="tags"><span>Tags</span></button>
+				<button class="nav-link" data-cms-tab="media"><span>Media</span></button>
+				<button class="nav-link" data-cms-tab="seo"><span>SEO</span></button>
+			</nav>
+			<div class="system-card"><span class="eyebrow">Publishing</span><p>Draft, preview, schedule, and publish content without editing code.</p><a class="button" href="/blog" target="_blank" rel="noreferrer">Open Blog</a></div>
+		</aside>
+		<main class="main">
+			<header class="topbar">
+				<div><span class="eyebrow"><span class="live-dot"></span>Secure Content Management</span></div>
+				<div class="account"><button class="ghost-button" type="button" data-cms-logout>Log Out</button><div class="avatar">IQ</div></div>
+			</header>
+			<section class="page-head"><div><div class="page-kicker">Admin Content Dashboard</div><h1>Manage ApexOneIQ content.</h1></div><button class="button" type="button" data-cms-new>New Article</button></section>
+			<section class="brief-panel cms-login-panel" data-cms-login-panel>
+				<div class="panel-label">Admin Login</div>
+				<p class="brief-copy">Enter the CMS admin token configured in Render as <strong>APEX_CMS_ADMIN_TOKEN</strong>.</p>
+				<form class="cms-login-form" data-cms-login-form>
+					<input type="password" name="token" placeholder="Admin token" autocomplete="current-password" required>
+					<button class="button" type="submit">Unlock CMS</button>
+				</form>
+				<p class="form-status" data-cms-login-status></p>
+			</section>
+			<section class="cms-workspace" data-cms-workspace hidden>
+				<div class="cms-list-panel">
+					<div class="panel-head"><div><div class="panel-label" data-cms-list-label>Content</div><h3 data-cms-list-title>Pages</h3></div><button class="ghost-button" type="button" data-cms-refresh>Refresh</button></div>
+					<div class="cms-search-row"><input data-cms-filter placeholder="Search content"><button class="ghost-button" type="button" data-cms-new-page>New Page</button></div>
+					<div class="cms-content-list" data-cms-list></div>
+				</div>
+				<form class="cms-editor-panel" data-cms-editor>
+					<input type="hidden" name="id">
+					<input type="hidden" name="type" value="blog">
+					<div class="panel-head"><div><div class="panel-label">Editor</div><h3 data-cms-editor-title>New Article</h3></div><div class="cms-editor-actions"><button class="ghost-button" type="button" data-cms-preview>Preview</button><button class="button" type="submit">Save</button></div></div>
+					<div class="cms-form-grid">
+						<label>Title<input name="title" required></label>
+						<label>Slug<input name="slug" required></label>
+						<label>Status<select name="status"><option value="draft">Draft</option><option value="published">Publish</option><option value="scheduled">Schedule</option></select></label>
+						<label>Scheduled At<input name="scheduledAt" type="datetime-local"></label>
+						<label>Meta Title<input name="metaTitle"></label>
+						<label>Meta Description<input name="metaDescription"></label>
+						<label>Open Graph Title<input name="openGraphTitle"></label>
+						<label>Open Graph Description<input name="openGraphDescription"></label>
+						<label>Canonical URL<input name="canonicalUrl" type="url"></label>
+						<label>Categories<input name="categories" placeholder="Business Growth, AI Visibility"></label>
+						<label>Tags<input name="tags" placeholder="seo, trust, ai visibility"></label>
+						<label>Author<input name="author" value="ApexOneIQ"></label>
+						<label>Featured Image URL<input name="featuredImage"></label>
+						<label>Image Alt Text<input name="imageAlt"></label>
+					</div>
+					<label>Excerpt<textarea name="excerpt" rows="3"></textarea></label>
+					<div class="cms-toolbar" data-cms-toolbar>
+						<button type="button" data-command="formatBlock" data-value="h2">H2</button>
+						<button type="button" data-command="formatBlock" data-value="h3">H3</button>
+						<button type="button" data-command="bold">B</button>
+						<button type="button" data-command="italic">I</button>
+						<button type="button" data-command="insertUnorderedList">List</button>
+						<button type="button" data-cms-link>Link</button>
+						<button type="button" data-cms-block="quote">Quote</button>
+						<button type="button" data-cms-block="callout">Callout</button>
+						<button type="button" data-cms-block="table">Table</button>
+						<button type="button" data-cms-block="code">Code</button>
+						<button type="button" data-cms-block="button">Button</button>
+						<button type="button" data-cms-block="faq">FAQ Block</button>
+					</div>
+					<div class="cms-rich-editor" contenteditable="true" data-cms-body aria-label="Article body"></div>
+					<label>FAQ JSON<textarea name="faqs" rows="4" placeholder='[{"question":"What is ApexOneIQ?","answer":"A business operating system."}]'></textarea></label>
+					<div class="cms-score-panel" data-cms-analysis></div>
+				</form>
+				<section class="cms-media-panel" data-cms-media-panel hidden>
+					<div class="panel-head"><div><div class="panel-label">Media</div><h3>Upload media</h3></div></div>
+					<form data-cms-media-form class="cms-media-form">
+						<input type="file" name="file" accept="image/*,.pdf,video/mp4,video/webm,.doc,.docx,.txt">
+						<input name="alt" placeholder="Alt text">
+						<button class="button" type="submit">Upload</button>
+					</form>
+					<div class="cms-media-grid" data-cms-media-grid></div>
+				</section>
+			</section>
+		</main>
+	</div>
+	<script src="js/cms-admin.js"></script>
+</body>
+</html>

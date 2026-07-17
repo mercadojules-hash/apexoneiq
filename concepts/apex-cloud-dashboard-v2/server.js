@@ -2,12 +2,18 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const zlib = require('zlib');
 const { plans, normalizePlanId, planFor, entitlementsFor } = require('./js/subscription-config.js');
 
 const root = __dirname;
 const port = Number(process.env.PORT || 4177);
+const productionOrigin = 'https://apexoneiq.com';
 const dataDir = path.join(root, 'data');
 const subscriptionStorePath = path.join(dataDir, 'subscription-store.json');
+const contentStorePath = path.join(dataDir, 'content-store.json');
+const mediaDir = path.join(root, 'media');
+const knowledgeCenterDir = path.join(root, 'content', 'knowledge-center');
+const knowledgeCenterManifestPath = path.join(knowledgeCenterDir, 'knowledge-center-manifest.json');
 
 loadEnvFile(path.join(root, '.env'));
 loadEnvFile(path.join(root, '.env.sandbox'));
@@ -21,12 +27,19 @@ const contentTypes = {
 	'.jpg': 'image/jpeg',
 	'.jpeg': 'image/jpeg',
 	'.svg': 'image/svg+xml; charset=utf-8',
-	'.ico': 'image/x-icon'
+	'.ico': 'image/x-icon',
+	'.webp': 'image/webp',
+	'.gif': 'image/gif',
+	'.pdf': 'application/pdf',
+	'.mp4': 'video/mp4',
+	'.webm': 'video/webm',
+	'.txt': 'text/plain; charset=utf-8',
+	'.webmanifest': 'application/manifest+json; charset=utf-8'
 };
 
 const server = http.createServer(async (req, res) => {
 	try {
-		const url = new URL(req.url, `http://${req.headers.host || `127.0.0.1:${port}`}`);
+		const url = new URL(req.url, `http://${req.headers.host || 'apexoneiq.com'}`);
 		if (req.method === 'GET' && url.pathname === '/api/billing/config') return sendBillingConfig(res);
 		if (req.method === 'GET' && url.pathname === '/api/billing/status') return sendBillingStatus(req, res, url);
 		if (req.method === 'GET' && url.pathname === '/api/executive-scan') return handleExecutiveScan(req, res, url);
@@ -35,8 +48,20 @@ const server = http.createServer(async (req, res) => {
 		if (req.method === 'POST' && (url.pathname === '/api/billing/webhook' || url.pathname === '/api/stripe/webhook')) return handleStripeWebhook(req, res);
 		if (req.method === 'POST' && url.pathname === '/api/entitlements/check') return handleEntitlementCheck(req, res);
 		if (req.method === 'POST' && url.pathname === '/api/enterprise/inquiry') return handleEnterpriseInquiry(req, res);
+		if (url.pathname.startsWith('/api/cms/')) return handleCmsApi(req, res, url);
+		if (req.method === 'GET' && normalizeRoutePath(url.pathname) === '/knowledge-center') return renderKnowledgeCenterIndex(req, res, url);
+		if (req.method === 'GET' && normalizeRoutePath(url.pathname).startsWith('/knowledge-center/')) return renderKnowledgeCenterArticle(req, res, url);
+		if (req.method === 'GET' && url.pathname === '/blog') return renderBlogIndex(req, res, url);
+		if (req.method === 'GET' && url.pathname.startsWith('/blog/')) return renderBlogArticle(req, res, url);
+		if (req.method === 'GET' && url.pathname === '/sitemap.xml') return renderSitemap(req, res, url);
+		if (req.method === 'GET' && url.pathname === '/robots.txt') return renderRobots(req, res, url);
+		if (req.method === 'GET' && normalizeRoutePath(url.pathname) === '/pricing') return serveStaticPath(req, res, '/subscription.html');
+		if (req.method === 'GET' && normalizeRoutePath(url.pathname) === '/sign-in') return serveStaticPath(req, res, '/sign-in.html');
+		if (req.method === 'GET' && cmsPageSlugForPath(url.pathname)) return renderCmsPage(req, res, url);
 		if (req.method === 'GET' && normalizeRoutePath(url.pathname) === '/oauth/google') return handleGoogleOAuthStart(req, res, url);
 		if (req.method === 'GET' && normalizeRoutePath(url.pathname) === '/oauth/google/callback') return handleGoogleOAuthCallback(req, res, url);
+		if (req.method === 'GET' && isIndexNowKeyPath(url.pathname)) return renderIndexNowKey(req, res);
+		if (req.method === 'POST' && url.pathname === '/api/indexnow/submit') return handleIndexNowSubmit(req, res);
 		if (req.method !== 'GET' && req.method !== 'HEAD') {
 			sendJson(res, 405, { error: 'method_not_allowed' });
 			return;
@@ -48,8 +73,1079 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, () => {
-	console.log(`ApexOneIQ sandbox server running at http://127.0.0.1:${port}`);
+	console.log(`ApexOneIQ Node server listening on port ${port}`);
 });
+
+async function handleCmsApi(req, res, url) {
+	if (req.method === 'POST' && url.pathname === '/api/cms/login') return handleCmsLogin(req, res);
+	if (req.method === 'POST' && url.pathname === '/api/cms/logout') return handleCmsLogout(req, res);
+	if (req.method === 'GET' && url.pathname === '/api/cms/status') return sendJson(res, 200, { authenticated: isCmsAuthenticated(req), authMode: 'cms_session' });
+	if (!isCmsAuthenticated(req)) return sendJson(res, 401, { error: 'cms_auth_required', message: 'Admin content access requires a valid CMS session.' });
+	if (req.method === 'GET' && url.pathname === '/api/cms/content') return sendJson(res, 200, readContentStore());
+	if (req.method === 'GET' && url.pathname === '/api/cms/search') return handleCmsSearch(req, res, url);
+	if (req.method === 'POST' && url.pathname === '/api/cms/media') return handleCmsMediaUpload(req, res);
+	if (req.method === 'POST' && url.pathname === '/api/cms/content') return handleCmsContentCreate(req, res);
+	if (req.method === 'PUT' && url.pathname.startsWith('/api/cms/content/')) return handleCmsContentUpdate(req, res, url);
+	if (req.method === 'DELETE' && url.pathname.startsWith('/api/cms/content/')) return handleCmsContentDelete(req, res, url);
+	sendJson(res, 404, { error: 'cms_route_not_found' });
+}
+
+async function handleCmsLogin(req, res) {
+	const payload = await readJsonBody(req);
+	const configuredToken = cmsAdminToken();
+	if (!configuredToken) return sendJson(res, 503, { error: 'cms_admin_token_missing', message: 'Set APEX_CMS_ADMIN_TOKEN before using the CMS admin.' });
+	if (String(payload.token || '') !== configuredToken) return sendJson(res, 401, { error: 'cms_auth_failed' });
+	const session = signCmsSession({ role: 'owner', createdAt: Date.now() });
+	res.writeHead(200, {
+		'Content-Type': 'application/json; charset=utf-8',
+		'Set-Cookie': cookieHeader('apex_cms_session', session, 60 * 60 * 12)
+	});
+	res.end(JSON.stringify({ authenticated: true }));
+}
+
+function handleCmsLogout(req, res) {
+	res.writeHead(200, {
+		'Content-Type': 'application/json; charset=utf-8',
+		'Set-Cookie': cookieHeader('apex_cms_session', '', 0)
+	});
+	res.end(JSON.stringify({ authenticated: false }));
+}
+
+function isCmsAuthenticated(req) {
+	const cookies = parseCookies(req.headers.cookie || '');
+	const session = cookies.apex_cms_session || '';
+	if (verifyCmsSession(session)) return true;
+	const auth = String(req.headers.authorization || '');
+	const token = cmsAdminToken();
+	return Boolean(token && auth === `Bearer ${token}`);
+}
+
+function cmsAdminToken() {
+	const token = process.env.APEX_CMS_ADMIN_TOKEN || process.env.ADMIN_CONTENT_TOKEN || '';
+	if (token) return token;
+	if (String(process.env.NODE_ENV || '').toLowerCase() !== 'production') return 'local-admin';
+	return '';
+}
+
+function signCmsSession(payload) {
+	const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url');
+	const signature = crypto.createHmac('sha256', cmsSessionSecret()).update(encoded).digest('base64url');
+	return `${encoded}.${signature}`;
+}
+
+function verifyCmsSession(value) {
+	const [encoded, signature] = String(value || '').split('.');
+	if (!encoded || !signature) return false;
+	const expected = crypto.createHmac('sha256', cmsSessionSecret()).update(encoded).digest('base64url');
+	if (!timingSafeStringEqual(signature, expected)) return false;
+	try {
+		const payload = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
+		return payload.role === 'owner' && Date.now() - Number(payload.createdAt || 0) < 60 * 60 * 12 * 1000;
+	} catch (error) {
+		return false;
+	}
+}
+
+function cmsSessionSecret() {
+	return process.env.SESSION_SECRET || process.env.APEX_CMS_SESSION_SECRET || 'apexoneiq-local-cms-session';
+}
+
+function timingSafeStringEqual(left, right) {
+	const a = Buffer.from(String(left || ''));
+	const b = Buffer.from(String(right || ''));
+	return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+async function handleCmsContentCreate(req, res) {
+	const payload = await readJsonBody(req);
+	const store = readContentStore();
+	const item = normalizeContentItem({ ...payload, id: createId(payload.type || 'content'), createdAt: new Date().toISOString() });
+	store.items.push(item);
+	writeContentStore(store);
+	sendJson(res, 201, { item, analysis: analyzeContentItem(item, store) });
+}
+
+async function handleCmsContentUpdate(req, res, url) {
+	const id = decodeURIComponent(url.pathname.split('/').pop() || '');
+	const payload = await readJsonBody(req);
+	const store = readContentStore();
+	const index = store.items.findIndex(item => item.id === id);
+	if (index === -1) return sendJson(res, 404, { error: 'content_not_found' });
+	const previous = store.items[index];
+	const item = normalizeContentItem({ ...previous, ...payload, id: previous.id, createdAt: previous.createdAt, updatedAt: new Date().toISOString() });
+	store.items[index] = item;
+	writeContentStore(store);
+	sendJson(res, 200, { item, analysis: analyzeContentItem(item, store) });
+}
+
+function handleCmsContentDelete(req, res, url) {
+	const id = decodeURIComponent(url.pathname.split('/').pop() || '');
+	const store = readContentStore();
+	const before = store.items.length;
+	store.items = store.items.filter(item => item.id !== id);
+	if (store.items.length === before) return sendJson(res, 404, { error: 'content_not_found' });
+	writeContentStore(store);
+	sendJson(res, 200, { deleted: true, id });
+}
+
+function handleCmsSearch(req, res, url) {
+	const query = String(url.searchParams.get('q') || '').toLowerCase().trim();
+	const store = readContentStore();
+	const results = publicContentItems(store).filter(item => {
+		const text = `${item.title} ${item.excerpt} ${stripHtml(item.bodyHtml)} ${item.tags.join(' ')}`.toLowerCase();
+		return !query || text.includes(query);
+	}).slice(0, 25);
+	sendJson(res, 200, { query, results });
+}
+
+function renderKnowledgeCenterIndex(req, res) {
+	const origin = originForRequest(req);
+	const articles = readKnowledgeCenterArticles();
+	const cards = articles.map(article => `
+		<article class="knowledge-card">
+			<img src="${escapeHtml(article.featuredImage)}" alt="${escapeHtml(article.imageAlt || article.title)}" loading="lazy" width="640" height="360">
+			<div>
+				<span class="eyebrow">${escapeHtml(article.category || 'Knowledge Center')}</span>
+				<h2>${escapeHtml(article.title)}</h2>
+				<p>${escapeHtml(article.excerpt || '')}</p>
+				<div class="brief-meta">
+					<div><span class="table-label">Reading Time</span><strong>${escapeHtml(article.readingTime || 'Pending')}</strong></div>
+					<div><span class="table-label">Published</span><strong>${escapeHtml(article.publishDate)}</strong></div>
+				</div>
+				<a class="button" href="/knowledge-center/${escapeHtml(article.slug)}">Read Article</a>
+			</div>
+		</article>`).join('');
+	const content = `
+		<section class="landing-hero onboarding-hero knowledge-center-hero">
+			<div class="landing-copy onboarding-copy">
+				<div class="page-kicker"><span class="live-dot"></span>Knowledge Center</div>
+				<h1>Executive SEO, AI Visibility, and Local Growth Guides.</h1>
+				<p>Cornerstone resources built for business owners who want clear strategy, technical accuracy, and search visibility decisions they can trust.</p>
+				<div class="onboarding-actions"><a class="button" href="/oauth/google/?redirect_to=/sign-in.html">Run Your Free Executive Intelligence Scan</a><a class="ghost-button" href="/faq">Read FAQ</a></div>
+			</div>
+		</section>
+		<section class="landing-section">
+			<div class="section-head">
+				<div class="page-kicker">Pillar articles</div>
+				<h2>Start with the guide that matches your biggest growth constraint.</h2>
+			</div>
+			<div class="knowledge-grid">${cards}</div>
+		</section>`;
+	sendHtml(res, marketingHtmlDocument({
+		title: 'ApexOneIQ Knowledge Center',
+		description: 'Executive SEO, AI visibility, local SEO, Google Business Profile, schema, website speed, and ranking recovery guides from ApexOneIQ.',
+		canonical: `${origin}/knowledge-center`,
+		body: content,
+		active: 'knowledge',
+		schema: [
+			organizationJsonLd(origin),
+			websiteJsonLd(origin),
+			breadcrumbJsonLd(origin, [{ name: 'Knowledge Center', url: `${origin}/knowledge-center` }]),
+			{
+				'@context': 'https://schema.org',
+				'@type': 'CollectionPage',
+				name: 'ApexOneIQ Knowledge Center',
+				url: `${origin}/knowledge-center`,
+				hasPart: articles.map(article => ({ '@type': 'Article', headline: article.title, url: `${origin}/knowledge-center/${article.slug}` }))
+			}
+		]
+	}));
+}
+
+function renderKnowledgeCenterArticle(req, res, url) {
+	const slug = decodeURIComponent(normalizeRoutePath(url.pathname).replace(/^\/knowledge-center\//, ''));
+	const origin = originForRequest(req);
+	const articles = readKnowledgeCenterArticles();
+	const article = articles.find(item => item.slug === slug);
+	if (!article) return sendNotFound(res);
+	const toc = knowledgeToc(article.markdown);
+	const related = relatedKnowledgeArticles(article, articles).slice(0, 4);
+	const relatedCards = related.map(item => `<a class="cms-card" href="/knowledge-center/${escapeHtml(item.slug)}"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.excerpt || '')}</span></a>`).join('');
+	const content = `
+		<nav class="knowledge-breadcrumbs" aria-label="Breadcrumb">
+			<a href="/">Home</a><span>/</span>
+			<a href="/knowledge-center">Knowledge Center</a><span>/</span>
+			<span>${escapeHtml(article.category || 'Knowledge Center')}</span><span>/</span>
+			<strong>${escapeHtml(article.title)}</strong>
+		</nav>
+		<div class="knowledge-article-layout">
+			<aside class="knowledge-toc-wrap">
+				<details class="knowledge-toc" open>
+					<summary>Table of Contents</summary>
+					<nav>${toc.map(item => `<a href="#${escapeHtml(item.id)}" data-toc-link>${escapeHtml(item.text)}</a>`).join('')}</nav>
+				</details>
+			</aside>
+			<article class="brief-panel cms-article knowledge-article">
+				<div class="page-kicker">${escapeHtml(article.category || 'Knowledge Center')}</div>
+				<h1>${escapeHtml(article.h1 || article.title)}</h1>
+				<p class="brief-copy">${escapeHtml(article.excerpt || '')}</p>
+				<div class="brief-meta">
+					<div><span class="table-label">Author</span><strong>ApexOneIQ</strong></div>
+					<div><span class="table-label">Reading Time</span><strong>${escapeHtml(article.readingTime || 'Pending')}</strong></div>
+					<div><span class="table-label">Published</span><strong>${escapeHtml(article.publishDate)}</strong></div>
+					<div><span class="table-label">Last Updated</span><strong>${escapeHtml(article.modifiedDateLabel)}</strong></div>
+				</div>
+				<img class="cms-featured-image" src="${escapeHtml(article.featuredImage)}" alt="${escapeHtml(article.imageAlt || article.title)}">
+				<div class="knowledge-internal-links">
+					<a href="/">Homepage</a>
+					<a href="/faq">FAQ</a>
+					<a href="/oauth/google/?redirect_to=/sign-in.html">Executive Scan</a>
+					<a href="/knowledge-center">Knowledge Center</a>
+				</div>
+				<div class="cms-body knowledge-body">${markdownToHtml(article.markdown)}</div>
+			</article>
+		</div>
+		<section class="brief-panel">
+			<div class="panel-label">Related Articles</div>
+			<div class="cms-grid compact">${relatedCards}</div>
+		</section>
+		<section class="landing-final knowledge-article-cta">
+			<div><h2>Run Your Free Executive Intelligence Scan.</h2><p>Turn these SEO and AI visibility principles into a prioritized action plan for your own business.</p></div>
+			<a class="button" href="/oauth/google/?redirect_to=/sign-in.html">Run Your Free Executive Intelligence Scan</a>
+		</section>`;
+	sendHtml(res, marketingHtmlDocument({
+		title: article.metaTitle || article.title,
+		description: article.metaDescription || article.excerpt || '',
+		canonical: `${origin}/knowledge-center/${article.slug}`,
+		body: content,
+		active: 'knowledge',
+		schema: [
+			organizationJsonLd(origin),
+			websiteJsonLd(origin),
+			breadcrumbJsonLd(origin, [{ name: 'Knowledge Center', url: `${origin}/knowledge-center` }, { name: article.category || 'Knowledge Center', url: `${origin}/knowledge-center` }, { name: article.title, url: `${origin}/knowledge-center/${article.slug}` }]),
+			knowledgeArticleJsonLd(origin, article)
+		]
+	}));
+}
+
+function readKnowledgeCenterArticles() {
+	if (!fs.existsSync(knowledgeCenterManifestPath)) return [];
+	const manifest = JSON.parse(fs.readFileSync(knowledgeCenterManifestPath, 'utf8'));
+	return manifest.map(item => {
+		const filePath = path.join(knowledgeCenterDir, item.file);
+		const source = fs.readFileSync(filePath, 'utf8');
+		const parsed = parseMarkdownWithFrontmatter(source);
+		const stats = fs.statSync(filePath);
+		return {
+			...item,
+			...parsed.data,
+			file: item.file,
+			title: parsed.data.title || item.title,
+			slug: parsed.data.slug || item.slug,
+			featuredImage: parsed.data.featuredImage || item.featuredImage || item.image || '',
+			imageAlt: parsed.data.featured_image_alt || '',
+			category: parsed.data.category || parsed.data.categories?.[0] || 'Knowledge Center',
+			excerpt: parsed.data.excerpt || '',
+			readingTime: parsed.data.reading_time || `${item.wordCount ? Math.max(1, Math.round(item.wordCount / 220)) : 20} min`,
+			publishDate: formatDateOnly(stats.mtime),
+			modifiedDateLabel: formatDateOnly(stats.mtime),
+			modifiedDate: stats.mtime.toISOString(),
+			markdown: parsed.body
+		};
+	});
+}
+
+function parseMarkdownWithFrontmatter(source) {
+	const match = String(source || '').match(/^---\n([\s\S]*?)\n---\n?/);
+	if (!match) return { data: {}, body: String(source || '') };
+	const data = {};
+	for (const line of match[1].split('\n')) {
+		const index = line.indexOf(':');
+		if (index === -1) continue;
+		const key = line.slice(0, index).trim();
+		let value = line.slice(index + 1).trim();
+		if (/^\[.*\]$/.test(value)) {
+			try {
+				value = JSON.parse(value.replace(/'/g, '"'));
+			} catch (error) {
+				value = value.replace(/^\[|\]$/g, '').split(',').map(item => item.trim().replace(/^"|"$/g, '')).filter(Boolean);
+			}
+		} else {
+			value = value.replace(/^"|"$/g, '');
+		}
+		data[key] = value;
+	}
+	return { data, body: source.slice(match[0].length) };
+}
+
+function markdownToHtml(markdown) {
+	const lines = String(markdown || '').split('\n');
+	const html = [];
+	let paragraph = [];
+	let list = [];
+	let table = [];
+	const headingIds = new Map();
+	const flushParagraph = () => {
+		if (!paragraph.length) return;
+		html.push(`<p>${inlineMarkdown(paragraph.join(' '))}</p>`);
+		paragraph = [];
+	};
+	const flushList = () => {
+		if (!list.length) return;
+		html.push(`<ul>${list.map(item => `<li>${inlineMarkdown(item)}</li>`).join('')}</ul>`);
+		list = [];
+	};
+	const flushTable = () => {
+		if (!table.length) return;
+		const rows = table.map(line => line.split('|').slice(1, -1).map(cell => inlineMarkdown(cell.trim())));
+		const bodyRows = rows.filter(row => !row.every(cell => /^:?-{3,}:?$/.test(stripHtml(cell).trim())));
+		const [head, ...body] = bodyRows;
+		html.push(`<div class="knowledge-table-wrap"><table><thead><tr>${(head || []).map(cell => `<th>${cell}</th>`).join('')}</tr></thead><tbody>${body.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+		table = [];
+	};
+	for (const line of lines) {
+		const trimmed = line.trim();
+		if (!trimmed) {
+			flushParagraph(); flushList(); flushTable();
+			continue;
+		}
+		if (/^\|.*\|$/.test(trimmed)) {
+			flushParagraph(); flushList(); table.push(trimmed); continue;
+		}
+		flushTable();
+		const heading = trimmed.match(/^(#{2,4})\s+(.+)$/);
+		if (heading) {
+			flushParagraph(); flushList();
+			const level = heading[1].length;
+			const id = uniqueHeadingId(stripMarkdown(heading[2]), headingIds);
+			html.push(`<h${level} id="${escapeHtml(id)}">${inlineMarkdown(heading[2])}</h${level}>`);
+			continue;
+		}
+		const item = trimmed.match(/^-\s+(.+)$/);
+		if (item) {
+			flushParagraph(); list.push(item[1]); continue;
+		}
+		flushList();
+		paragraph.push(trimmed);
+	}
+	flushParagraph(); flushList(); flushTable();
+	return html.join('\n');
+}
+
+function knowledgeToc(markdown) {
+	const headingIds = new Map();
+	return String(markdown || '').split('\n').map(line => {
+		const match = line.trim().match(/^(#{2,3})\s+(.+)$/);
+		if (!match) return null;
+		const text = stripMarkdown(match[2]);
+		return { level: match[1].length, text, id: uniqueHeadingId(text, headingIds) };
+	}).filter(Boolean).slice(0, 24);
+}
+
+function uniqueHeadingId(value, headingIds) {
+	const base = slugifyHeading(value);
+	const count = headingIds.get(base) || 0;
+	headingIds.set(base, count + 1);
+	return count ? `${base}-${count + 1}` : base;
+}
+
+function slugifyHeading(value) {
+	return String(value || '').toLowerCase().replace(/&amp;/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'section';
+}
+
+function stripMarkdown(value) {
+	return String(value || '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/[`*_]/g, '').trim();
+}
+
+function inlineMarkdown(value) {
+	return escapeHtml(value)
+		.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+		.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+}
+
+function relatedKnowledgeArticles(article, articles) {
+	const related = Array.isArray(article.related_articles) ? article.related_articles : [];
+	const bySlug = new Map(articles.map(item => [item.slug, item]));
+	const selected = related.map(slug => bySlug.get(slug)).filter(Boolean);
+	if (selected.length) return selected;
+	return articles.filter(item => item.slug !== article.slug && item.category === article.category);
+}
+
+function knowledgeArticleJsonLd(origin, article) {
+	return {
+		'@context': 'https://schema.org',
+		'@type': 'Article',
+		headline: article.title,
+		description: article.meta_description || article.excerpt || '',
+		author: { '@type': 'Organization', name: 'ApexOneIQ' },
+		publisher: { '@type': 'Organization', name: 'ApexOneIQ', logo: { '@type': 'ImageObject', url: `${origin}/android-chrome-512x512.png` } },
+		datePublished: article.publishDate,
+		dateModified: article.modifiedDate,
+		mainEntityOfPage: `${origin}/knowledge-center/${article.slug}`,
+		image: article.featuredImage ? [absoluteUrl(origin, article.featuredImage)] : undefined
+	};
+}
+
+function formatDateOnly(value) {
+	return new Date(value).toISOString().slice(0, 10);
+}
+
+async function handleCmsMediaUpload(req, res) {
+	const payload = await readJsonBody(req);
+	const filename = safeFilename(payload.filename || 'upload.bin');
+	const mime = String(payload.mime || 'application/octet-stream');
+	const encoded = String(payload.data || '').replace(/^data:[^;]+;base64,/, '');
+	if (!encoded) return sendJson(res, 400, { error: 'missing_media_data' });
+	const allowed = /^(image\/(png|jpe?g|webp|gif|svg\+xml)|application\/pdf|video\/(mp4|webm)|text\/plain|application\/vnd\.openxmlformats-officedocument|application\/msword)/i;
+	if (!allowed.test(mime)) return sendJson(res, 400, { error: 'unsupported_media_type', mime });
+	const bytes = Buffer.from(encoded, 'base64');
+	if (bytes.length > 12 * 1024 * 1024) return sendJson(res, 413, { error: 'media_too_large', limit: '12MB' });
+	if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir, { recursive: true });
+	const id = createId('media');
+	const ext = path.extname(filename) || extensionForMime(mime);
+	const storedName = `${id}${ext}`;
+	const filePath = path.join(mediaDir, storedName);
+	fs.writeFileSync(filePath, bytes);
+	const store = readContentStore();
+	const media = {
+		id,
+		type: 'media',
+		filename,
+		storedName,
+		mime,
+		size: bytes.length,
+		url: `/media/${storedName}`,
+		alt: String(payload.alt || ''),
+		caption: String(payload.caption || ''),
+		optimized: mime.startsWith('image/') ? 'Stored without recompression; dimensions and alt text are tracked.' : 'Not applicable',
+		createdAt: new Date().toISOString()
+	};
+	store.media.push(media);
+	writeContentStore(store);
+	sendJson(res, 201, { media });
+}
+
+function renderBlogIndex(req, res, url) {
+	const store = readContentStore();
+	const page = Math.max(1, Number(url.searchParams.get('page') || 1));
+	const query = String(url.searchParams.get('q') || '').trim();
+	const category = String(url.searchParams.get('category') || '').trim();
+	let posts = publicContentItems(store).filter(item => item.type === 'blog');
+	if (query) posts = posts.filter(item => `${item.title} ${item.excerpt} ${stripHtml(item.bodyHtml)}`.toLowerCase().includes(query.toLowerCase()));
+	if (category) posts = posts.filter(item => item.categories.includes(category));
+	posts.sort((a, b) => String(b.publishedAt || b.updatedAt || b.createdAt).localeCompare(String(a.publishedAt || a.updatedAt || a.createdAt)));
+	const perPage = 9;
+	const paged = posts.slice((page - 1) * perPage, page * perPage);
+	const origin = originForRequest(req);
+	const cards = paged.map(post => `
+		<article class="cms-card">
+			<span class="eyebrow">${escapeHtml(post.categories[0] || 'ApexOneIQ')}</span>
+			<h2><a href="/blog/${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a></h2>
+			<p>${escapeHtml(post.excerpt || plainExcerpt(post.bodyHtml))}</p>
+			<div class="brief-meta"><div><span class="table-label">Reading Time</span><strong>${readingTime(post.bodyHtml)} min</strong></div><div><span class="table-label">Status</span><strong>${escapeHtml(post.status)}</strong></div></div>
+		</article>`).join('');
+	const content = `
+		<section class="page-head"><div><div class="page-kicker">ApexOneIQ Blog</div><h1>Executive SEO and Business Growth Intelligence</h1></div></section>
+		<section class="brief-panel"><form class="cms-search" action="/blog"><input name="q" value="${escapeHtml(query)}" placeholder="Search articles"><button class="button">Search</button></form></section>
+		<section class="cms-grid">${cards || '<p class="brief-copy">No published articles yet.</p>'}</section>`;
+	sendHtml(res, htmlDocument({
+		title: 'ApexOneIQ Blog',
+		description: 'Executive SEO, AI visibility, and business growth articles from ApexOneIQ.',
+		canonical: `${origin}/blog`,
+		body: content,
+		schema: [organizationJsonLd(origin), websiteJsonLd(origin), breadcrumbJsonLd(origin, [{ name: 'Blog', url: `${origin}/blog` }])]
+	}));
+}
+
+function renderBlogArticle(req, res, url) {
+	const slug = decodeURIComponent(url.pathname.replace(/^\/blog\//, '').replace(/\/$/, ''));
+	const store = readContentStore();
+	const post = publicContentItems(store).find(item => item.type === 'blog' && item.slug === slug);
+	if (!post) return sendNotFound(res);
+	const origin = originForRequest(req);
+	const related = relatedContent(post, store).slice(0, 3);
+	const faq = post.faqs?.length ? `<section class="brief-panel"><div class="panel-label">FAQ</div>${post.faqs.map(item => `<details><summary>${escapeHtml(item.question)}</summary><p>${escapeHtml(item.answer)}</p></details>`).join('')}</section>` : '';
+	const content = `
+		<article class="brief-panel cms-article">
+			<div class="page-kicker">${escapeHtml(post.categories[0] || 'ApexOneIQ')}</div>
+			<h1>${escapeHtml(post.title)}</h1>
+			<p class="brief-copy">${escapeHtml(post.excerpt || '')}</p>
+			<div class="brief-meta"><div><span class="table-label">Author</span><strong>${escapeHtml(post.author || 'ApexOneIQ')}</strong></div><div><span class="table-label">Reading Time</span><strong>${readingTime(post.bodyHtml)} min</strong></div></div>
+			${post.featuredImage ? `<img class="cms-featured-image" src="${escapeHtml(post.featuredImage)}" alt="${escapeHtml(post.imageAlt || post.title)}">` : ''}
+			<div class="cms-body">${sanitizeHtml(post.bodyHtml)}</div>
+		</article>
+		${faq}
+		<section class="brief-panel"><div class="panel-label">Related Articles</div><div class="cms-grid compact">${related.map(item => `<a class="cms-card" href="/blog/${escapeHtml(item.slug)}"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.excerpt || plainExcerpt(item.bodyHtml))}</span></a>`).join('') || '<p class="brief-copy">Related articles will appear as the library grows.</p>'}</div></section>`;
+	sendHtml(res, htmlDocument({
+		title: post.metaTitle || post.title,
+		description: post.metaDescription || post.excerpt || plainExcerpt(post.bodyHtml),
+		canonical: `${origin}/blog/${post.slug}`,
+		body: content,
+		schema: [
+			organizationJsonLd(origin),
+			websiteJsonLd(origin),
+			breadcrumbJsonLd(origin, [{ name: 'Blog', url: `${origin}/blog` }, { name: post.title, url: `${origin}/blog/${post.slug}` }]),
+			articleJsonLd(origin, post),
+			...(post.faqs?.length ? [faqJsonLd(post.faqs)] : [])
+		]
+	}));
+}
+
+function renderCmsPage(req, res, url) {
+	const slug = cmsPageSlugForPath(url.pathname);
+	const store = readContentStore();
+	const page = publicContentItems(store).find(item => item.type === 'page' && item.slug === slug);
+	if (!page) return serveStatic(req, res, url);
+	const origin = originForRequest(req);
+	const content = `
+		<section class="page-head"><div><div class="page-kicker">ApexOneIQ</div><h1>${escapeHtml(page.title)}</h1></div></section>
+		<section class="brief-panel cms-article">
+			${page.featuredImage ? `<img class="cms-featured-image" src="${escapeHtml(page.featuredImage)}" alt="${escapeHtml(page.imageAlt || page.title)}">` : ''}
+			<div class="cms-body">${sanitizeHtml(page.bodyHtml)}</div>
+		</section>
+		${page.faqs?.length ? `<section class="brief-panel"><div class="panel-label">FAQ</div>${page.faqs.map(item => `<details><summary>${escapeHtml(item.question)}</summary><p>${escapeHtml(item.answer)}</p></details>`).join('')}</section>` : ''}`;
+	sendHtml(res, htmlDocument({
+		title: page.metaTitle || page.title,
+		description: page.metaDescription || page.excerpt || plainExcerpt(page.bodyHtml),
+		canonical: `${origin}/${page.slug}`,
+		body: content,
+		schema: [
+			organizationJsonLd(origin),
+			websiteJsonLd(origin),
+			breadcrumbJsonLd(origin, [{ name: page.title, url: `${origin}/${page.slug}` }]),
+			...(page.faqs?.length ? [faqJsonLd(page.faqs)] : [])
+		]
+	}));
+}
+
+function renderSitemap(req, res) {
+	const origin = originForRequest(req);
+	const store = readContentStore();
+	const now = new Date().toISOString();
+	const staticUrls = ['', 'intelligence', 'faq', 'knowledge-center', 'pricing', 'sign-in', 'register', 'executive-brief.html', 'command-dashboard.html', 'mission-workspace.html', 'blog'].map(pathname => ({ pathname, lastmod: lastModifiedForPath(pathname) || now }));
+	const knowledgeUrls = readKnowledgeCenterArticles().map(article => ({ pathname: `knowledge-center/${article.slug}`, lastmod: article.modifiedDate || now }));
+	const cmsUrls = publicContentItems(store).map(item => ({ pathname: item.type === 'blog' ? `blog/${item.slug}` : item.slug, lastmod: item.updatedAt || item.publishedAt || item.createdAt || now })).filter(item => item.pathname);
+	const urls = uniqueSitemapUrls([...staticUrls, ...knowledgeUrls, ...cmsUrls]);
+	const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(item => `  <url><loc>${escapeXml(canonicalForPath(origin, item.pathname))}</loc><lastmod>${escapeXml(new Date(item.lastmod).toISOString())}</lastmod><changefreq>weekly</changefreq></url>`).join('\n')}\n</urlset>\n`;
+	res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' });
+	res.end(xml);
+}
+
+function renderRobots(req, res) {
+	const origin = originForRequest(req);
+	res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+	res.end(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin-content.html\nDisallow: /checkout/\nDisallow: /data/\nDisallow: /reports/\nSitemap: ${origin}/sitemap.xml\n`);
+}
+
+function uniqueSitemapUrls(items) {
+	const seen = new Map();
+	for (const item of items) {
+		if (!seen.has(item.pathname)) seen.set(item.pathname, item);
+	}
+	return Array.from(seen.values());
+}
+
+function canonicalForPath(origin, pathname) {
+	return `${origin}/${pathname || ''}`.replace(/\/$/, '') || origin;
+}
+
+function lastModifiedForPath(pathname) {
+	const candidates = [
+		pathname ? path.join(root, pathname) : path.join(root, 'index.html'),
+		pathname ? path.join(root, pathname, 'index.html') : ''
+	].filter(Boolean);
+	for (const candidate of candidates) {
+		if (fs.existsSync(candidate)) return fs.statSync(candidate).mtime.toISOString();
+	}
+	return '';
+}
+
+function isIndexNowKeyPath(pathname) {
+	const key = indexNowKey();
+	return Boolean(key && pathname === `/${key}.txt`);
+}
+
+function renderIndexNowKey(req, res) {
+	res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
+	res.end(indexNowKey());
+}
+
+async function handleIndexNowSubmit(req, res) {
+	const key = indexNowKey();
+	if (!key) return sendJson(res, 503, { error: 'indexnow_key_missing', message: 'Set INDEXNOW_KEY before submitting URLs.' });
+	if (!isCmsAuthenticated(req)) return sendJson(res, 401, { error: 'indexnow_auth_required' });
+	const payload = await readJsonBody(req);
+	const origin = String(payload.host || process.env.APP_URL || process.env.APEXONEIQ_APP_URL || '').replace(/\/+$/, '') || originForRequest(req);
+	const urls = Array.isArray(payload.urls) && payload.urls.length ? payload.urls : sitemapUrlsForIndexNow(origin);
+	const body = {
+		host: new URL(origin).host,
+		key,
+		keyLocation: `${origin}/${key}.txt`,
+		urlList: urls.map(item => new URL(item, origin).toString())
+	};
+	try {
+		const response = await fetch('https://api.indexnow.org/indexnow', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json; charset=utf-8' },
+			body: JSON.stringify(body)
+		});
+		sendJson(res, response.ok ? 200 : response.status, { submitted: response.ok, status: response.status, count: body.urlList.length });
+	} catch (error) {
+		sendJson(res, 502, { error: 'indexnow_submit_failed', message: error.message });
+	}
+}
+
+function indexNowKey() {
+	return String(process.env.INDEXNOW_KEY || process.env.BING_INDEXNOW_KEY || '').trim();
+}
+
+function sitemapUrlsForIndexNow(origin) {
+	return [
+		canonicalForPath(origin, ''),
+		canonicalForPath(origin, 'intelligence'),
+		canonicalForPath(origin, 'faq'),
+		canonicalForPath(origin, 'knowledge-center'),
+		...readKnowledgeCenterArticles().map(article => canonicalForPath(origin, `knowledge-center/${article.slug}`))
+	];
+}
+
+function readContentStore() {
+	if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+	if (!fs.existsSync(contentStorePath)) {
+		const initial = defaultContentStore();
+		writeContentStore(initial);
+		return initial;
+	}
+	try {
+		const parsed = JSON.parse(fs.readFileSync(contentStorePath, 'utf8'));
+		return {
+			items: Array.isArray(parsed.items) ? parsed.items.map(normalizeContentItem) : [],
+			media: Array.isArray(parsed.media) ? parsed.media : [],
+			categories: Array.isArray(parsed.categories) ? parsed.categories : ['Business Growth', 'AI Visibility', 'Local SEO'],
+			tags: Array.isArray(parsed.tags) ? parsed.tags : ['executive brief', 'seo', 'trust', 'ai visibility'],
+			updatedAt: parsed.updatedAt || new Date().toISOString()
+		};
+	} catch (error) {
+		return defaultContentStore();
+	}
+}
+
+function writeContentStore(store) {
+	if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+	fs.writeFileSync(contentStorePath, JSON.stringify({ ...store, updatedAt: new Date().toISOString() }, null, 2));
+}
+
+function defaultContentStore() {
+	const now = new Date().toISOString();
+	return {
+		items: [
+			normalizeContentItem({ id: 'page_home', type: 'page', title: 'Home', slug: 'home', status: 'draft', metaTitle: 'ApexOneIQ', metaDescription: 'Executive business intelligence and autonomous optimization.', bodyHtml: '<p>Homepage content is currently served by index.html. Use this record to prepare owner-managed homepage copy before publishing.</p>', createdAt: now, updatedAt: now }),
+			normalizeContentItem({ id: 'page_pricing', type: 'page', title: 'Pricing', slug: 'pricing', status: 'draft', metaTitle: 'ApexOneIQ Pricing', metaDescription: 'Choose an ApexOneIQ growth plan.', bodyHtml: '<p>Pricing content is currently served by subscription.html. Use this record to draft future pricing copy.</p>', createdAt: now, updatedAt: now }),
+			normalizeContentItem({ id: 'post_welcome', type: 'blog', title: 'What ApexOneIQ Measures Before Recommending Growth Work', slug: 'what-apexoneiq-measures', status: 'draft', metaTitle: 'What ApexOneIQ Measures Before Recommending Growth Work', metaDescription: 'A plain-English guide to ApexOneIQ scan evidence, trust signals, and growth recommendations.', excerpt: 'ApexOneIQ uses scan evidence before recommending growth work.', bodyHtml: '<h2>Evidence before recommendations</h2><p>ApexOneIQ starts with measurable website, trust, local, and AI visibility signals before recommending work.</p>', categories: ['Business Growth'], tags: ['executive brief', 'seo'], author: 'ApexOneIQ', createdAt: now, updatedAt: now })
+		],
+		media: [],
+		categories: ['Business Growth', 'AI Visibility', 'Local SEO'],
+		tags: ['executive brief', 'seo', 'trust', 'ai visibility'],
+		updatedAt: now
+	};
+}
+
+function normalizeContentItem(item = {}) {
+	const type = ['page', 'blog', 'faq'].includes(item.type) ? item.type : 'blog';
+	const title = String(item.title || 'Untitled').trim();
+	const slug = slugify(item.slug || title);
+	const status = ['draft', 'published', 'scheduled'].includes(item.status) ? item.status : 'draft';
+	return {
+		id: String(item.id || createId(type)),
+		type,
+		title,
+		slug,
+		status,
+		metaTitle: String(item.metaTitle || title).slice(0, 90),
+		metaDescription: String(item.metaDescription || item.excerpt || '').slice(0, 180),
+		openGraphTitle: String(item.openGraphTitle || item.metaTitle || title).slice(0, 90),
+		openGraphDescription: String(item.openGraphDescription || item.metaDescription || item.excerpt || '').slice(0, 220),
+		canonicalUrl: String(item.canonicalUrl || ''),
+		bodyHtml: sanitizeHtml(String(item.bodyHtml || '')),
+		excerpt: String(item.excerpt || '').slice(0, 240),
+		faqs: Array.isArray(item.faqs) ? item.faqs.map(faq => ({ question: String(faq.question || ''), answer: String(faq.answer || '') })).filter(faq => faq.question && faq.answer) : [],
+		categories: arrayOfStrings(item.categories),
+		tags: arrayOfStrings(item.tags),
+		featuredImage: String(item.featuredImage || ''),
+		imageAlt: String(item.imageAlt || ''),
+		author: String(item.author || 'ApexOneIQ'),
+		publishedAt: item.publishedAt || (status === 'published' ? new Date().toISOString() : ''),
+		scheduledAt: String(item.scheduledAt || ''),
+		schemaOptions: {
+			article: item.schemaOptions?.article !== false,
+			breadcrumb: item.schemaOptions?.breadcrumb !== false,
+			faq: item.schemaOptions?.faq !== false,
+			organization: item.schemaOptions?.organization !== false
+		},
+		createdAt: item.createdAt || new Date().toISOString(),
+		updatedAt: item.updatedAt || new Date().toISOString()
+	};
+}
+
+function analyzeContentItem(item, store = readContentStore()) {
+	const words = stripHtml(item.bodyHtml).split(/\s+/).filter(Boolean);
+	const hasMeta = Boolean(item.metaTitle && item.metaDescription);
+	const hasInternalLink = /href=["']\/(?!\/)/i.test(item.bodyHtml);
+	const hasImageAlt = !item.featuredImage || Boolean(item.imageAlt);
+	const missing = [
+		!item.metaTitle && 'Meta title',
+		!item.metaDescription && 'Meta description',
+		item.featuredImage && !item.imageAlt && 'Featured image alt text',
+		!hasInternalLink && 'Internal link'
+	].filter(Boolean);
+	const related = relatedContent(item, store).slice(0, 5).map(relatedItem => ({ title: relatedItem.title, slug: relatedItem.slug, type: relatedItem.type }));
+	return {
+		seoScore: clampNumber((hasMeta ? 32 : 8) + (words.length >= 600 ? 22 : words.length >= 300 ? 14 : 5) + (hasInternalLink ? 18 : 4) + (item.faqs.length ? 12 : 0) + (hasImageAlt ? 16 : 4)),
+		readability: words.length && averageSentenceLength(stripHtml(item.bodyHtml)) <= 24 ? 'Good' : 'Needs Review',
+		aiVisibility: item.faqs.length || /<h2|<h3/i.test(item.bodyHtml) ? 'Strong' : 'Needs structured headings or FAQ blocks',
+		schemaValidation: item.schemaOptions ? 'Ready' : 'Missing schema options',
+		missingMetadata: missing,
+		internalLinkSuggestions: related,
+		imageAltSuggestions: item.featuredImage && !item.imageAlt ? [`Add alt text that describes ${item.title}.`] : []
+	};
+}
+
+function publicContentItems(store) {
+	const now = Date.now();
+	return (store.items || []).filter(item => {
+		if (item.status === 'published') return true;
+		if (item.status === 'scheduled' && item.scheduledAt && Date.parse(item.scheduledAt) <= now) return true;
+		return false;
+	});
+}
+
+function relatedContent(item, store) {
+	const tags = new Set(item.tags || []);
+	const categories = new Set(item.categories || []);
+	return publicContentItems(store)
+		.filter(candidate => candidate.id !== item.id)
+		.map(candidate => {
+			const score = (candidate.tags || []).filter(tag => tags.has(tag)).length * 2
+				+ (candidate.categories || []).filter(category => categories.has(category)).length;
+			return { ...candidate, relatedScore: score };
+		})
+		.filter(candidate => candidate.relatedScore > 0)
+		.sort((a, b) => b.relatedScore - a.relatedScore || String(b.publishedAt).localeCompare(String(a.publishedAt)));
+}
+
+function htmlDocument({ title, description, canonical, body, schema = [] }) {
+	return `<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>${escapeHtml(title)}</title>
+	<meta name="description" content="${escapeHtml(description || '')}">
+	<link rel="canonical" href="${escapeHtml(canonical || '')}">
+	<meta property="og:title" content="${escapeHtml(title)}">
+	<meta property="og:description" content="${escapeHtml(description || '')}">
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="${escapeHtml(canonical || '')}">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="${escapeHtml(title)}">
+	<meta name="twitter:description" content="${escapeHtml(description || '')}">
+	<link rel="stylesheet" href="/css/app.css">
+	<link rel="icon" href="/favicon.ico" sizes="any">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<meta name="theme-color" content="#020814">
+	${schema.map(item => `<script type="application/ld+json">${JSON.stringify(item)}</script>`).join('\n\t')}
+</head>
+<body>
+	<div class="app">
+		<aside class="sidebar">
+			<div class="brand"><div class="logo">IQ</div><div><strong>ApexOneIQ</strong><span>Content OS</span></div></div>
+			<div class="site-card"><span class="eyebrow"><span class="live-dot"></span>Published Content</span><strong>ApexOneIQ</strong><p>Owner-managed content powered by the native CMS.</p></div>
+			<div class="nav-section">Content</div>
+			<nav class="nav-list"><a class="nav-link" href="/"><span>Home</span></a><a class="nav-link" href="/blog"><span>Blog</span></a><a class="nav-link" href="/pricing"><span>Pricing</span></a><a class="nav-link" href="/executive-brief.html"><span>Executive Brief</span></a></nav>
+			<div class="system-card"><span class="eyebrow">Owner CMS</span><p>Use the secure Content Dashboard to edit pages, articles, FAQs, media, and SEO.</p><a class="button" href="/admin-content.html">Open Admin</a></div>
+		</aside>
+		<main class="main">${body}</main>
+	</div>
+</body>
+</html>`;
+}
+
+function marketingHtmlDocument({ title, description, canonical, body, schema = [], active = '' }) {
+	return `<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>${escapeHtml(title)}</title>
+	<meta name="description" content="${escapeHtml(description || '')}">
+	<link rel="canonical" href="${escapeHtml(canonical || '')}">
+	<meta property="og:title" content="${escapeHtml(title)}">
+	<meta property="og:description" content="${escapeHtml(description || '')}">
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="${escapeHtml(canonical || '')}">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="${escapeHtml(title)}">
+	<meta name="twitter:description" content="${escapeHtml(description || '')}">
+	<link rel="stylesheet" href="/css/app.css">
+	<link rel="icon" href="/favicon.ico" sizes="any">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<meta name="theme-color" content="#020814">
+	${schema.map(item => `<script type="application/ld+json">${JSON.stringify(item)}</script>`).join('\n\t')}
+</head>
+<body data-route="${escapeHtml(active || 'marketing')}" class="marketing-home onboarding-home">
+	${landingNavHtml(active)}
+	<main class="landing-main onboarding-landing">${body}</main>
+	<script>
+	(function(){
+		var toc = document.querySelector('.knowledge-toc');
+		if (!toc) return;
+		if (window.matchMedia('(max-width: 780px)').matches) toc.removeAttribute('open');
+		var links = Array.from(document.querySelectorAll('[data-toc-link]'));
+		var sections = links.map(function(link){ return document.querySelector(link.getAttribute('href')); }).filter(Boolean);
+		if (!('IntersectionObserver' in window) || !sections.length) return;
+		var observer = new IntersectionObserver(function(entries){
+			entries.forEach(function(entry){
+				if (!entry.isIntersecting) return;
+				links.forEach(function(link){ link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id); });
+			});
+		}, { rootMargin: '-20% 0px -65% 0px', threshold: 0.01 });
+		sections.forEach(function(section){ observer.observe(section); });
+	})();
+	</script>
+	<script src="/js/mission-engine.js"></script><script src="/js/app.js"></script>
+</body>
+</html>`;
+}
+
+function landingNavHtml(active = '') {
+	const activeAttr = name => active === name ? ' aria-current="page"' : '';
+	const links = `
+		<a href="/">Home</a>
+		<a href="/intelligence"${activeAttr('intelligence')}>Intelligence</a>
+		<a href="/#reputation">Trust</a>
+		<a href="/knowledge-center"${activeAttr('knowledge')}>Knowledge Center</a>
+		<a href="/faq"${activeAttr('faq')}>FAQ</a>
+		<a href="/dashboard.html?demo=1">Demo</a>
+		<a class="nav-cta" href="/oauth/google/?redirect_to=/sign-in.html">My Workspace</a>`;
+	return `<header class="landing-nav">
+		<a class="landing-brand" href="/"><span class="landing-logo">IQ</span><span>ApexOneIQ</span></a>
+		<nav class="desktop-landing-menu" aria-label="Primary">${links}</nav>
+		<details class="mobile-landing-menu"><summary>Menu</summary><nav aria-label="Mobile Primary">${links}</nav></details>
+	</header>`;
+}
+
+function organizationJsonLd(origin) {
+	return {
+		'@context': 'https://schema.org',
+		'@type': 'Organization',
+		name: 'ApexOneIQ',
+		url: origin,
+		logo: `${origin}/android-chrome-512x512.png`
+	};
+}
+
+function websiteJsonLd(origin) {
+	return {
+		'@context': 'https://schema.org',
+		'@type': 'WebSite',
+		name: 'ApexOneIQ',
+		url: origin
+	};
+}
+
+function breadcrumbJsonLd(origin, crumbs) {
+	const items = [{ name: 'Home', url: origin }, ...crumbs];
+	return {
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: items.map((item, index) => ({
+			'@type': 'ListItem',
+			position: index + 1,
+			name: item.name,
+			item: item.url
+		}))
+	};
+}
+
+function articleJsonLd(origin, post) {
+	return {
+		'@context': 'https://schema.org',
+		'@type': 'Article',
+		headline: post.title,
+		description: post.metaDescription || post.excerpt || plainExcerpt(post.bodyHtml),
+		author: { '@type': 'Person', name: post.author || 'ApexOneIQ' },
+		publisher: { '@type': 'Organization', name: 'ApexOneIQ', logo: { '@type': 'ImageObject', url: `${origin}/android-chrome-512x512.png` } },
+		datePublished: post.publishedAt || post.createdAt,
+		dateModified: post.updatedAt || post.publishedAt || post.createdAt,
+		mainEntityOfPage: `${origin}/blog/${post.slug}`,
+		image: post.featuredImage ? [absoluteUrl(origin, post.featuredImage)] : undefined
+	};
+}
+
+function faqJsonLd(faqs) {
+	return {
+		'@context': 'https://schema.org',
+		'@type': 'FAQPage',
+		mainEntity: faqs.map(item => ({
+			'@type': 'Question',
+			name: item.question,
+			acceptedAnswer: { '@type': 'Answer', text: item.answer }
+		}))
+	};
+}
+
+function cmsPageSlugForPath(pathname) {
+	const clean = String(pathname || '').replace(/^\/+|\/+$/g, '');
+	const map = {
+		features: 'features',
+		pricing: 'pricing',
+		scanner: 'scanner',
+		'executive-brief': 'executive-brief',
+		about: 'about',
+		contact: 'contact'
+	};
+	return map[clean] || '';
+}
+
+function originForRequest(req) {
+	const configured = process.env.APP_URL || process.env.APEXONEIQ_APP_URL;
+	if (configured) return configured.replace(/\/+$/, '');
+	if (process.env.NODE_ENV === 'production') return productionOrigin;
+	const proto = req.headers['x-forwarded-proto'] || 'https';
+	const host = req.headers['x-forwarded-host'] || req.headers.host || 'apexoneiq.com';
+	return `${proto}://${host}`;
+}
+
+function sendHtml(res, html) {
+	const body = injectProductionHead(html);
+	res.writeHead(200, productionHeaders({ 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }));
+	res.end(body);
+}
+
+function sendNotFound(res) {
+	res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+	res.end('Not found');
+}
+
+function productionHeaders(headers = {}) {
+	return {
+		'X-Content-Type-Options': 'nosniff',
+		'Referrer-Policy': 'strict-origin-when-cross-origin',
+		'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+		...headers
+	};
+}
+
+function cacheControlForExtension(ext) {
+	if (['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.ico', '.woff', '.woff2'].includes(ext)) return 'public, max-age=31536000, immutable';
+	if (['.css', '.js', '.json', '.webmanifest'].includes(ext)) return 'public, max-age=3600, stale-while-revalidate=86400';
+	return 'no-cache';
+}
+
+function injectProductionHead(html) {
+	let output = String(html || '');
+	if (!/<head[^>]*>/i.test(output)) return output;
+	const additions = productionHeadAdditions(output);
+	if (additions) output = output.replace(/<head([^>]*)>/i, `<head$1>\n${additions}`);
+	return output;
+}
+
+function productionHeadAdditions(html) {
+	const additions = [];
+	if (!/<meta\s+name=["']robots["']/i.test(html)) additions.push('\t<meta name="robots" content="index,follow">');
+	if (!/<link\s+rel=["']preconnect["'][^>]+https:\/\/www\.googletagmanager\.com/i.test(html)) additions.push('\t<link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>');
+	if (!/<link\s+rel=["']preload["'][^>]+css\/app\.css/i.test(html)) additions.push('\t<link rel="preload" href="/css/app.css" as="style">');
+	const googleVerification = process.env.GOOGLE_SITE_VERIFICATION || process.env.GOOGLE_SEARCH_CONSOLE_VERIFICATION || '';
+	if (googleVerification && !/google-site-verification/i.test(html)) additions.push(`\t<meta name="google-site-verification" content="${escapeHtml(googleVerification)}">`);
+	const bingVerification = process.env.BING_SITE_VERIFICATION || process.env.BING_WEBMASTER_VERIFICATION || '';
+	if (bingVerification && !/msvalidate\.01/i.test(html)) additions.push(`\t<meta name="msvalidate.01" content="${escapeHtml(bingVerification)}">`);
+	const gaId = process.env.GA4_MEASUREMENT_ID || process.env.GOOGLE_ANALYTICS_ID || '';
+	if (gaId && !/googletagmanager\.com\/gtag\/js/i.test(html)) {
+		additions.push(`\t<script async src="https://www.googletagmanager.com/gtag/js?id=${escapeHtml(gaId)}"></script>`);
+		additions.push(`\t<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${escapeHtml(gaId)}');</script>`);
+	}
+	return additions.join('\n');
+}
+
+function createId(prefix) {
+	return `${String(prefix || 'item').replace(/[^a-z0-9]/gi, '').toLowerCase()}_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+}
+
+function slugify(value) {
+	return String(value || '')
+		.toLowerCase()
+		.replace(/&/g, ' and ')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 90) || `content-${Date.now()}`;
+}
+
+function arrayOfStrings(value) {
+	if (Array.isArray(value)) return value.map(item => String(item).trim()).filter(Boolean);
+	if (typeof value === 'string') return value.split(',').map(item => item.trim()).filter(Boolean);
+	return [];
+}
+
+function safeFilename(value) {
+	const parsed = path.parse(String(value || 'upload.bin'));
+	const name = parsed.name.replace(/[^a-z0-9._-]/gi, '-').replace(/-+/g, '-').slice(0, 80) || 'upload';
+	const ext = parsed.ext.replace(/[^a-z0-9.]/gi, '').slice(0, 12);
+	return `${name}${ext}`;
+}
+
+function extensionForMime(mime) {
+	if (/png/i.test(mime)) return '.png';
+	if (/jpe?g/i.test(mime)) return '.jpg';
+	if (/webp/i.test(mime)) return '.webp';
+	if (/gif/i.test(mime)) return '.gif';
+	if (/svg/i.test(mime)) return '.svg';
+	if (/pdf/i.test(mime)) return '.pdf';
+	if (/mp4/i.test(mime)) return '.mp4';
+	if (/webm/i.test(mime)) return '.webm';
+	return '.bin';
+}
+
+function readingTime(html) {
+	const words = stripHtml(html).split(/\s+/).filter(Boolean).length;
+	return Math.max(1, Math.ceil(words / 220));
+}
+
+function plainExcerpt(html) {
+	return stripHtml(html).slice(0, 155);
+}
+
+function averageSentenceLength(text) {
+	const words = String(text || '').split(/\s+/).filter(Boolean).length;
+	const sentences = String(text || '').split(/[.!?]+/).filter(Boolean).length || 1;
+	return words / sentences;
+}
+
+function absoluteUrl(origin, value) {
+	try {
+		return new URL(value, origin).toString();
+	} catch (error) {
+		return value;
+	}
+}
+
+function sanitizeHtml(html) {
+	let safe = String(html || '');
+	safe = safe.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '');
+	safe = safe.replace(/\son[a-z]+=["'][^"']*["']/gi, '');
+	safe = safe.replace(/\s(href|src)=["']javascript:[^"']*["']/gi, '');
+	const allowed = /^(\/?(p|br|strong|b|em|i|ul|ol|li|h2|h3|h4|blockquote|pre|code|table|thead|tbody|tr|th|td|a|img|figure|figcaption|div|span|details|summary|section|article|hr))(\s|>|\/)/i;
+	return safe.replace(/<\/?([a-z0-9-]+)([^>]*)>/gi, tag => allowed.test(tag) ? tag : '');
+}
+
+function escapeHtml(value) {
+	return String(value || '').replace(/[&<>"']/g, char => ({
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#039;'
+	}[char]));
+}
+
+function escapeXml(value) {
+	return escapeHtml(value);
+}
 
 async function handleCheckout(req, res, url) {
 	const requestedPlan = url.pathname.split('/').filter(Boolean).pop();
@@ -71,7 +1167,7 @@ async function handleCheckout(req, res, url) {
 		return;
 	}
 
-	const origin = `${url.protocol}//${req.headers.host}`;
+	const origin = publicOrigin(req, url);
 	const userId = String(payload.userId || payload.user_id || payload.user?.id || 'local-user');
 	const accountId = String(payload.accountId || payload.account_id || payload.account?.id || userId);
 	const businessWebsite = String(payload.businessWebsite || payload.website || payload.profile?.website || '');
@@ -157,10 +1253,10 @@ async function handleCustomerPortal(req, res, url) {
 		sendJson(res, 404, { error: 'stripe_customer_missing', message: 'No Stripe customer is stored for this account yet.' });
 		return;
 	}
-	const origin = `${url.protocol}//${req.headers.host}`;
+	const origin = publicOrigin(req, url);
 	const body = new URLSearchParams({
 		customer,
-		return_url: `${origin}/subscription.html`
+		return_url: `${origin}/pricing`
 	});
 	const stripeResponse = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
 		method: 'POST',
@@ -319,8 +1415,9 @@ function normalizeRoutePath(pathname) {
 function publicOrigin(req, url) {
 	const configured = process.env.APP_URL || process.env.APEXONEIQ_APP_URL;
 	if (configured) return configured.replace(/\/+$/, '');
+	if (process.env.NODE_ENV === 'production') return productionOrigin;
 	const proto = req.headers['x-forwarded-proto'] || url.protocol.replace(':', '') || 'https';
-	return `${proto}://${req.headers.host}`;
+	return `${proto}://${req.headers.host || 'apexoneiq.com'}`;
 }
 
 function googleCallbackUrl(origin) {
@@ -1259,6 +2356,10 @@ function writeSubscriptionStore(store) {
 function serveStatic(req, res, url) {
 	let pathname = decodeURIComponent(url.pathname);
 	if (pathname === '/') pathname = '/index.html';
+	serveStaticPath(req, res, pathname);
+}
+
+function serveStaticPath(req, res, pathname) {
 	let filePath = path.normalize(path.join(root, pathname));
 	if (!filePath.startsWith(root)) {
 		res.writeHead(403);
@@ -1274,11 +2375,29 @@ function serveStatic(req, res, url) {
 		return;
 	}
 	const type = contentTypes[path.extname(filePath)] || 'application/octet-stream';
-	res.writeHead(200, { 'Content-Type': type });
+	const ext = path.extname(filePath);
+	const isHtml = ext === '.html';
+	const headers = productionHeaders({
+		'Content-Type': type,
+		'Cache-Control': cacheControlForExtension(ext)
+	});
 	if (req.method === 'HEAD') {
+		res.writeHead(200, headers);
 		res.end();
 		return;
 	}
+	if (isHtml) {
+		res.writeHead(200, headers);
+		res.end(injectProductionHead(fs.readFileSync(filePath, 'utf8')));
+		return;
+	}
+	const acceptsGzip = /\bgzip\b/.test(String(req.headers['accept-encoding'] || ''));
+	if (acceptsGzip && /\.(css|js|json|svg|txt|xml|webmanifest)$/i.test(filePath)) {
+		res.writeHead(200, { ...headers, 'Content-Encoding': 'gzip' });
+		fs.createReadStream(filePath).pipe(zlib.createGzip({ level: 9 })).pipe(res);
+		return;
+	}
+	res.writeHead(200, headers);
 	fs.createReadStream(filePath).pipe(res);
 }
 

@@ -4,7 +4,7 @@ const apexRegisterUrl = window.ApexOneIQ?.registerUrl || `${apexRoot}register/`;
 const apexRoutePath = location.pathname.replace(/\/$/, '');
 const route = document.body.dataset.route || apexRoutePath.split('/').pop() || 'dashboard.html';
 const apexDemoMode = Boolean(window.ApexOneIQ?.demoMode) || new URLSearchParams(location.search).get('demo') === '1';
-const apexWordPressMode = typeof window.ApexOneIQ !== 'undefined';
+const apexServerMode = typeof window.ApexOneIQ !== 'undefined';
 const apexProfileKey = 'apexoneiq_free_profile';
 const apexSessionKey = 'apexoneiq_auth_user';
 const apexHref = href => {
@@ -39,7 +39,7 @@ function writeStorage(key, value) {
 	try {
 		localStorage.setItem(key, JSON.stringify(value));
 	} catch (error) {
-		// Local storage is a convenience for the standalone prototype; WordPress remains the source of truth.
+		// Local storage is a convenience for the standalone Node runtime.
 	}
 }
 
@@ -51,13 +51,13 @@ function initialsFor(nameOrEmail = 'JM') {
 }
 
 function getApexUser() {
-	const wpUser = window.ApexOneIQ?.isLoggedIn ? {
+	const runtimeUser = window.ApexOneIQ?.isLoggedIn ? {
 		name: window.ApexOneIQ?.userName || window.ApexOneIQ?.businessName || window.ApexOneIQ?.businessEmail || 'Apex User',
 		email: window.ApexOneIQ?.businessEmail || '',
 		initials: window.ApexOneIQ?.userInitials || initialsFor(window.ApexOneIQ?.userName || window.ApexOneIQ?.businessEmail || 'JM'),
-		source: 'wordpress'
+		source: 'node'
 	} : null;
-	return wpUser || readStorage(apexSessionKey, null);
+	return runtimeUser || readStorage(apexSessionKey, null);
 }
 
 function ensurePrototypeUser() {
@@ -89,7 +89,7 @@ function getStoredProfile() {
 			createdAt: new Date().toISOString(),
 			completedAt: window.ApexOneIQ.scanCompletedAt || '',
 			trend: Array.isArray(window.ApexOneIQ.scanTrend) && window.ApexOneIQ.scanTrend.length ? window.ApexOneIQ.scanTrend : [12, 28, 41, 55, score],
-			dataMode: 'wordpress-profile'
+			dataMode: 'node-profile'
 		};
 	}
 	return null;
@@ -461,7 +461,7 @@ function renderAccountState() {
 				<div class="account-dropdown" role="menu">
 					<a href="${escapeHtml(apexPageUrl('executive-brief.html'))}" role="menuitem">My Workspace</a>
 					<a href="${escapeHtml(apexPageUrl('account.html'))}" role="menuitem">Account</a>
-					<a href="${escapeHtml(apexPageUrl('subscription.html'))}" role="menuitem">Billing</a>
+					<a href="${escapeHtml(apexPageUrl('pricing'))}" role="menuitem">Billing</a>
 					<a href="${escapeHtml(apexPageUrl('settings.html'))}" role="menuitem">Settings</a>
 					<button type="button" data-apex-logout role="menuitem">Logout</button>
 				</div>
@@ -1087,7 +1087,7 @@ function setupLandingCapture() {
 function setupExecutiveScan() {
 	const form = document.querySelector('[data-executive-scan-form]');
 	if (!form) return;
-	if (!apexWordPressMode) ensurePrototypeUser();
+	if (!apexServerMode) ensurePrototypeUser();
 	renderAccountState();
 
 	const status = form.querySelector('[data-executive-scan-status]');
@@ -1147,7 +1147,7 @@ function setupExecutiveScan() {
 
 	form.addEventListener('submit', event => {
 		event.preventDefault();
-		if (apexWordPressMode && !getApexUser()) {
+		if (apexServerMode && !getApexUser()) {
 			status.textContent = 'Sign in with Google before ApexOneIQ can save your Executive Scan.';
 			window.location.assign(apexHref('oauth/google/?redirect_to=/sign-in.html'));
 			return;
@@ -1176,7 +1176,7 @@ function setupExecutiveScan() {
 			scanCompleted: false,
 			score: 0,
 			createdAt: new Date().toISOString(),
-			dataMode: window.ApexOneIQ?.isLoggedIn ? 'wordpress-onboarding' : 'static-onboarding'
+			dataMode: window.ApexOneIQ?.isLoggedIn ? 'node-onboarding' : 'static-onboarding'
 		});
 
 		scanSteps.forEach(([nextPercent, nextTitle, completeLabel, nextDetail], index) => {
@@ -1323,7 +1323,7 @@ function applyFreeProfileSnapshot() {
 	main.innerHTML = `
 		<header class="topbar">
 			<div><span class="eyebrow"><span class="live-dot"></span>Free Executive Brief™ Ready</span></div>
-			<div class="account"><a class="ghost-button" href="${escapeHtml(apexHref('subscription.html'))}">Choose How To Grow</a><div class="avatar">IQ</div></div>
+			<div class="account"><a class="ghost-button" href="${escapeHtml(apexHref('pricing'))}">Choose How To Grow</a><div class="avatar">IQ</div></div>
 		</header>
 		<section class="free-brief-hero">
 			<div>
@@ -1375,7 +1375,7 @@ function applyFreeProfileSnapshot() {
 				<h2>${escapeHtml(data.recommendations[0].title)}</h2>
 				<p>${escapeHtml(data.recommendations[0].impact)} Apex can show the complete evidence, refresh the score, and turn this into a repeatable growth plan.</p>
 			</div>
-			<a class="button" href="${escapeHtml(apexHref('subscription.html'))}">Choose How You Want To Grow</a>
+			<a class="button" href="${escapeHtml(apexHref('pricing'))}">Choose How You Want To Grow</a>
 		</section>
 	`;
 }
@@ -3214,10 +3214,6 @@ document.addEventListener('click', event => {
 			localStorage.removeItem(apexProfileKey);
 		} catch (error) {
 			// Ignore local logout cleanup failures.
-		}
-		if (apexWordPressMode) {
-			window.location.assign(`${apexRoot}wp-login.php?action=logout`);
-			return;
 		}
 		window.location.assign(apexHref('sign-in.html'));
 		return;
