@@ -14,6 +14,7 @@ const contentStorePath = path.join(dataDir, 'content-store.json');
 const mediaDir = path.join(root, 'media');
 const knowledgeCenterDir = path.join(root, 'content', 'knowledge-center');
 const knowledgeCenterManifestPath = path.join(knowledgeCenterDir, 'knowledge-center-manifest.json');
+const defaultIndexNowKey = 'c74d4d4b2d084cf89a877550cf3d3a19';
 
 loadEnvFile(path.join(root, '.env'));
 loadEnvFile(path.join(root, '.env.sandbox'));
@@ -687,7 +688,7 @@ async function handleIndexNowSubmit(req, res) {
 }
 
 function indexNowKey() {
-	return String(process.env.INDEXNOW_KEY || process.env.BING_INDEXNOW_KEY || '').trim();
+	return String(process.env.INDEXNOW_KEY || process.env.BING_INDEXNOW_KEY || defaultIndexNowKey).trim();
 }
 
 function sitemapUrlsForIndexNow(origin) {
