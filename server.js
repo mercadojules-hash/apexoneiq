@@ -21,7 +21,8 @@ const contentTypes = {
 	'.jpg': 'image/jpeg',
 	'.jpeg': 'image/jpeg',
 	'.svg': 'image/svg+xml; charset=utf-8',
-	'.ico': 'image/x-icon'
+	'.ico': 'image/x-icon',
+	'.xml': 'application/xml; charset=utf-8'
 };
 
 const server = http.createServer(async (req, res) => {
